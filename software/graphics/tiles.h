@@ -1,4 +1,4 @@
-#ifdef TILES_H
+#ifndef TILES_H
 #define TILES_H
 
 #include "predefined_graphics.h"

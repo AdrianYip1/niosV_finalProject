@@ -1,6 +1,6 @@
 #pragma once
-#include "graphics/sprites/spriteStruct.h"
+#include "spriteStruct.h"
 
 extern Sprite playerSprite;
 
-void initPlayerAsCharizard();
+void initCharizardBackSprite(void);

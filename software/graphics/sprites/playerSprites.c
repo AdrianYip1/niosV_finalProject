@@ -1,5 +1,5 @@
-#include "graphics/sprites/spriteStruct.h"
-#include "graphics/sprites/charizard_back_frames.h"
+#include "spriteStruct.h"
+#include "charizard_back_frames.h"
 
 Sprite playerSprite;
 
