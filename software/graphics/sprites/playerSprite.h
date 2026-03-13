@@ -4,3 +4,4 @@
 extern Sprite playerSprite;
 
 void initCharizardBackSprite(void);
+void drawSpriteAnimation(void);
