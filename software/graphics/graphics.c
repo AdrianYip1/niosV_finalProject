@@ -27,6 +27,39 @@ void wait_for_vsync() {
     } //wait for status to be ready
 }
 
+void draw_hline(int x, int y, int width, short int colour){
+    for (int position = x; position < x + widthl position++) {
+        draw_pixel(position, y, colour); //draws horizontal line at y position
+    }
+}
+
+void draw_vline(int x, int y, int height, short int colour) {
+    for (int position = y; position < y + height; position++) {
+        draw_pixel(x, position, colour); //draws vertical line at x position
+    }
+}
+
+void draw_rect(int x, int y, int width, int height, short int colour) {
+    for (int position = x; position < x + width; position++) {
+        draw_pixel(position, y, colour); //draws top horizontal line
+        draw_pixel(position, y + height - 1, colour); //draws bottom horizontal line
+    }
+    for (int position = y; position < y + height; position++) {
+        draw_pixel(x, position, colour); //draws left vertical line
+        draw_pixel(x + width - 1, position, colour); //draws right vertical line
+    }
+}
+
+void draw_rect_outline(int x, int y, int width, int height, short int colour) {
+    draw_hline(x, y, width, colour); //top line
+    draw_hline(x, y + height - 1, width, colour); //bottom line
+    draw_vline(x, y, height, colour); //left line
+    draw_vline(x + width - 1, y, height, colour); //right line
+}
+
+void draw_circle(int cx, int cy, int radius, short int colour);
+void draw_circle_filled(int cx, int cy, int radius, short int colour);
+void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
 
 
 
