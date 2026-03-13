@@ -2,7 +2,7 @@ from PIL import Image
 
 PINK = (255, 0, 255, 255)  # transparent colour (pink)
 
-im = Image.open("zard.gif")
+im = Image.open("mcWalkingWest.gif")
 frames = []
 frame = 0
 
@@ -19,10 +19,8 @@ while True:
     for y in range(h):
         for x in range(w):
             r, g, b, a = pixels[x, y]
-            # change white pixels to pink
-            if r > 240 and g > 240 and b > 240:
+            if a == 0 or (r > 240 and g > 240 and b > 240):
                 pixels[x, y] = PINK
-
 
     frames.append(f)
     frame += 1

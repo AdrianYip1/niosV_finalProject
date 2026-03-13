@@ -1,12 +1,14 @@
 from PIL import Image
 import os
 
-TILE_SIZE = 48  # change this to the size of the sprite whenever you switch
+TILE_SIZE = 36  # change this to the size of the sprite whenever you switch
 # sprites will be 48x48 to preserve detail and tiles are 16x16
-TRANSPARENT_KEY = (255, 0, 255)  # FF00FF is transparent colour (pink)
-OUTPUT_C_FILE = "charizard_frames.c"
-OUTPUT_H_FILE = "charizard_frames.h"
-SPRITE_PREFIX = "charizard_frame_"
+TRANSPARENT_KEY = (255, 0, 255)  # FF00FF pink
+WHITE_THRESHOLD = 240  # treat near-white as transparent too
+OUTPUT_C_FILE = "mcWalkingWest_frames.c"
+OUTPUT_H_FILE = "mcWalkingWest_frames.h"
+TILE_SIZE_DEFINE = "MC_WALKING_WEST_TILE_SIZE"
+SPRITE_PREFIX = "mcWalkingWest_frame_"
 
 
 def rgb_to_565(r, g, b):
@@ -23,7 +25,7 @@ def convert(name, var_name, out_file):
     for y in range(TILE_SIZE):
         for x in range(TILE_SIZE):
             r, g, b = img.getpixel((x, y))
-            if (r, g, b) == TRANSPARENT_KEY:
+            if (r, g, b) == TRANSPARENT_KEY or (r > WHITE_THRESHOLD and g > WHITE_THRESHOLD and b > WHITE_THRESHOLD):
                 val = 0xF81F  # PINK_TRANSPARENT
             else:
                 val = rgb_to_565(r, g, b)
@@ -39,22 +41,24 @@ def convert(name, var_name, out_file):
 def write_header(header_name, frame_count): #automatically writes the header file for the sprite
     with open(header_name, "w") as h:
         h.write("#pragma once\n\n")
-        h.write(f"#define CHARIZARD_TILE_SIZE {TILE_SIZE}\n") //change manually for sprites
-        h.write(f"#define CHARIZARD_FRAME_COUNT {frame_count}\n\n")
+        h.write(f"#define MC_WALKING_WEST_TILE_SIZE {TILE_SIZE}\n") 
+        h.write(f"#define MC_WALKING_WEST_FRAME_COUNT {frame_count}\n\n")
 
         for i in range(frame_count):
             h.write(
-                f"extern const unsigned short charizard_frame_{i}[TILE_SIZE * TILE_SIZE];\n"
+                f"extern const unsigned short mcWalkingWest_frame_{i}[TILE_SIZE * TILE_SIZE];\n"
             )
 
         h.write(
-            "\nextern const unsigned short* const charizardFrames[CHARIZARD_FRAME_COUNT];\n"
+            "\nextern const unsigned short* const mcWalkingWestFrames[MC_WALKING_WEST_FRAME_COUNT];\n"
         )
 
 
 if __name__ == "__main__":  # loop through every single frame_#.png file, deletes the pngs and makes the h adn c files
     frame_count = 0
     with open(OUTPUT_C_FILE, "w") as out:
+        out.write(f'#include "{OUTPUT_H_FILE}"\n\n')
+        out.write(f"#define TILE_SIZE {TILE_SIZE_DEFINE}\n\n")
         i = 0
         while True:
             name = f"frame_{i}.png"
@@ -67,7 +71,7 @@ if __name__ == "__main__":  # loop through every single frame_#.png file, delete
 
         if frame_count > 0:
             out.write(
-                f"const unsigned short* const charizardFrames[CHARIZARD_FRAME_COUNT] = {{\n"
+                f"const unsigned short* const mcWalkingWestFrames[MC_WALKING_WEST_FRAME_COUNT] = {{\n"
             )
             for i in range(frame_count):
                 end = "," if i + 1 < frame_count else ""
