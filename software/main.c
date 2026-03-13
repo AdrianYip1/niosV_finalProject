@@ -1,7 +1,7 @@
-#include "graphics.h"
-#include "predefined_graphics.h"
-#include "predefined_colours.h"
-#include "graphics/sprites/playerSprites.h"
+#include "graphics/graphics.h"
+#include "graphics/predefined_graphics.h"
+#include "graphics/predefined_colours.h"
+#include "graphics/sprites/playerSprite.h"
 #include "graphics/tiles.h"
 
 #define SCREEN_WIDTH 320
