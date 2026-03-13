@@ -2,7 +2,12 @@ INSTALL	:= C:/intelFPGA/QUARTUS_Lite_V23.1
 
 MAIN	:= main.c
 HDRS	:= address_map.h
-SRCS	:= $(MAIN)
+SRCS := main.c \
+        hardware/audio.c \
+        hardware/keyboard.c \
+        hardware/mouse.c \
+        software/graphics/graphics.c \
+        software/graphics/predefined_graphics.c
 
 SHELL	:= cmd.exe
 
