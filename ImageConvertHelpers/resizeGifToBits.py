@@ -1,8 +1,8 @@
 from PIL import Image
 
-TILE_SIZE = 16
+TILE_SIZE = 48
 
-im = Image.open("anim.gif")
+im = Image.open("out_pink_bg.gif")
 frame = 0
 while True:
     try:
