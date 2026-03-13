@@ -1,6 +1,8 @@
 #include "font8x8_basic.h"
-#include "address_map.h"
+#include "../../address_map.h"
 
+#define TILE_SIZE 16
+#define TRANSPARENT_COLOUR 0xF81F //anyy pink pixels will be transparent
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 
