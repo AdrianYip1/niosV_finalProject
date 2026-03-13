@@ -28,13 +28,18 @@ void drawSpriteAnimation(void) {
 
     for (int tile_y = topTile; tile_y <= bottomTile; tile_y++) {
         for (int tile_x = leftTile; tile_x <= rightTile; tile_x++) {
-            drawTile(tile_x, tile_y, TILE_GRASS); //grass as defaukt for now
+            drawTile(tile_x, tile_y, TILE_GRASS);
         }
     }
 
-    for (int i = 0; i < sprite->tileSize; i++) {
-        for (int j = 0; j < sprite->tileSize; j++) {
-            draw_pixel(sprite->x + i, sprite->y + j, sprite->frames[sprite->frameIndex][i * sprite->tileSize + j]);
+    const unsigned short* frame = sprite->frames[sprite->frameIndex];
+    for (int y = 0; y < sprite->tileSize; y++) {
+        for (int x = 0; x < sprite->tileSize; x++) {
+            unsigned short color = frame[y * sprite->tileSize + x];
+            if (color == 0xF81F) {
+                continue; // transparent
+            }
+            draw_pixel(sprite->x + x, sprite->y + y, color);
         }
     }
 
