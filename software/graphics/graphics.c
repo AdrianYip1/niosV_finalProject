@@ -1,3 +1,5 @@
+#include "font8x8_basic.h"
+
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 #define PIXEL_BASE 0xFF203020
@@ -71,8 +73,7 @@ void draw_window(int x, int y, int w, int h, short int border_colour, short int 
 }
 
 // Draw a 16x16 tile; tile is a 16*16 array of colours (pre defined).
-void draw_tiles(const short *tile, int x, int y)
-{
+void draw_tiles(const short *tile, int x, int y) {
     for (int tile_y = 0; tile_y < TILE_SIZE; tile_y++) {
         for (int tile_x = 0; tile_x < TILE_SIZE; tile_x++) {
             draw_pixel(x + tile_x, y + tile_y, tile[tile_y * TILE_SIZE + tile_x]);
@@ -82,8 +83,7 @@ void draw_tiles(const short *tile, int x, int y)
 
 // Draw a 16x16 sprite with transparency; any pixel equal to 'transparent'
 // is skipped so the background shows through.
-void draw_sprite_transparent(const short *sprite, int x, int y, short transparent)
-{
+void draw_sprite_transparent(const short *sprite, int x, int y, short transparent) {
     for (int sprite_y = 0; sprite_y < TILE_SIZE; sprite_y++) {
         for (int sprite_x = 0; sprite_x < TILE_SIZE; sprite_x++) {
             short colour = sprite[sprite_y * TILE_SIZE + sprite_x];
@@ -94,6 +94,31 @@ void draw_sprite_transparent(const short *sprite, int x, int y, short transparen
     }
 }
 
+void draw_char(int x, int y, char c, short int colour) {
+    unsigned char character = (unsigned char)c;
+    if (character < 127) return; //out of bounds
+
+    const unsigned char *font_data = font8x8_basic[character];
+
+    for (int row = 0; row < 8; row++) {
+        unsigned char bits = font_data[row];
+        for (int col = 0; col < 8; col++) {
+            if (bits & (1 << col)) { //if the bit is 1, draw the pixel. 1 << col masks the bit to col
+                draw_pixel(x + col, y + row, colour);
+            }
+        }
+    }
+}
+
+void draw_string(int x, int y, const char *string, short colour)
+{
+    int cursor_x = x;
+    while (*string) {
+        draw_char(cursor_x, y, *string, colour);
+        cursor_x += 8; // next character cell
+        string++;
+    }
+}
 
 
 
