@@ -1,5 +1,8 @@
 #include "spriteStruct.h"
 #include "charizard_back_frames.h"
+#include "../graphics.h"
+#include "../predefined_graphics.h"
+#include "../tiles.h"
 
 Sprite playerSprite;
 
