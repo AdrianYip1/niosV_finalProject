@@ -1,11 +1,22 @@
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 #define PIXEL_BASE 0xFF203020
-#define pixel_buffer_start ((short int *)PIXEL_BASE)
+int pixel_buffer_start; //pointer to base register of controller
+
+void init_graphics() {
+    volatile int* pixel_ctrl_ptr = (int*)PIXEL_BASE;
+    pixel_buffer_start = *pixel_ctrl_ptr;
+
+    clear_screen();
+    wait_for_vsync();
+}
 
 void draw_pixel(int x, int y, short int colour) {
-    volatile short int *one_pixel_address = pixel_buffer_start + (y << 10) + (x << 1);
-    *one_pixel_address = colour;
+    if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) return;
+    volatile short int *one_pixel_address;
+
+    one_pixel_address = (volatile short int *)(pixel_buffer_start + (y << 10) + (x << 1));
+    *one_pixel_address = colour; //write the colour value to the pixel buffer
 }
 
 void clear_screen() {
@@ -28,7 +39,7 @@ void wait_for_vsync() {
 }
 
 void draw_hline(int x, int y, int width, short int colour){
-    for (int position = x; position < x + widthl position++) {
+    for (int position = x; position < x + width; position++) {
         draw_pixel(position, y, colour); //draws horizontal line at y position
     }
 }
@@ -40,13 +51,10 @@ void draw_vline(int x, int y, int height, short int colour) {
 }
 
 void draw_rect(int x, int y, int width, int height, short int colour) {
-    for (int position = x; position < x + width; position++) {
-        draw_pixel(position, y, colour); //draws top horizontal line
-        draw_pixel(position, y + height - 1, colour); //draws bottom horizontal line
-    }
-    for (int position = y; position < y + height; position++) {
-        draw_pixel(x, position, colour); //draws left vertical line
-        draw_pixel(x + width - 1, position, colour); //draws right vertical line
+    for (int dy = 0; dy < height; dy++) {
+        for (int dx = 0; dx < width; dx++) {
+            draw_pixel(x + dx, y + dy, colour);
+        }
     }
 }
 
@@ -57,9 +65,10 @@ void draw_rect_outline(int x, int y, int width, int height, short int colour) {
     draw_vline(x + width - 1, y, height, colour); //right line
 }
 
-void draw_circle(int cx, int cy, int radius, short int colour);
-void draw_circle_filled(int cx, int cy, int radius, short int colour);
-void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
+void draw_window(int x, int y, int w, int h, short int border_colour, short int fill_colour) {
+    draw_rect(x, y, w, h, fill_colour);
+    draw_rect_outline(x, y, w, h, border_colour);
+}
 
 
 
