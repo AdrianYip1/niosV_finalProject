@@ -1,6 +1,14 @@
 #include "graphics.h"
 #include "predefined_graphics.h"
 #include "predefined_colours.h"
+#include "graphics/sprites/playerSprites.h"
+#include "graphics/tiles.h"
+
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+#define NUM_TILES_X (SCREEN_WIDTH / TILE_SIZE)
+#define NUM_TILES_Y (SCREEN_HEIGHT / TILE_SIZE)
+
 
 int main(void)
 {
@@ -12,23 +20,21 @@ int main(void)
 
     draw_sprite_transparent(player_up_1_sprite, 100, 100, PINK_TRANSPARENT);
 
-    // Draw one grass tile at (0,0)
-    draw_tiles(tiles[TILE_GRASS], 0, 0);
-
-    // Draw a 5x3 block of grass tiles starting at (32, 32)
-    for (int ty = 0; ty < 3; ty++) {
-        for (int tx = 0; tx < 5; tx++) {
-            int x = 32 + tx * TILE_SIZE;
-            int y = 32 + ty * TILE_SIZE;
-            draw_tiles(tiles[TILE_GRASS], x, y);
+    for (int tile_y = 0; tile_y < NUM_TILES_Y; tile_y++) {
+        for (int tile_x = 0; tile_x < NUM_TILES_X; tile_x++) {
+            drawTile(tile_x, tile_y, TILE_GRASS);
         }
     }
+
+    initCharizardBackSprite();
+    
 
     // Draw some text over the tiles
     draw_string(10, 10, "HELLO WORLD", GREEN);
 
-    // Main loop: just keep the frame on screen
     while (1) {
+        drawSpriteAnimation();
+
         wait_for_vsync();
     }
 
