@@ -39,7 +39,7 @@ def convert(name, var_name, out_file):
 def write_header(header_name, frame_count): #automatically writes the header file for the sprite
     with open(header_name, "w") as h:
         h.write("#pragma once\n\n")
-        h.write(f"#define TILE_SIZE {TILE_SIZE}\n")
+        h.write(f"#define CHARIZARD_TILE_SIZE {TILE_SIZE}\n") //change manually for sprites
         h.write(f"#define CHARIZARD_FRAME_COUNT {frame_count}\n\n")
 
         for i in range(frame_count):
