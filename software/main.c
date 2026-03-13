@@ -10,6 +10,8 @@ int main(void)
 
     clear_screen();
 
+    draw_sprite_transparent(player_up_1_sprite, 100, 100, PINK_TRANSPARENT);
+
     // Draw one grass tile at (0,0)
     draw_tiles(tiles[TILE_GRASS], 0, 0);
 

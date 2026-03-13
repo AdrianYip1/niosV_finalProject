@@ -1,13 +1,20 @@
 #include "font8x8_basic.h"
+#include "address_map.h"
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
-#define PIXEL_BASE 0xFF203020
-int pixel_buffer_start; //pointer to base register of controller
+
+#define BACK_BUFFER 0x02000000
+
+static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
+static int pixel_buffer_start;   // address of current back buffer
 
 void init_graphics() {
-    volatile int* pixel_ctrl_ptr = (int*)PIXEL_BASE;
-    pixel_buffer_start = *pixel_ctrl_ptr;
+    pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
+
+    // set initial back buffer
+    *(pixel_ctrl_ptr + 1) = BACK_BUFFER;
+    pixel_buffer_start = BACK_BUFFER;
 
     clear_screen();
     wait_for_vsync();
@@ -18,7 +25,7 @@ void draw_pixel(int x, int y, short int colour) {
     volatile short int *one_pixel_address;
 
     one_pixel_address = (volatile short int *)(pixel_buffer_start + (y << 10) + (x << 1));
-    *one_pixel_address = colour; //write the colour value to the pixel buffer
+    *one_pixel_address = colour; //write the colour to the pixel buffer
 }
 
 void clear_screen() {
@@ -30,14 +37,17 @@ void clear_screen() {
 }
 
 void wait_for_vsync() {
-    volatile int* pixel_ctrl_ptr = (int*)0xFF203020;
     register int status;
-    *pixel_ctrl_ptr = 1; //start synchronization
 
-    status = *(pixel_ctrl_ptr + 3); //read status register
-    while ((status & 0x01) != 0) { //polling loop for S bit to go to 0
+    *pixel_ctrl_ptr = 1; // start synchronization
+
+    status = *(pixel_ctrl_ptr + 3); // poll for status register
+    while ((status & 0x01) != 0) { // wait for S bit to clear
         status = *(pixel_ctrl_ptr + 3);
-    } //wait for status to be ready
+    }
+
+    // get new back buffer address
+    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
 }
 
 void draw_hline(int x, int y, int width, short int colour){
@@ -96,7 +106,7 @@ void draw_sprite_transparent(const short *sprite, int x, int y, short transparen
 
 void draw_char(int x, int y, char c, short int colour) {
     unsigned char character = (unsigned char)c;
-    if (character < 127) return; //out of bounds
+    if (character >= 128) return; //out of bounds
 
     const unsigned char *font_data = font8x8_basic[character];
 
