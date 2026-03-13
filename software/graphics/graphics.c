@@ -70,6 +70,30 @@ void draw_window(int x, int y, int w, int h, short int border_colour, short int 
     draw_rect_outline(x, y, w, h, border_colour);
 }
 
+// Draw a 16x16 tile; tile is a 16*16 array of colours (pre defined).
+void draw_tiles(const short *tile, int x, int y)
+{
+    for (int tile_y = 0; tile_y < TILE_SIZE; tile_y++) {
+        for (int tile_x = 0; tile_x < TILE_SIZE; tile_x++) {
+            draw_pixel(x + tile_x, y + tile_y, tile[tile_y * TILE_SIZE + tile_x]);
+        }
+    }
+}
+
+// Draw a 16x16 sprite with transparency; any pixel equal to 'transparent'
+// is skipped so the background shows through.
+void draw_sprite_transparent(const short *sprite, int x, int y, short transparent)
+{
+    for (int sprite_y = 0; sprite_y < TILE_SIZE; sprite_y++) {
+        for (int sprite_x = 0; sprite_x < TILE_SIZE; sprite_x++) {
+            short colour = sprite[sprite_y * TILE_SIZE + sprite_x];
+            if (colour != transparent) { //if the pixel is not transparent, draw it
+                draw_pixel(x + sprite_x, y + sprite_y, colour);
+            }
+        }
+    }
+}
+
 
 
 

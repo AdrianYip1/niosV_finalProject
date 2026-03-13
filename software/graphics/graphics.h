@@ -22,6 +22,10 @@ void draw_rect(int x, int y, int width, int height, short int colour);
 void draw_rect_outline(int x, int y, int width, int height, short int colour);
 void draw_window(int x, int y, int w, int h, short int border_colour, short int fill_colour);
 
+
+void draw_tiles(const short *tile, int x, int y);
+void draw_sprite_transparent(const short *sprite, int x, int y, short transparent);
+
 void draw_circle(int cx, int cy, int radius, short int colour);
 void draw_circle_filled(int cx, int cy, int radius, short int colour);
 void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
