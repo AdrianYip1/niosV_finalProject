@@ -3,7 +3,7 @@
 #include "graphics/predefined_colours.h"
 #include "graphics/sprites/playerSprite.h"
 #include "graphics/tiles.h"
-#include "graphics/titleScreen/titleScreenDraw.h"
+#include "graphics/map.h"
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
@@ -20,19 +20,17 @@ int main(void)
     // Init VGA and tiles
     init_graphics();
     init_predefined_graphics();
+    init_map();
     clear_screen();
 
-
-    
-    initTitleScreen();
     initCharizardBackSprite();
 
 
     while (1) {
-        wait_for_vsync();
-        drawTitleScreen();
-        drawSpriteAnimation();
+        draw_map();
+        drawSpriteAnimationWithMap();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
+        wait_for_vsync();
     }
 
     return 0;

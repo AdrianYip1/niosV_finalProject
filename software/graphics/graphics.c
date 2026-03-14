@@ -41,6 +41,7 @@ void clear_screen() {
 void wait_for_vsync() {
     register int status;
 
+
     *pixel_ctrl_ptr = 1; // start synchronization
 
     status = *(pixel_ctrl_ptr + 3); // poll for status register
