@@ -12,10 +12,6 @@ typedef enum {
 // 16x16 tiles 
 extern short tiles[TILE_COUNT][TILE_SIZE * TILE_SIZE];
 
-extern short player_sprite[TILE_SIZE * TILE_SIZE];
-
-extern short player_up_1_sprite[TILE_SIZE * TILE_SIZE];
-extern short player_up_2_sprite[TILE_SIZE * TILE_SIZE];
 
 void init_predefined_graphics(void);
 
