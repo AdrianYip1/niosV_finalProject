@@ -1,6 +1,6 @@
 #pragma once
-
-#define GLOBAL_ANIM_FRAME_DELAY 2
+x
+#define TITLE_ANIM_FRAME_DELAY 1   // faster title
 
 void initTitleScreen(void);
 void drawTitleScreen(void);

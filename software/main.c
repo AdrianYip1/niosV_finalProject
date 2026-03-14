@@ -28,8 +28,9 @@ int main(void)
 
     initTitleScreen();
     unsigned int titleFrames = 0;
-    while (titleFrames < 600) {
+    while (titleFrames < 300) {
         drawTitleScreen();
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
         wait_for_vsync();
         titleFrames++;
     }

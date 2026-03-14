@@ -4,7 +4,6 @@
 #include "../map.h"
 #include "../predefined_graphics.h"
 #include "../tiles.h"
-#include "../titleScreen/titleScreenDraw.h"  // for GLOBAL_ANIM_FRAME_DELAY
 
 Sprite playerSprite;
 
@@ -16,7 +15,7 @@ void initCharizardBackSprite(void) {
     playerSprite.y          = 120;
     playerSprite.frameIndex = 0;
     playerSprite.frameTimer = 0;
-    playerSprite.frameDelay = GLOBAL_ANIM_FRAME_DELAY;  // keep same FPS as title
+    playerSprite.frameDelay = 2; 
 }
 
 void drawSpriteAnimation(void) {

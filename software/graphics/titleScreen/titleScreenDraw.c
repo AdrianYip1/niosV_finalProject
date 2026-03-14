@@ -26,7 +26,7 @@ void initTitleScreen(void) {
 
 void drawTitleScreen(void) {
     frameTimer++;
-    if (frameTimer >= GLOBAL_ANIM_FRAME_DELAY) {
+    if (frameTimer >= TITLE_ANIM_FRAME_DELAY) {
         frameTimer = 0;
         frameIndex = (frameIndex + 1) % TITLE_SCREEN_FRAME_COUNT;
     }
