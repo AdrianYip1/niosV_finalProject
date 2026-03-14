@@ -30,10 +30,14 @@ int main(void)
         }
     }
 
+    
+    initTitleScreen();
     initCharizardBackSprite();
 
     while (1) {
+        drawTitleScreen();
         drawSpriteAnimation();
+        drawString(10, 10, "Text for testing 123", BLACK);
         wait_for_vsync();
     }
 
