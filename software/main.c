@@ -35,11 +35,20 @@ int main(void)
     initTitleScreen();
     initCharizardBackSprite();
 
+    // Track which animation frame is in each of the 2 double buffers (index 0 or 1)
+    int title_frame_in_buffer[2] = { -1, -1 };
+    int sprite_frame_in_buffer[2] = { -1, -1 };
+
     while (1) {
+        wait_for_vsync();
+        int back = get_back_buffer_index();
+
         drawTitleScreen();
         drawSpriteAnimation();
         draw_string(10, 10, "Text for testing 123", BLACK);
-        wait_for_vsync();
+
+        title_frame_in_buffer[back] = getTitleFrameIndex();
+        sprite_frame_in_buffer[back] = getSpriteFrameIndex();
     }
 
     return 0;

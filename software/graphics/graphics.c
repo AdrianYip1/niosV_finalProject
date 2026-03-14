@@ -9,7 +9,7 @@
 #define BACK_BUFFER 0x02000000
 
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
-static int pixel_buffer_start;   // address of current back buffer
+static unsigned int pixel_buffer_start;   // address of current back buffer
 
 void init_graphics() {
     pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
@@ -49,7 +49,19 @@ void wait_for_vsync() {
     }
 
     // get new back buffer address
-    pixel_buffer_start = *(pixel_ctrl_ptr + 1);
+    pixel_buffer_start = (unsigned int)(*(pixel_ctrl_ptr + 1));
+}
+
+void set_pixel_buffer(unsigned int addr) {
+    pixel_buffer_start = addr;
+}
+
+unsigned int get_other_buffer(void) {
+    return (pixel_buffer_start == BACK_BUFFER) ? (unsigned int)FPGA_PIXEL_BUF_BASE : BACK_BUFFER;
+}
+
+int get_back_buffer_index(void) {
+    return (pixel_buffer_start == BACK_BUFFER) ? 0 : 1;
 }
 
 void draw_hline(int x, int y, int width, short int colour){

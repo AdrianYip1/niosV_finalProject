@@ -21,19 +21,6 @@ void initCharizardBackSprite(void) {
 void drawSpriteAnimation(void) {
     Sprite* sprite = &playerSprite;
 
-    //get the tiles the sprite is in
-    int leftTile = sprite->x / TILE_SIZE;
-    int rightTile = (sprite->x + sprite->tileSize - 1) / TILE_SIZE;
-    int topTile = sprite->y / TILE_SIZE;
-    int bottomTile = (sprite->y + sprite->tileSize - 1) / TILE_SIZE;
-
-    for (int tile_y = topTile; tile_y <= bottomTile; tile_y++) {
-        for (int tile_x = leftTile; tile_x <= rightTile; tile_x++) {
-            drawTile(tile_x, tile_y, TILE_GRASS);
-        }
-    }
-    
-
     const unsigned short* frame = sprite->frames[sprite->frameIndex];
     for (int y = 0; y < sprite->tileSize; y++) {
         for (int x = 0; x < sprite->tileSize; x++) {
@@ -50,4 +37,22 @@ void drawSpriteAnimation(void) {
         sprite->frameTimer = 0;
         sprite->frameIndex = (sprite->frameIndex + 1) % sprite->frameCount; //ensure that you loop back to 1 at the end of array
     }
+}
+
+void drawSpriteCurrentFrameOnly(void) {
+    Sprite* sprite = &playerSprite;
+    const unsigned short* frame = sprite->frames[sprite->frameIndex];
+    for (int y = 0; y < sprite->tileSize; y++) {
+        for (int x = 0; x < sprite->tileSize; x++) {
+            unsigned short color = frame[y * sprite->tileSize + x];
+            if (color == 0xF81F) {
+                continue;
+            }
+            draw_pixel(sprite->x + x, sprite->y + y, color);
+        }
+    }
+}
+
+int getSpriteFrameIndex(void) {
+    return playerSprite.frameIndex;
 }

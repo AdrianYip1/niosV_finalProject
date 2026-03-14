@@ -22,9 +22,6 @@ static void drawTitleScreenFrame(int index) {
 void initTitleScreen(void) {
     frameIndex = 0;
     frameTimer = 0;
-
-    // Draw the first frame once up front so the background is ready
-    drawTitleScreenFrame(frameIndex);
 }
 
 void drawTitleScreen(void) {
@@ -32,6 +29,15 @@ void drawTitleScreen(void) {
     if (frameTimer >= GLOBAL_ANIM_FRAME_DELAY) {
         frameTimer = 0;
         frameIndex = (frameIndex + 1) % TITLE_SCREEN_FRAME_COUNT;
-        drawTitleScreenFrame(frameIndex);
     }
+
+    drawTitleScreenFrame(frameIndex);
+}
+
+void drawTitleScreenCurrentFrame(void) {
+    drawTitleScreenFrame(frameIndex);
+}
+
+int getTitleFrameIndex(void) {
+    return frameIndex;
 }

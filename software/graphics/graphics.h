@@ -14,6 +14,9 @@ void init_graphics();
 void draw_pixel(int x, int y, short int colour);
 void clear_screen(void);
 void wait_for_vsync(void);
+void set_pixel_buffer(unsigned int addr);
+unsigned int get_other_buffer(void);
+int get_back_buffer_index(void);
 
 void draw_hline(int x, int y, int width, short int colour);
 void draw_vline(int x, int y, int height, short int colour);
