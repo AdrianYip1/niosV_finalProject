@@ -1,5 +1,5 @@
 #pragma once
-x
+
 #define TITLE_ANIM_FRAME_DELAY 1   // faster title
 
 void initTitleScreen(void);
