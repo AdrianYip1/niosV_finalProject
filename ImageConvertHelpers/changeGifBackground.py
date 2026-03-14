@@ -2,7 +2,7 @@ from PIL import Image
 
 PINK = (255, 0, 255, 255)  # transparent colour (pink)
 
-im = Image.open("mcWalkingWest.gif")
+im = Image.open("titleScreen.gif")
 frames = []
 frame = 0
 
