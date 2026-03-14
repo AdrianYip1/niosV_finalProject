@@ -12,13 +12,15 @@ void initTitleScreen(void) {
 }
 
 static void drawTitleScreenFrame(int index) {
+    if (index < 0 || index >= TITLE_SCREEN_FRAME_COUNT) {
+        return;
+    }
+
     const unsigned short* frame = titleScreenFrames[index];
     for (int y = 0; y < TITLE_SCREEN_HEIGHT; y++) {
         for (int x = 0; x < TITLE_SCREEN_WIDTH; x++) {
             unsigned short colour = frame[y * TITLE_SCREEN_WIDTH + x];
-            if (colour != 0xF81F) {
-                draw_pixel(x, y, colour);
-            }
+            draw_pixel(x, y, colour);
         }
     }
 }
