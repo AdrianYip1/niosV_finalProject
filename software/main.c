@@ -29,18 +29,10 @@ int main(void)
 
 
     while (1) {
-        /* Draw full frame into current back buffer (advance animation) */
+        wait_for_vsync();
         drawTitleScreen();
         drawSpriteAnimation();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
-
-        /* Draw same frame into the other buffer so both have title+charizard+text */
-        set_pixel_buffer(get_other_buffer());
-        drawTitleScreenCurrentFrameOnly();
-        drawSpriteCurrentFrameOnly();
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
-
-        wait_for_vsync();
     }
 
     return 0;
