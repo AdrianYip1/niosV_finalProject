@@ -4,6 +4,7 @@
 #include "graphics/sprites/playerSprite.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
+#include "graphics/titleScreen/titleScreenDraw.h"
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
@@ -25,14 +26,23 @@ int main(void)
     init_predefined_graphics();
     clear_screen();
 
+    initTitleScreen();
+    unsigned int titleFrames = 0;
+    while (titleFrames < 600) {
+        drawTitleScreen();
+        wait_for_vsync();
+        titleFrames++;
+    }
+
+    
     init_map();                 // start on route preset
     initCharizardBackSprite();
 
-    draw_map();                 // draw route so we start with green background
+    load_map_preset(MAP_PRESET_ROUTE);
+    draw_map();                 // initial background
 
     while (1) {
-        // toggle between route and black
-        int phase = (frame_count / 300) & 1; //5 seconds
+        int phase = (frame_count / 300) & 1; // swap every 5 seconds
         if (phase != current_phase) {
             current_phase = phase;
             if (current_phase == 0) {
