@@ -17,7 +17,8 @@
 int main(void)
 {
     unsigned int frame_count = 0;
-    int current_phase = 0; // 0 = route, 1 = black
+    int current_phase = 0;      // 0 = route, 1 = black
+    short colour = BLACK;       // text colour: BLACK on route, WHITE on black
 
     // Init VGA and tiles
     init_graphics();
@@ -27,6 +28,8 @@ int main(void)
     init_map();                 // start on route preset
     initCharizardBackSprite();
 
+    draw_map();                 // draw route so we start with green background
+
     while (1) {
         // toggle between route and black
         int phase = (frame_count / 300) & 1; //5 seconds
@@ -34,15 +37,17 @@ int main(void)
             current_phase = phase;
             if (current_phase == 0) {
                 load_map_preset(MAP_PRESET_ROUTE);
+                colour = BLACK;
             } else {
                 load_map_preset(MAP_PRESET_BLACK);
+                colour = WHITE;
             }
             draw_map(); // redraw full map with new preset
         }
         frame_count++;
 
         drawSpriteAnimationWithMap();
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
         wait_for_vsync();
     }
 
