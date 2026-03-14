@@ -25,6 +25,8 @@ void drawSpriteAnimation(void) {
     int rightTile  = (sprite->x + sprite->tileSize - 1) / TILE_SIZE;
     int topTile    = sprite->y / TILE_SIZE;
     int bottomTile = (sprite->y + sprite->tileSize - 1) / TILE_SIZE;
+
+    
     for (int tile_y = topTile; tile_y <= bottomTile; tile_y++) {
         for (int tile_x = leftTile; tile_x <= rightTile; tile_x++) {
             drawTile(tile_x, tile_y, TILE_GRASS);

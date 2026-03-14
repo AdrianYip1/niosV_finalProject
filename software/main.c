@@ -18,18 +18,6 @@ int main(void)
     init_predefined_graphics();
     clear_screen();
 
-    // Draw grass into both frame buffers so there is no flicker
-    for (int tile_y = 0; tile_y < NUM_TILES_Y; tile_y++) {
-        for (int tile_x = 0; tile_x < NUM_TILES_X; tile_x++) {
-            drawTile(tile_x, tile_y, TILE_GRASS);
-        }
-    }
-    wait_for_vsync();
-    for (int tile_y = 0; tile_y < NUM_TILES_Y; tile_y++) {
-        for (int tile_x = 0; tile_x < NUM_TILES_X; tile_x++) {
-            drawTile(tile_x, tile_y, TILE_GRASS);
-        }
-    }
 
     
     initTitleScreen();
