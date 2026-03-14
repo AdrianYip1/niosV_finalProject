@@ -4,3 +4,4 @@
 
 void initTitleScreen(void);
 void drawTitleScreen(void);
+void drawTitleScreenCurrentFrameOnly(void);

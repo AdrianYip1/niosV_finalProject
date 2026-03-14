@@ -14,9 +14,8 @@ void init_graphics(void);
 void draw_pixel(int x, int y, short int colour);
 void clear_screen(void);
 void wait_for_vsync(void);
-unsigned int debug_get_pixel_buffer_start(void);
-void agent_log_state(const char *location, const char *message, const char *hypothesisId,
-                     int value1, int value2, unsigned int bufAddr);
+void set_pixel_buffer(unsigned int addr);
+unsigned int get_other_buffer(void);
 
 void draw_hline(int x, int y, int width, short int colour);
 void draw_vline(int x, int y, int height, short int colour);

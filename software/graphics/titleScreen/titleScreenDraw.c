@@ -33,3 +33,7 @@ void drawTitleScreen(void) {
 
     drawTitleScreenFrame(frameIndex);
 }
+
+void drawTitleScreenCurrentFrameOnly(void) {
+    drawTitleScreenFrame(frameIndex);
+}

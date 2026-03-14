@@ -52,6 +52,14 @@ void wait_for_vsync() {
     pixel_buffer_start = (unsigned int)(*(pixel_ctrl_ptr + 1));
 }
 
+void set_pixel_buffer(unsigned int addr) {
+    pixel_buffer_start = addr;
+}
+
+unsigned int get_other_buffer(void) {
+    return (pixel_buffer_start == BACK_BUFFER) ? (unsigned int)FPGA_PIXEL_BUF_BASE : BACK_BUFFER;
+}
+
 void draw_hline(int x, int y, int width, short int colour){
     for (int position = x; position < x + width; position++) {
         draw_pixel(position, y, colour); //draws horizontal line at y position

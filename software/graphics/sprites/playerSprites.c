@@ -40,6 +40,18 @@ void drawSpriteAnimation(void) {
     }
 }
 
+void drawSpriteCurrentFrameOnly(void) {
+    Sprite* sprite = &playerSprite;
+    const unsigned short* frame = sprite->frames[sprite->frameIndex];
+    for (int y = 0; y < sprite->tileSize; y++) {
+        for (int x = 0; x < sprite->tileSize; x++) {
+            unsigned short color = frame[y * sprite->tileSize + x];
+            if (color == 0xF81F) continue;
+            draw_pixel(sprite->x + x, sprite->y + y, color);
+        }
+    }
+}
+
 // restore map under
 void drawSpriteAnimationWithMap(void) {
     Sprite* sprite = &playerSprite;

@@ -7,6 +7,7 @@ SRCS := software/main.c \
         hardware/keyboard.c \
         hardware/mouse.c \
         software/graphics/graphics.c \
+        software/graphics/map.c \
         software/graphics/predefined_graphics.c \
         software/graphics/tiles.c \
         software/graphics/sprites/charizard_back_frames.c \

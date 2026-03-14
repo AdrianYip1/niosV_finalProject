@@ -5,6 +5,10 @@
 #include "graphics/tiles.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
 
+#define TITLE_TEXT_X 10
+#define TITLE_TEXT_Y 10
+#define TITLE_TEXT_STRING "Text for testing 123"
+
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 #define NUM_TILES_X (SCREEN_WIDTH / TILE_SIZE)
@@ -25,10 +29,18 @@ int main(void)
 
 
     while (1) {
-        drawTitleScreen();                               // full background
-        drawSpriteAnimation();                           // Charizard
-        draw_string(10, 10, "Text for testing 123", BLACK); // text
-        wait_for_vsync();                                // swap front/back
+        /* Draw full frame into current back buffer (advance animation) */
+        drawTitleScreen();
+        drawSpriteAnimation();
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
+
+        /* Draw same frame into the other buffer so both have title+charizard+text */
+        set_pixel_buffer(get_other_buffer());
+        drawTitleScreenCurrentFrameOnly();
+        drawSpriteCurrentFrameOnly();
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
+
+        wait_for_vsync();
     }
 
     return 0;
