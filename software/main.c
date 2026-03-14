@@ -20,14 +20,16 @@ int main(void)
     // Init VGA and tiles
     init_graphics();
     init_predefined_graphics();
-    init_map();
     clear_screen();
 
+    init_map();                 // load route preset into map[][]
     initCharizardBackSprite();
 
+    // Draw the full map once as background
+    draw_map();
+    wait_for_vsync();
 
     while (1) {
-        draw_map();
         drawSpriteAnimationWithMap();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
         wait_for_vsync();
