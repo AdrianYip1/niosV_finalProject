@@ -28,7 +28,7 @@ int main(void)
 
     initTitleScreen();
     unsigned int titleFrames = 0;
-    while (titleFrames < 300) {
+    while (titleFrames < 100) {
         clear_screen();   /* known back buffer state so title + text don't jitter */
         drawTitleScreen();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
