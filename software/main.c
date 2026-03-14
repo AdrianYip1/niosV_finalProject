@@ -3,6 +3,7 @@
 #include "graphics/predefined_colours.h"
 #include "graphics/sprites/playerSprite.h"
 #include "graphics/tiles.h"
+#include "graphics/titleScreen/titleScreenDraw.h"
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
@@ -37,7 +38,7 @@ int main(void)
     while (1) {
         drawTitleScreen();
         drawSpriteAnimation();
-        drawString(10, 10, "Text for testing 123", BLACK);
+        draw_string(10, 10, "Text for testing 123", BLACK);
         wait_for_vsync();
     }
 
