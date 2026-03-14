@@ -31,6 +31,13 @@ void drawTitleScreen(void) {
         frameIndex = (frameIndex + 1) % TITLE_SCREEN_FRAME_COUNT;
     }
 
+    agent_log_state("titleScreenDraw.c:drawTitleScreen",
+                    "drawing title frame",
+                    "H1-frame-indices",
+                    frameIndex,
+                    0,
+                    debug_get_pixel_buffer_start());
+
     drawTitleScreenFrame(frameIndex);
 }
 

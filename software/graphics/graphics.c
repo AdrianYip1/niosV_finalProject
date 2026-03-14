@@ -1,5 +1,6 @@
 #include "font8x8_basic.h"
 #include "../../address_map.h"
+#include <stdio.h>
 
 #define TILE_SIZE 16
 #define TRANSPARENT_COLOUR 0xF81F //anyy pink pixels will be transparent
@@ -10,6 +11,24 @@
 
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
 static unsigned int pixel_buffer_start;   // address of current back buffer
+
+// #region agent log
+void agent_log_state(const char *location, const char *message, const char *hypothesisId,
+                     int value1, int value2, unsigned int bufAddr) {
+    FILE *f = fopen("debug-0f9d91.log", "a");
+    if (!f) return;
+    fprintf(f,
+            "{\"sessionId\":\"0f9d91\",\"runId\":\"pre-fix-1\",\"hypothesisId\":\"%s\","
+            "\"location\":\"%s\",\"message\":\"%s\",\"data\":{\"value1\":%d,\"value2\":%d,"
+            "\"bufAddr\":%u},\"timestamp\":0}\n",
+            hypothesisId, location, message, value1, value2, bufAddr);
+    fclose(f);
+}
+
+unsigned int debug_get_pixel_buffer_start(void) {
+    return pixel_buffer_start;
+}
+// #endregion
 
 void init_graphics() {
     pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
@@ -50,6 +69,13 @@ void wait_for_vsync() {
 
     // get new back buffer address
     pixel_buffer_start = (unsigned int)(*(pixel_ctrl_ptr + 1));
+
+    agent_log_state("graphics.c:wait_for_vsync",
+                    "after vsync; updated pixel_buffer_start",
+                    "H2-buffer-address",
+                    0,
+                    0,
+                    pixel_buffer_start);
 }
 
 void set_pixel_buffer(unsigned int addr) {

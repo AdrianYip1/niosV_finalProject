@@ -21,6 +21,13 @@ void initCharizardBackSprite(void) {
 void drawSpriteAnimation(void) {
     Sprite* sprite = &playerSprite;
 
+    agent_log_state("playerSprites.c:drawSpriteAnimation",
+                    "drawing sprite frame",
+                    "H1-frame-indices",
+                    sprite->frameIndex,
+                    0,
+                    debug_get_pixel_buffer_start());
+
     const unsigned short* frame = sprite->frames[sprite->frameIndex];
     for (int y = 0; y < sprite->tileSize; y++) {
         for (int x = 0; x < sprite->tileSize; x++) {
