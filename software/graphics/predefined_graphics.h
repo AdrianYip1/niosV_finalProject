@@ -6,6 +6,7 @@
 // Tile IDs for map
 typedef enum {
     TILE_GRASS = 0,
+    TILE_BLACK,
     TILE_COUNT
 } TileId;
 

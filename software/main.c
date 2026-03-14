@@ -14,22 +14,33 @@
 #define NUM_TILES_X (SCREEN_WIDTH / TILE_SIZE)
 #define NUM_TILES_Y (SCREEN_HEIGHT / TILE_SIZE)
 
-
 int main(void)
 {
+    unsigned int frame_count = 0;
+    int current_phase = 0; // 0 = route, 1 = black
+
     // Init VGA and tiles
     init_graphics();
     init_predefined_graphics();
     clear_screen();
 
-    init_map();                 // load route preset into map[][]
+    init_map();                 // start on route preset
     initCharizardBackSprite();
 
-    // Draw the full map once as background
-    draw_map();
-    wait_for_vsync();
-
     while (1) {
+        // toggle between route and black
+        int phase = (frame_count / 300) & 1; //5 seconds
+        if (phase != current_phase) {
+            current_phase = phase;
+            if (current_phase == 0) {
+                load_map_preset(MAP_PRESET_ROUTE);
+            } else {
+                load_map_preset(MAP_PRESET_BLACK);
+            }
+            draw_map(); // redraw full map with new preset
+        }
+        frame_count++;
+
         drawSpriteAnimationWithMap();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
         wait_for_vsync();

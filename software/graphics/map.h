@@ -10,10 +10,11 @@
 extern TileId map[MAP_HEIGHT][MAP_WIDTH];
 
 // active map preset is active. Change with load_map_preset()
-#define MAP_PRESET_COUNT 2
+#define MAP_PRESET_COUNT 3
 typedef enum {
     MAP_PRESET_ROUTE,
     MAP_PRESET_BOSS,
+    MAP_PRESET_BLACK,
     MAP_PRESET_BATTLE
 } MapPresetId;
 
