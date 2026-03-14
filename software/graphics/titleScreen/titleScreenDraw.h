@@ -4,5 +4,3 @@
 
 void initTitleScreen(void);
 void drawTitleScreen(void);
-void drawTitleScreenCurrentFrame(void);
-int getTitleFrameIndex(void);

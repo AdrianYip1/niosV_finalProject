@@ -9,14 +9,11 @@
 // Base address for the pixel buffer
 #define PIXEL_BASE 0xFF203020
 
-void init_graphics();
+void init_graphics(void);
 
 void draw_pixel(int x, int y, short int colour);
 void clear_screen(void);
 void wait_for_vsync(void);
-void set_pixel_buffer(unsigned int addr);
-unsigned int get_other_buffer(void);
-int get_back_buffer_index(void);
 unsigned int debug_get_pixel_buffer_start(void);
 void agent_log_state(const char *location, const char *message, const char *hypothesisId,
                      int value1, int value2, unsigned int bufAddr);
@@ -38,6 +35,4 @@ void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
 
 void draw_char(int x, int y, char c, short int colour);
 void draw_string(int x, int y, const char *string, short colour);
-
-
 #endif
