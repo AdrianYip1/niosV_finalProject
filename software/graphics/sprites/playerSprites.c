@@ -3,6 +3,7 @@
 #include "../graphics.h"
 #include "../predefined_graphics.h"
 #include "../tiles.h"
+#include "../titleScreen/titleScreenDraw.h"  // for GLOBAL_ANIM_FRAME_DELAY
 
 Sprite playerSprite;
 
@@ -14,13 +15,13 @@ void initCharizardBackSprite(void) {
     playerSprite.y          = 120;
     playerSprite.frameIndex = 0;
     playerSprite.frameTimer = 0;
-    playerSprite.frameDelay = 5;
+    playerSprite.frameDelay = GLOBAL_ANIM_FRAME_DELAY;  // keep same FPS as title
 }
 
 void drawSpriteAnimation(void) {
     Sprite* sprite = &playerSprite;
 
-    /*get the tiles the sprite is in
+    //get the tiles the sprite is in
     int leftTile = sprite->x / TILE_SIZE;
     int rightTile = (sprite->x + sprite->tileSize - 1) / TILE_SIZE;
     int topTile = sprite->y / TILE_SIZE;
@@ -31,7 +32,7 @@ void drawSpriteAnimation(void) {
             drawTile(tile_x, tile_y, TILE_GRASS);
         }
     }
-    */
+    
 
     const unsigned short* frame = sprite->frames[sprite->frameIndex];
     for (int y = 0; y < sprite->tileSize; y++) {

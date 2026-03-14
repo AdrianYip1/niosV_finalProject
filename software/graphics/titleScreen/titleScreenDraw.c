@@ -1,15 +1,9 @@
 #include "../graphics.h"
 #include "titleScreen_frames.h"
-
-#define TITLE_SCREEN_FRAME_DELAY 2  // waits 2 vsyncs before going to the next frame
+#include "titleScreenDraw.h"
 
 static int frameIndex;
 static int frameTimer;
-
-void initTitleScreen(void) {
-    frameIndex = 0;
-    frameTimer = 0;
-}
 
 static void drawTitleScreenFrame(int index) {
     if (index < 0 || index >= TITLE_SCREEN_FRAME_COUNT) {
@@ -25,12 +19,19 @@ static void drawTitleScreenFrame(int index) {
     }
 }
 
-void drawTitleScreen(void) {
-    drawTitleScreenFrame(frameIndex);
+void initTitleScreen(void) {
+    frameIndex = 0;
+    frameTimer = 0;
 
+    // Draw the first frame once up front so the background is ready
+    drawTitleScreenFrame(frameIndex);
+}
+
+void drawTitleScreen(void) {
     frameTimer++;
-    if (frameTimer >= TITLE_SCREEN_FRAME_DELAY) {
+    if (frameTimer >= GLOBAL_ANIM_FRAME_DELAY) {
         frameTimer = 0;
-        frameIndex = (frameIndex + 1) % TITLE_SCREEN_FRAME_COUNT; //makes sure it loops back to 0 at the end of the array
+        frameIndex = (frameIndex + 1) % TITLE_SCREEN_FRAME_COUNT;
+        drawTitleScreenFrame(frameIndex);
     }
 }
