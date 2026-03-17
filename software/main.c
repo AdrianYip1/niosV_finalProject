@@ -2,7 +2,7 @@
 #include "graphics/predefined_graphics.h"
 #include "graphics/predefined_colours.h"
 #include "graphics/sprites/playerSprite.h"
-#include "gameplayLogic/map & movement/mcMoving.h"
+#include "gameplayLogic/map_movement/mcMoving.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
 #include "graphics/titleScreen/titleScreenDraw.h"

@@ -7,13 +7,16 @@ SRCS := software/main.c \
         hardware/keyboard.c \
         hardware/mouse.c \
         software/graphics/graphics.c \
+        software/graphics/mcWalkingDraw.c \
         software/graphics/map.c \
         software/graphics/predefined_graphics.c \
         software/graphics/tiles.c \
         software/graphics/sprites/charizard_back_frames.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/titleScreen/titleScreen_frames.c \
-        software/graphics/titleScreen/titleScreenDraw.c
+        software/graphics/titleScreen/titleScreenDraw.c \
+        software/gameplayLogic/map_movement/mcDirectionChecker.c \
+        software/gameplayLogic/map_movement/mcMoving.c
 
 SHELL	:= cmd.exe
 
