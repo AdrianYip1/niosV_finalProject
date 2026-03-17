@@ -3,7 +3,7 @@
 #include "mcDirectionChecker.h"
 #include "mcMoving.h"
 #include "../../../hardware/keyboard.h"
-#include "../../../graphics/mcWalkingDraw.h"
+#include "../../graphics/mcWalkingDraw.h"
 
 
 void mcMovingInit(int startX, int startY, McFacing facing) {
@@ -27,7 +27,7 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
             case MC_DIR_NW: initMCWalkingNorthWest(); break;
             case MC_DIR_SE: initMCWalkingSouthEast(); break;
             case MC_DIR_SW: initMCWalkingSouthWest(); break;
-            default: break; 
+            default: break;
         }
     }
 
@@ -40,10 +40,13 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
         case MC_DIR_NW: goUp(); goLeft(); break;
         case MC_DIR_SE: goDown(); goRight(); break;
         case MC_DIR_SW: goDown(); goLeft(); break;
-        default: break; 
+        default: break;
     }
 
-    if (dir != MC_DIR_NONE && dir != MC_DIR_INVALID) {
+    if (dir == MC_DIR_NONE) {
+        initMCIdle();
+        drawMCIdleAnimation();
+    } else if (dir != MC_DIR_INVALID) {
         drawMCWalkingAnimation();
     }
 }

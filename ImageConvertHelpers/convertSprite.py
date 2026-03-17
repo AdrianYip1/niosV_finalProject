@@ -1,9 +1,9 @@
 from PIL import Image
 
-TILE_SIZE = 64
+TILE_SIZE = 36
 TRANSPARENT_KEY = (255, 0, 255)  # FF00FF pink
-OUTPUT_C_FILE = "sprite.c"
-VAR_NAME = "charizardTalk"
+OUTPUT_C_FILE = "mcIdle_frames.c"
+VAR_NAME = "mcIdle"
 
 def rgb_to_565(r, g, b):
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)

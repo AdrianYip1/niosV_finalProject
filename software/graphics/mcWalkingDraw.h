@@ -12,12 +12,24 @@ typedef enum McFacing {
     MC_FACING_SW,
 } McFacing;
 
+typedef struct McBounds {
+    int x0;
+    int y0;
+    int x1;
+    int y1;
+    int valid;
+} McBounds;
+
 void drawMCWalkingAnimation(void);
+void drawMCIdleAnimation(void);
+void initMCIdle(void);
+McBounds getMCBounds(void);
 void goUp(void);
 void goDown(void);
 void goLeft(void);
 void goRight(void);
 void initMCWalkingSprite(int startX, int startY, McFacing facing);
+void initMCIdle(void);
 void initMCWalkingEast(void);
 void initMCWalkingNorth(void);
 void initMCWalkingNorthEast(void);
