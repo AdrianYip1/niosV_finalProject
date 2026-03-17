@@ -11,6 +11,15 @@ SRCS := software/main.c \
         software/graphics/map.c \
         software/graphics/predefined_graphics.c \
         software/graphics/tiles.c \
+        software/graphics/sprites/mainCharacter/idle/mcIdle_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingEast_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingNorth_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingNorthEast_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingNorthWest_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingSouth_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingSouthEast_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingSouthWest_frames.c \
+        software/graphics/sprites/mainCharacter/walking/mcWalkingWest_frames.c \
         software/graphics/sprites/charizard_back_frames.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/titleScreen/titleScreen_frames.c \
