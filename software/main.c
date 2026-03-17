@@ -95,11 +95,11 @@ int main(void)
                 load_map_preset(MAP_PRESET_BLACK);
                 colour = WHITE;
             }
-            draw_map(); // redraw full map with new preset
         }
         frame_count++;
 
-        redraw_tiles_under_mcbounds(getMCBounds());
+
+        draw_map();
 
         drawSpriteAnimationWithMap();
 
@@ -130,7 +130,12 @@ int main(void)
         mcMovingTick(up, down, left, right);
 
 
-        // Draw textbox over everything else
+        draw_rect(TEXTBOX_X,
+                  TEXTBOX_Y,
+                  TEXT_BOX_WIDTH,
+                  TEXT_BOX_HEIGHT,
+                  WHITE);
+
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
                         TEXT_BOX_HEIGHT,
