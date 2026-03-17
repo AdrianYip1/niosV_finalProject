@@ -92,7 +92,6 @@ int main(void)
 
     initCharizardBackSprite();
 
-
     mcMovingInit(80, 112, MC_FACING_S);
 
     wait_for_vsync();      
