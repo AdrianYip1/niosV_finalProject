@@ -68,6 +68,8 @@ int main(void)
         titleFrames++;
     }
 
+    wait_for_vsync();
+
     
     init_map();                 // start on route preset
 
@@ -129,13 +131,6 @@ int main(void)
 
         mcMovingTick(up, down, left, right);
 
-
-        draw_rect(TEXTBOX_X,
-                  TEXTBOX_Y,
-                  TEXT_BOX_WIDTH,
-                  TEXT_BOX_HEIGHT,
-                  WHITE);
-
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
                         TEXT_BOX_HEIGHT,
@@ -144,7 +139,7 @@ int main(void)
                         TRANSPARENT_COLOUR);
 
         // Draw text on top of the textbox
-        draw_string(TEXTBOX_X + 8, TEXTBOX_Y + 8, TITLE_TEXT_STRING, colour);
+        draw_string(TEXTBOX_X + 8, TEXTBOX_Y + 8, TITLE_TEXT_STRING, BLACK);
         wait_for_vsync();
     }
 
