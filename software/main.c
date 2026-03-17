@@ -6,6 +6,7 @@
 #include "graphics/tiles.h"
 #include "graphics/map.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
+#include <stdbool.h>
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
@@ -15,6 +16,28 @@
 #define SCREEN_HEIGHT 240
 #define NUM_TILES_X (SCREEN_WIDTH / TILE_SIZE)
 #define NUM_TILES_Y (SCREEN_HEIGHT / TILE_SIZE)
+
+// Redraw only the map tiles under the MC's previous bounding box.
+static void redraw_tiles_under_mcbounds(McBounds b)
+{
+    if (!b.valid) return;
+
+    int leftTile   = b.x0 / TILE_SIZE;
+    int rightTile  = b.x1 / TILE_SIZE;
+    int topTile    = b.y0 / TILE_SIZE;
+    int bottomTile = b.y1 / TILE_SIZE;
+
+    if (leftTile < 0) leftTile = 0;
+    if (topTile < 0) topTile = 0;
+    if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
+    if (bottomTile >= MAP_HEIGHT) bottomTile = MAP_HEIGHT - 1;
+
+    for (int ty = topTile; ty <= bottomTile; ty++) {
+        for (int tx = leftTile; tx <= rightTile; tx++) {
+            drawTile(tx, ty, map[ty][tx]);
+        }
+    }
+}
 
 int main(void)
 {
@@ -39,10 +62,11 @@ int main(void)
 
     
     init_map();                 // start on route preset
-    initCharizardBackSprite();
 
     load_map_preset(MAP_PRESET_ROUTE);
     draw_map();                 // initial background
+
+    initCharizardBackSprite();
 
 
     mcMovingInit(80, 112, MC_FACING_S);
@@ -62,7 +86,21 @@ int main(void)
         }
         frame_count++;
 
+        redraw_tiles_under_mcbounds(getMCBounds());
+
         drawSpriteAnimationWithMap();
+
+        
+        bool up = false, down = false, left = false, right = false;
+        int t = (int)(frame_count % 240);
+        int movePhase = t / 60;
+        if (movePhase == 0) right = true;
+        else if (movePhase == 1) down = true;
+        else if (movePhase == 2) left = true;
+        else up = true;
+
+        mcMovingTick(up, down, left, right);
+
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
         wait_for_vsync();
     }
