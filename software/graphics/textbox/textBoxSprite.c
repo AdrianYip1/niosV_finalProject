@@ -1,4 +1,4 @@
-// Auto-generated from text_banner_320x80_pink.png
+
 #include "textBoxSprite.h"
 
 const unsigned short textBoxSprite[TEXT_BOX_WIDTH * TEXT_BOX_HEIGHT] = {
