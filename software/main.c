@@ -80,6 +80,8 @@ int main(void)
     while (titleFrames < 100) {
         drawTitleScreen(); // full-screen title frame
 
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y,
+                    TITLE_TEXT_STRING, WHITE);
         wait_for_vsync();
         titleFrames++;
     }
@@ -107,10 +109,11 @@ int main(void)
                 load_map_preset(MAP_PRESET_BLACK);
                 colour = WHITE;
             }
+            draw_map(); // redraw full map on preset switch
         }
         frame_count++;
 
-        draw_map();
+        redraw_tiles_under_mcbounds(getMCBounds());
         drawSpriteAnimationWithMap();
 
         bool up = false, down = false, left = false, right = false;
@@ -137,6 +140,9 @@ int main(void)
         }
 
         mcMovingTick(up, down, left, right);
+
+
+        redraw_tiles_under_textbox();
 
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
