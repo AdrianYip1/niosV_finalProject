@@ -101,12 +101,19 @@ int main(void)
 
         
         bool up = false, down = false, left = false, right = false;
-        int t = (int)(frame_count % 240);
+        int t = (int)(frame_count % 300);   // 5 phases of 60 frames
         int movePhase = t / 60;
-        if (movePhase == 0) right = true;
-        else if (movePhase == 1) down = true;
-        else if (movePhase == 2) left = true;
-        else up = true;
+        if (movePhase == 0) {
+            right = true;                   // walk right
+        } else if (movePhase == 1) {
+            down = true;                    // walk down
+        } else if (movePhase == 2) {
+            left = true;                    // walk left
+        } else if (movePhase == 3) {
+            up = true;                      // walk up
+        } else {
+            //idle
+        }
 
         mcMovingTick(up, down, left, right);
 
