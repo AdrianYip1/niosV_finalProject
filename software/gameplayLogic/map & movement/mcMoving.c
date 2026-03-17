@@ -11,6 +11,7 @@ void mcMovingInit(int startX, int startY, McFacing facing) {
     drawMCWalkingAnimation(); // show MC on frame 0
 }
 
+//connect to keyyboard polling
 void mcMovingTick(bool up, bool down, bool left, bool right) {
     static McDirection lastDir = MC_DIR_NONE;
 
