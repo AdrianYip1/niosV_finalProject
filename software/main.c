@@ -43,6 +43,27 @@ static void redraw_tiles_under_mcbounds(McBounds b)
     }
 }
 
+// draws only the map tiles covered by the textbox region.
+
+static void redraw_tiles_under_textbox(void)
+{
+    int leftTile = 0;
+    int rightTile = (SCREEN_WIDTH - 1) / TILE_SIZE;
+
+    int topTile = TEXTBOX_Y / TILE_SIZE;
+    int bottomTile = (TEXTBOX_Y + TEXT_BOX_HEIGHT - 1) / TILE_SIZE;
+
+    // Clamp to map bounds just in case.
+    if (topTile < 0) topTile = 0;
+    if (bottomTile >= MAP_HEIGHT) bottomTile = MAP_HEIGHT - 1;
+
+    for (int ty = topTile; ty <= bottomTile; ty++) {
+        for (int tx = leftTile; tx <= rightTile; tx++) {
+            drawTile(tx, ty, map[ty][tx]);
+        }
+    }
+}
+
 int main(void)
 {
     unsigned int frame_count = 0;
@@ -87,15 +108,15 @@ int main(void)
                 load_map_preset(MAP_PRESET_BLACK);
                 colour = WHITE;
             }
+            draw_map(); // full redraw when preset changes
         }
         frame_count++;
 
-
-        draw_map();
-
+        
+        redraw_tiles_under_textbox();
+        redraw_tiles_under_mcbounds(getMCBounds());
         drawSpriteAnimationWithMap();
 
-        
         bool up = false, down = false, left = false, right = false;
         int t = (int)(frame_count % 540);   // 9 phases of 60 frames
         int movePhase = t / 60;
@@ -129,7 +150,7 @@ int main(void)
                         TRANSPARENT_COLOUR);
 
         // Draw text on top of the textbox
-        draw_string(TEXTBOX_X + 8, TEXTBOX_Y + 8, TITLE_TEXT_STRING, BLACK);
+        draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
         wait_for_vsync();
     }
 
