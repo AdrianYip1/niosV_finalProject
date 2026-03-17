@@ -64,12 +64,17 @@ int main(void)
     init_map();                 // start on route preset
 
     load_map_preset(MAP_PRESET_ROUTE);
-    draw_map();                 // initial background
+    draw_map();                 // initial background (back buffer)
 
     initCharizardBackSprite();
 
 
     mcMovingInit(80, 112, MC_FACING_S);
+
+    wait_for_vsync();           // swap: start drawing into the other buffer
+    draw_map();
+    drawSpriteAnimationWithMap();
+    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
 
     while (1) {
         int phase = (frame_count / 300) & 1; // swap every 5 seconds
