@@ -7,7 +7,6 @@
 #define SCREEN_HEIGHT 240
 
 #define BACK_BUFFER 0x02000000
-#define OTHER_BUFFER (BACK_BUFFER + (SCREEN_HEIGHT << 10)
 
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
 static unsigned int pixel_buffer_start;   // address of current back buffer
@@ -50,8 +49,8 @@ void wait_for_vsync() {
         status = *(pixel_ctrl_ptr + 3);
     }
 
-    pixel_buffer_start = (pixel_buffer_start == BACK_BUFFER) ? OTHER_BUFFER : BACK_BUFFER;
-    *(pixel_ctrl_ptr + 1) = pixel_buffer_start;
+    // get new back buffer address 
+    pixel_buffer_start = (unsigned int)(*(pixel_ctrl_ptr + 1));
 }
 
 
