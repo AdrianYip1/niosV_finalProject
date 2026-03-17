@@ -112,13 +112,22 @@ int main(void)
         } else if (movePhase == 3) {
             up = true;                      // N
         } else if (movePhase == 4) {
-            up = true; right = true;        // NE
+            // Diagonals move at half speed: only move on even frames.
+            if ((frame_count & 1u) == 0u) {
+                up = true; right = true;    // NE
+            }
         } else if (movePhase == 5) {
-            up = true; left = true;         // NW
+            if ((frame_count & 1u) == 0u) {
+                up = true; left = true;     // NW
+            }
         } else if (movePhase == 6) {
-            down = true; right = true;      // SE
+            if ((frame_count & 1u) == 0u) {
+                down = true; right = true;  // SE
+            }
         } else if (movePhase == 7) {
-            down = true; left = true;       // SW
+            if ((frame_count & 1u) == 0u) {
+                down = true; left = true;   // SW
+            }
         } else {
             // movePhase == 8 -> idle (all false)
         }
