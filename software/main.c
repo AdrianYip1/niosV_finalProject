@@ -2,6 +2,7 @@
 #include "graphics/predefined_graphics.h"
 #include "graphics/predefined_colours.h"
 #include "graphics/sprites/playerSprite.h"
+#include "gameplayLogic/map & movement/mcMoving.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
@@ -42,6 +43,9 @@ int main(void)
 
     load_map_preset(MAP_PRESET_ROUTE);
     draw_map();                 // initial background
+
+
+    mcMovingInit(80, 112, MC_FACING_S);
 
     while (1) {
         int phase = (frame_count / 300) & 1; // swap every 5 seconds
