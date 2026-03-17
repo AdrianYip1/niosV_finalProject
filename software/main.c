@@ -43,27 +43,6 @@ static void redraw_tiles_under_mcbounds(McBounds b)
     }
 }
 
-// draws only the map tiles covered by the textbox region.
-
-static void redraw_tiles_under_textbox(void)
-{
-    int leftTile = 0;
-    int rightTile = (SCREEN_WIDTH - 1) / TILE_SIZE;
-
-    int topTile = TEXTBOX_Y / TILE_SIZE;
-    int bottomTile = (TEXTBOX_Y + TEXT_BOX_HEIGHT - 1) / TILE_SIZE;
-
-    // Clamp to map bounds just in case.
-    if (topTile < 0) topTile = 0;
-    if (bottomTile >= MAP_HEIGHT) bottomTile = MAP_HEIGHT - 1;
-
-    for (int ty = topTile; ty <= bottomTile; ty++) {
-        for (int tx = leftTile; tx <= rightTile; tx++) {
-            drawTile(tx, ty, map[ty][tx]);
-        }
-    }
-}
-
 int main(void)
 {
     unsigned int frame_count = 0;
@@ -150,8 +129,6 @@ int main(void)
         }
 
         mcMovingTick(up, down, left, right);
-
-        redraw_tiles_under_textbox();
 
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
