@@ -11,6 +11,43 @@ void mcMovingInit(int startX, int startY, McFacing facing) {
     drawMCWalkingAnimation(); // show MC on frame 0
 }
 
+static void moveDiagonal(McDirection dir, unsigned int stepCounter) {
+    const bool even = ((stepCounter & 1u) == 0u);
+
+    switch (dir) {
+        case MC_DIR_NE:
+            if (even) {
+                goRight();
+            } else {
+                goUp();
+            }
+            break;
+        case MC_DIR_NW:
+            if (even) {
+                goLeft();
+            } else {
+                goUp();
+            }
+            break;
+        case MC_DIR_SE:
+            if (even) {
+                goRight();
+            } else {
+                goDown();
+            }
+            break;
+        case MC_DIR_SW:
+            if (even) {
+                goLeft();
+            } else {
+                goDown();
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 //connect to keyboard polling
 void mcMovingTick(bool up, bool down, bool left, bool right) {
     static McDirection lastDir = MC_DIR_NONE;
@@ -50,33 +87,10 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
             goRight();
             break;
         case MC_DIR_NE:
-            // diagonals: move 1 unit per tick by alternating axes
-            if ((stepCounter & 1u) == 0u) {
-                goRight();
-            } else {
-                goUp();
-            }
-            break;
         case MC_DIR_NW:
-            if ((stepCounter & 1u) == 0u) {
-                goLeft();
-            } else {
-                goUp();
-            }
-            break;
         case MC_DIR_SE:
-            if ((stepCounter & 1u) == 0u) {
-                goRight();
-            } else {
-                goDown();
-            }
-            break;
         case MC_DIR_SW:
-            if ((stepCounter & 1u) == 0u) {
-                goLeft();
-            } else {
-                goDown();
-            }
+            moveDiagonal(dir, stepCounter);
             break;
         default:
             break;
