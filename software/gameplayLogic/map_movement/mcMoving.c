@@ -11,9 +11,10 @@ void mcMovingInit(int startX, int startY, McFacing facing) {
     drawMCWalkingAnimation(); // show MC on frame 0
 }
 
-//connect to keyyboard polling
+//connect to keyboard polling
 void mcMovingTick(bool up, bool down, bool left, bool right) {
     static McDirection lastDir = MC_DIR_NONE;
+    static unsigned int stepCounter = 0;
 
     const McDirection dir = mcPickDirection(up, down, left, right);
 
@@ -33,16 +34,52 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
         }
     }
 
+    stepCounter++;
+
     switch (dir) {
-        case MC_DIR_N:  goUp(); break;
-        case MC_DIR_S:  goDown(); break;
-        case MC_DIR_W:  goLeft(); break;
-        case MC_DIR_E:  goRight(); break;
-        case MC_DIR_NE: goUp(); goRight(); break;
-        case MC_DIR_NW: goUp(); goLeft(); break;
-        case MC_DIR_SE: goDown(); goRight(); break;
-        case MC_DIR_SW: goDown(); goLeft(); break;
-        default: break;
+        case MC_DIR_N:
+            goUp();
+            break;
+        case MC_DIR_S:
+            goDown();
+            break;
+        case MC_DIR_W:
+            goLeft();
+            break;
+        case MC_DIR_E:
+            goRight();
+            break;
+        case MC_DIR_NE:
+            // diagonals: move 1 unit per tick by alternating axes
+            if ((stepCounter & 1u) == 0u) {
+                goRight();
+            } else {
+                goUp();
+            }
+            break;
+        case MC_DIR_NW:
+            if ((stepCounter & 1u) == 0u) {
+                goLeft();
+            } else {
+                goUp();
+            }
+            break;
+        case MC_DIR_SE:
+            if ((stepCounter & 1u) == 0u) {
+                goRight();
+            } else {
+                goDown();
+            }
+            break;
+        case MC_DIR_SW:
+            if ((stepCounter & 1u) == 0u) {
+                goLeft();
+            } else {
+                goDown();
+            }
+            break;
+        default:
+            break;
     }
 
     if (dir == MC_DIR_NONE) {
