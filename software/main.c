@@ -118,11 +118,10 @@ int main(void)
                 colour = WHITE;
             }
             draw_map(); // redraw full map on preset switch
+
+            draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
         }
         frame_count++;
-
-
-        redraw_tiles_under_textbox();
 
         redraw_tiles_under_mcbounds(getMCBounds());
         drawSpriteAnimationWithMap();
@@ -151,6 +150,8 @@ int main(void)
         }
 
         mcMovingTick(up, down, left, right);
+
+        redraw_tiles_under_textbox();
 
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
