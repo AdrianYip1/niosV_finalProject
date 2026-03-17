@@ -55,8 +55,12 @@ int main(void)
     while (titleFrames < 100) {
         drawTitleScreen();                          // full-screen title frame
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y,    
-                    TITLE_TEXT_STRING, WHITE);  
+                    TITLE_TEXT_STRING, WHITE);      // draw on current back buffer
         wait_for_vsync();
+ 
+        drawTitleScreen();                          // redraw frame on new back buffer
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y,
+                    TITLE_TEXT_STRING, WHITE);
         titleFrames++;
     }
 
