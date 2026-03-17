@@ -23,6 +23,7 @@ typedef struct McBounds {
 void drawMCWalkingAnimation(void);
 void drawMCIdleAnimation(void);
 void initMCIdle(void);
+void drawMCAnimation(void);
 McBounds getMCBounds(void);
 void goUp(void);
 void goDown(void);

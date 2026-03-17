@@ -78,7 +78,7 @@ void initMCWalkingSprite(int startX, int startY, McFacing facing) {
         case MC_FACING_NW: initMCWalkingNorthWest(); break;
         case MC_FACING_SE: initMCWalkingSouthEast(); break;
         case MC_FACING_SW: initMCWalkingSouthWest(); break;
-        default: initMCWalkingSouth(); break;
+        default: initMCWalkingNorth(); break;
     }
 }
 
@@ -96,10 +96,9 @@ void initMCIdle(void) {
     mcWalkingSprite.frameDelay = 6; 
 }
 
-void drawMCIdleAnimation(void) {
+void drawMCAnimation(void) {
     Sprite* MCsprite = &mcWalkingSprite;
     const unsigned short* frame = MCsprite->frames[MCsprite->frameIndex];
-
     for (int y = 0; y < MCsprite->tileSize; y++) {
         for (int x = 0; x < MCsprite->tileSize; x++) {
             unsigned short color = frame[y * MCsprite->tileSize + x];
@@ -119,28 +118,8 @@ void drawMCIdleAnimation(void) {
     }
 }
 
-void drawMCWalkingAnimation(void) {
-    Sprite* MCsprite = &mcWalkingSprite;
-
-    const unsigned short* frame = MCsprite->frames[MCsprite->frameIndex];
-    for (int y = 0; y < MCsprite->tileSize; y++) {
-        for (int x = 0; x < MCsprite->tileSize; x++) {
-            unsigned short color = frame[y * MCsprite->tileSize + x];
-            if (color == TRANSPARENT_COLOUR) {
-                continue; // transparent
-            }
-            draw_pixel(MCsprite->x + x, MCsprite->y + y, color);
-        }
-    }
-
-    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, MCsprite->x, MCsprite->y);
-
-    MCsprite->frameTimer++;
-    if (MCsprite->frameTimer >= MCsprite->frameDelay) {
-        MCsprite->frameTimer = 0;
-        MCsprite->frameIndex = (MCsprite->frameIndex + 1) % MCsprite->frameCount; //ensure that you loop back to 1 at the end of array
-    }
-}
+void drawMCIdleAnimation(void) { drawMCAnimation(); }
+void drawMCWalkingAnimation(void) { drawMCAnimation(); }
 
 McBounds getMCBounds(void) {
     return g_mcBounds;
