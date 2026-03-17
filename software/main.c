@@ -108,13 +108,10 @@ int main(void)
                 load_map_preset(MAP_PRESET_BLACK);
                 colour = WHITE;
             }
-            draw_map(); // full redraw when preset changes
         }
         frame_count++;
 
-        
-        redraw_tiles_under_textbox();
-        redraw_tiles_under_mcbounds(getMCBounds());
+        draw_map();
         drawSpriteAnimationWithMap();
 
         bool up = false, down = false, left = false, right = false;
