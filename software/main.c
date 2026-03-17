@@ -57,18 +57,11 @@ int main(void)
     initTitleScreen();
     unsigned int titleFrames = 0;
     while (titleFrames < 100) {
-        drawTitleScreen();                          // full-screen title frame
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y,    
-                    TITLE_TEXT_STRING, WHITE);      // draw on current back buffer
+        drawTitleScreen(); // full-screen title frame
+
         wait_for_vsync();
- 
-        drawTitleScreen();                          // redraw frame on new back buffer
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y,
-                    TITLE_TEXT_STRING, WHITE);
         titleFrames++;
     }
-
-    wait_for_vsync();
 
     
     init_map();                 // start on route preset
@@ -81,10 +74,7 @@ int main(void)
 
     mcMovingInit(80, 112, MC_FACING_S);
 
-    wait_for_vsync();           // swap: start drawing into the other buffer
-    draw_map();
-    drawSpriteAnimationWithMap();
-    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
+    wait_for_vsync();      
 
     while (1) {
         int phase = (frame_count / 300) & 1; // swap every 5 seconds
