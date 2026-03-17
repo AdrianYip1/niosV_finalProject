@@ -28,7 +28,8 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
             case MC_DIR_NW: initMCWalkingNorthWest(); break;
             case MC_DIR_SE: initMCWalkingSouthEast(); break;
             case MC_DIR_SW: initMCWalkingSouthWest(); break;
-            default: break;
+            case MC_DIR_NONE: initMCIdle(); break;
+            default: break; // MC_DIR_INVALID
         }
     }
 
@@ -45,7 +46,6 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
     }
 
     if (dir == MC_DIR_NONE) {
-        initMCIdle();
         drawMCIdleAnimation();
     } else if (dir != MC_DIR_INVALID) {
         drawMCWalkingAnimation();
