@@ -113,6 +113,9 @@ int main(void)
         }
         frame_count++;
 
+
+        redraw_tiles_under_textbox();
+
         redraw_tiles_under_mcbounds(getMCBounds());
         drawSpriteAnimationWithMap();
 
@@ -140,9 +143,6 @@ int main(void)
         }
 
         mcMovingTick(up, down, left, right);
-
-
-        redraw_tiles_under_textbox();
 
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
