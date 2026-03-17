@@ -96,7 +96,15 @@ int main(void)
 
     mcMovingInit(80, 112, MC_FACING_S);
 
-    wait_for_vsync();      
+    draw_sprite_any(textBoxSprite,
+                     TEXT_BOX_WIDTH,
+                     TEXT_BOX_HEIGHT,
+                     TEXTBOX_X,
+                     TEXTBOX_Y,
+                     TRANSPARENT_COLOUR);
+    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
+
+    wait_for_vsync();
 
     while (1) {
         int phase = (frame_count / 300) & 1; // swap every 5 seconds
