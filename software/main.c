@@ -6,6 +6,7 @@
 #include "graphics/tiles.h"
 #include "graphics/map.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
+#include "graphics/textbox/textBoxSprite.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -16,6 +17,9 @@
 #define SCREEN_HEIGHT 240
 #define NUM_TILES_X (SCREEN_WIDTH / TILE_SIZE)
 #define NUM_TILES_Y (SCREEN_HEIGHT / TILE_SIZE)
+
+#define TEXTBOX_X 0
+#define TEXTBOX_Y (SCREEN_HEIGHT - TEXT_BOX_HEIGHT)
 
 // Redraw only the map tiles under the MC's previous bounding box.
 static void redraw_tiles_under_mcbounds(McBounds b)
@@ -125,7 +129,17 @@ int main(void)
 
         mcMovingTick(up, down, left, right);
 
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
+
+        // Draw textbox over everything else
+        draw_sprite_any(textBoxSprite,
+                        TEXT_BOX_WIDTH,
+                        TEXT_BOX_HEIGHT,
+                        TEXTBOX_X,
+                        TEXTBOX_Y,
+                        TRANSPARENT_COLOUR);
+
+        // Draw text on top of the textbox
+        draw_string(TEXTBOX_X + 8, TEXTBOX_Y + 8, TITLE_TEXT_STRING, colour);
         wait_for_vsync();
     }
 

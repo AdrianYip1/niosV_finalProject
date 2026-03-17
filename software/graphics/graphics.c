@@ -108,6 +108,21 @@ void draw_sprite_transparent(const short *sprite, int x, int y, short transparen
     }
 }
 
+void draw_sprite_any(const unsigned short *sprite,
+                     int width, int height,
+                     int x, int y,
+                     short transparent)
+{
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            short colour = sprite[sy * width + sx];
+            if (colour != transparent) {
+                draw_pixel(x + sx, y + sy, colour);
+            }
+        }
+    }
+}
+
 void draw_char(int x, int y, char c, short int colour) {
     unsigned char character = (unsigned char)c;
     if (character >= 128) return; //out of bounds

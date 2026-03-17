@@ -28,6 +28,12 @@ void draw_window(int x, int y, int w, int h, short int border_colour, short int 
 void draw_tiles(const short *tile, int x, int y);
 void draw_sprite_transparent(const short *sprite, int x, int y, short transparent);
 
+// Generic sprite drawer
+void draw_sprite_any(const unsigned short *sprite,
+                     int width, int height,
+                     int x, int y,
+                     short transparent);
+
 void draw_circle(int cx, int cy, int radius, short int colour);
 void draw_circle_filled(int cx, int cy, int radius, short int colour);
 void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
