@@ -55,34 +55,35 @@ int main(void)
     clear_screen();
 
     initTitleScreen();
+    drawTitleScreen();
+    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
+    wait_for_vsync();  
+    
+    drawTitleScreen();
+    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
+    wait_for_vsync();  
     unsigned int titleFrames = 0;
     while (titleFrames < 100) {
-        drawTitleScreen(); // full-screen title frame
-
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y,
-                    TITLE_TEXT_STRING, WHITE);
-        wait_for_vsync();
+        wait_for_vsync();  
         titleFrames++;
     }
 
     
-    init_map();                 // start on route preset
-
+    init_map();
     load_map_preset(MAP_PRESET_ROUTE);
-    draw_map();                 // initial background (back buffer)
-
     initCharizardBackSprite();
-
     mcMovingInit(80, 112, MC_FACING_S);
+    
 
-    draw_sprite_any(textBoxSprite,
-                     TEXT_BOX_WIDTH,
-                     TEXT_BOX_HEIGHT,
-                     TEXTBOX_X,
-                     TEXTBOX_Y,
-                     TRANSPARENT_COLOUR);
+    draw_map();
+    draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
     draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
+    wait_for_vsync(); 
+    
 
+    draw_map();
+    draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
+    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
     wait_for_vsync();
 
     while (1) {
@@ -96,9 +97,15 @@ int main(void)
                 load_map_preset(MAP_PRESET_BLACK);
                 colour = WHITE;
             }
-            draw_map(); // redraw full map on preset switch
 
+            draw_map();
             draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
+            wait_for_vsync(); // flip to buffer 2
+        
+
+            draw_map();
+            draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
+            // No vsync here — the bottom of the main loop handles it
         }
         frame_count++;
 
