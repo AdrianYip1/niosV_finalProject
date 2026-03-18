@@ -47,7 +47,7 @@ int main(void)
 {
     unsigned int frame_count = 0;
     int current_phase = 0;      // 0 = route, 1 = black
-    short colour = BLACK;       // text colour: BLACK on route, WHITE on black
+    short colour = BLACK;    
 
     // Init VGA and tiles
     init_graphics();
@@ -75,14 +75,13 @@ int main(void)
     
 
     draw_map();
-    draw_map();
     draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
-    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, colour);
+    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
     wait_for_vsync();
     
     draw_map();
     draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
-    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, colour);
+    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
     wait_for_vsync();
 
     while (1) {
