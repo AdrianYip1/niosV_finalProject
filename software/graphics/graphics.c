@@ -1,14 +1,12 @@
 #include "font8x8_basic.h"
 #include "../../address_map.h"
+#include "textbox/textBoxSprite.h"
 #include <string.h>
 
 #define TILE_SIZE 16
 #define TRANSPARENT_COLOUR 0xF81F //anyy pink pixels will be transparent
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
-
-#define FRAMEBUFFER_0 0x02000000
-#define FRAMEBUFFER_1 0x02040000
 
 #ifndef GRAPHICS_USE_DOUBLE_BUFFER
 #define GRAPHICS_USE_DOUBLE_BUFFER 1
