@@ -6,20 +6,19 @@
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 
-
 #define FRAMEBUFFER_0 0x02000000
 #define FRAMEBUFFER_1 0x02040000
 
 #ifndef GRAPHICS_USE_DOUBLE_BUFFER
-#define GRAPHICS_USE_DOUBLE_BUFFER 0
+#define GRAPHICS_USE_DOUBLE_BUFFER 1
 #endif
 
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
-static unsigned int pixel_buffer_start;   // address currently drawing into (back buffer)
+static unsigned int pixel_buffer_start;   // address drawing into (back buffer)
 #if GRAPHICS_USE_DOUBLE_BUFFER
 static unsigned int front_buffer_start;   // address currently being displayed
 #endif
-static unsigned int back_buffer_start;    // address drawn the next frame into
+static unsigned int back_buffer_start;    // address draw the next frame into
 
 void init_graphics() {
     pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
@@ -39,7 +38,7 @@ void init_graphics() {
     wait_for_vsync();
 
 #if GRAPHICS_USE_DOUBLE_BUFFER
-
+    // Clear the other buffer
     pixel_buffer_start = (back_buffer_start == FRAMEBUFFER_0) ? FRAMEBUFFER_1 : FRAMEBUFFER_0;
     clear_screen();
     pixel_buffer_start = back_buffer_start;
@@ -70,7 +69,7 @@ void wait_for_vsync() {
     while ((*(pixel_ctrl_ptr + 3) & 0x01) != 0) { }
 
 #if GRAPHICS_USE_DOUBLE_BUFFER
-    //old front becomes back.
+    //old front becomes  back.
     unsigned int tmp = front_buffer_start;
     front_buffer_start = back_buffer_start;
     back_buffer_start = tmp;
@@ -79,7 +78,6 @@ void wait_for_vsync() {
     *(pixel_ctrl_ptr + 1) = back_buffer_start;
     pixel_buffer_start = back_buffer_start;
 #else
-
     pixel_buffer_start = back_buffer_start;
 #endif
 }

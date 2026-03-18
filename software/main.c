@@ -21,28 +21,6 @@
 #define TEXTBOX_X 0
 #define TEXTBOX_Y (SCREEN_HEIGHT - TEXT_BOX_HEIGHT)
 
-// Redraw only the map tiles under the MC's previous bounding box.
-static void redraw_tiles_under_mcbounds(McBounds b)
-{
-    if (!b.valid) return;
-
-    int leftTile   = b.x0 / TILE_SIZE;
-    int rightTile  = b.x1 / TILE_SIZE;
-    int topTile    = b.y0 / TILE_SIZE;
-    int bottomTile = b.y1 / TILE_SIZE;
-
-    if (leftTile < 0) leftTile = 0;
-    if (topTile < 0) topTile = 0;
-    if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
-    if (bottomTile >= MAP_HEIGHT) bottomTile = MAP_HEIGHT - 1;
-
-    for (int ty = topTile; ty <= bottomTile; ty++) {
-        for (int tx = leftTile; tx <= rightTile; tx++) {
-            drawTile(tx, ty, map[ty][tx]);
-        }
-    }
-}
-
 int main(void)
 {
     unsigned int frame_count = 0;
@@ -98,20 +76,13 @@ int main(void)
                 colour = WHITE;
             }
 
-            draw_map();
-            draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
-            wait_for_vsync(); // flip to buffer 2
         
 
             draw_map();
             draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
-            // No vsync here — the bottom of the main loop handles it
+
         }
         frame_count++;
-
-        redraw_tiles_under_mcbounds(getMCBounds());
-        drawSpriteAnimationWithMap();
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
 
         bool up = false, down = false, left = false, right = false;
         int t = (int)(frame_count % 540);   // 9 phases of 60 frames
@@ -135,8 +106,11 @@ int main(void)
         } else {
             // movePhase == 8 -> idle (all false)
         }
-
+//full map redraw 
+        draw_map();
+        drawSpriteAnimation();
         mcMovingTick(up, down, left, right);
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
 
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
