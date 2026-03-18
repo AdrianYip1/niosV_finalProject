@@ -7,6 +7,7 @@
 #include "graphics/map.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
 #include "graphics/textbox/textBoxSprite.h"
+#include "graphics/sprites/spacebar/spacebar_frames.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -21,6 +22,11 @@
 #define TEXTBOX_X 0
 #define TEXTBOX_Y (SCREEN_HEIGHT - TEXT_BOX_HEIGHT)
 
+#define SPACEBAR_X ((SCREEN_WIDTH - SPACEBAR_WIDTH) / 2)
+#define SPACEBAR_Y (TEXTBOX_Y - SPACEBAR_HEIGHT - 4)
+#define SPACEBAR_SPEED_FRAMES 8
+#define SPACEBAR_TITLE_Y (SCREEN_HEIGHT - SPACEBAR_HEIGHT - 12)
+
 int main(void)
 {
 
@@ -28,6 +34,8 @@ int main(void)
     const char *textboxMsg2 = "Second message!";
     const char *textboxMsg = textboxMsg1;
     int textboxPrevDone = 0; 
+    int spacebarFrame = 0;
+    int spacebarTimer = 0;
 
     unsigned int frame_count = 0;
     int current_phase = 0;      // 0 = route, 1 = black
@@ -43,11 +51,19 @@ int main(void)
     while (titleFrames < 100) {
         drawTitleScreen();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
-        wait_for_vsync();
-        titleFrames++;
-        
-        drawTitleScreen();
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
+
+        spacebarTimer++;
+        if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
+            spacebarTimer = 0;
+            spacebarFrame = (spacebarFrame + 1) % SPACEBAR_FRAME_COUNT;
+        }
+        draw_sprite_any(spacebarFrames[spacebarFrame],
+                        SPACEBAR_WIDTH,
+                        SPACEBAR_HEIGHT,
+                        SPACEBAR_X,
+                        SPACEBAR_TITLE_Y,
+                        TRANSPARENT_COLOUR);
+
         wait_for_vsync();
         titleFrames++;
     }
