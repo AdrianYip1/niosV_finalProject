@@ -23,6 +23,12 @@
 
 int main(void)
 {
+
+    const char *textboxMsg1 = TITLE_TEXT_STRING;
+    const char *textboxMsg2 = "Second message!";
+    const char *textboxMsg = textboxMsg1;
+    int textboxPrevDone = 0; 
+
     unsigned int frame_count = 0;
     int current_phase = 0;      // 0 = route, 1 = black
     short colour = BLACK;    
@@ -54,7 +60,11 @@ int main(void)
 
     draw_map();
     draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
-    draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, TITLE_TEXT_STRING, BLACK);
+    textboxPrevDone = draw_textbox_animated_text(textBoxSprite,
+                                                   TEXTBOX_X,
+                                                   TEXTBOX_Y,
+                                                   textboxMsg,
+                                                   BLACK);
     wait_for_vsync();
 
     while (1) {
@@ -105,7 +115,19 @@ int main(void)
         mcMovingTick(up, down, left, right);
         
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
-        draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, TITLE_TEXT_STRING, BLACK);
+
+        {
+            int textboxDone = draw_textbox_animated_text(textBoxSprite,
+                                                          TEXTBOX_X,
+                                                          TEXTBOX_Y,
+                                                          textboxMsg,
+                                                          BLACK);
+
+            if (textboxDone && !textboxPrevDone) {
+                textboxMsg = (textboxMsg == textboxMsg1) ? textboxMsg2 : textboxMsg1;
+            }
+            textboxPrevDone = textboxDone;
+        }
         wait_for_vsync();
     }
 

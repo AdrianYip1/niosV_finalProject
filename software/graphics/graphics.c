@@ -171,14 +171,22 @@ void draw_textbox_instant_text(const unsigned short *textBoxSprite, int x, int y
     draw_string(x + 30, y + 30, string, colour);
 }
 
-void draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour) {
+int draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour) {
     // text cursor variables
     static int cursor = 0;
     static int frameTimer = 0;
+    static const char *lastString = 0;
     const int speedFrames = 4; // frames per character
 
     int len = (int)strlen(string);
-    if (len <= 0) return;
+    if (string == 0 || len <= 0) return 1;
+
+    // Reset typing for different strings
+    if (string != lastString) {
+        cursor = 0;
+        frameTimer = 0;
+        lastString = string;
+    }
 
     // increment cursor location
     if (cursor < len) {
@@ -201,6 +209,8 @@ void draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int 
     buffer[n] = '\0';
 
     draw_string(x + 30, y + 30, buffer, colour);
+
+    return cursor >= len;
 }
 
 void draw_char(int x, int y, char c, short int colour) {
