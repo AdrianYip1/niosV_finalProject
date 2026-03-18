@@ -75,11 +75,13 @@ int main(void)
     
 
     draw_map();
+    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
     draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
     draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
     wait_for_vsync();
     
     draw_map();
+    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
     draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
     draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
     wait_for_vsync();
@@ -109,6 +111,7 @@ int main(void)
 
         redraw_tiles_under_mcbounds(getMCBounds());
         drawSpriteAnimationWithMap();
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
 
         bool up = false, down = false, left = false, right = false;
         int t = (int)(frame_count % 540);   // 9 phases of 60 frames
@@ -142,7 +145,6 @@ int main(void)
                         TEXTBOX_Y,
                         TRANSPARENT_COLOUR);
 
-        // Draw text on top of the textbox
         draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
         wait_for_vsync();
     }
