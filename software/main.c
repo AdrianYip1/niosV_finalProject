@@ -138,19 +138,14 @@ int main(void)
 
         mcMovingTick(up, down, left, right);
 
-        int topTile = TEXTBOX_Y / TILE_SIZE;
-        int bottomTile = (TEXTBOX_Y + TEXT_BOX_HEIGHT - 1) / TILE_SIZE;
-        for (int ty = topTile; ty <= bottomTile; ty++)
-            for (int tx = 0; tx < NUM_TILES_X; tx++)
-                drawTile(tx, ty, map[ty][tx]);
-
         draw_sprite_any(textBoxSprite,
                         TEXT_BOX_WIDTH,
                         TEXT_BOX_HEIGHT,
                         TEXTBOX_X,
                         TEXTBOX_Y,
                         TRANSPARENT_COLOUR);
-        draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, WHITE);
+
+        draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
         wait_for_vsync();
     }
 
