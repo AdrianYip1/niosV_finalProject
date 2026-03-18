@@ -6,36 +6,44 @@
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 
-// Two frame buffers in SDRAM. Keeping them well away from the program image
-// helps avoid accidental corruption if the controller swaps buffers.
+
 #define FRAMEBUFFER_0 0x02000000
 #define FRAMEBUFFER_1 0x02040000
 
+#ifndef GRAPHICS_USE_DOUBLE_BUFFER
+#define GRAPHICS_USE_DOUBLE_BUFFER 0
+#endif
+
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
-static unsigned int pixel_buffer_start;   // address we are currently drawing into (back buffer)
+static unsigned int pixel_buffer_start;   // address currently drawing into (back buffer)
+#if GRAPHICS_USE_DOUBLE_BUFFER
 static unsigned int front_buffer_start;   // address currently being displayed
-static unsigned int back_buffer_start;    // address we will draw the next frame into
+#endif
+static unsigned int back_buffer_start;    // address drawn the next frame into
 
 void init_graphics() {
     pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
 
-    // double bufferig
+#if GRAPHICS_USE_DOUBLE_BUFFER
     front_buffer_start = FRAMEBUFFER_0;
     back_buffer_start = FRAMEBUFFER_1;
-
-    *(pixel_ctrl_ptr + 1) = front_buffer_start;
-    *pixel_ctrl_ptr = 1;
-    while ((*(pixel_ctrl_ptr + 3) & 0x01) != 0) { }
+#else
+    back_buffer_start = FRAMEBUFFER_0;
+#endif
 
     // configure the back buffer for drawing.
     *(pixel_ctrl_ptr + 1) = back_buffer_start;
     pixel_buffer_start = back_buffer_start;
 
-    // Clear both buffers
-    pixel_buffer_start = front_buffer_start;
+    clear_screen();
+    wait_for_vsync();
+
+#if GRAPHICS_USE_DOUBLE_BUFFER
+
+    pixel_buffer_start = (back_buffer_start == FRAMEBUFFER_0) ? FRAMEBUFFER_1 : FRAMEBUFFER_0;
     clear_screen();
     pixel_buffer_start = back_buffer_start;
-    clear_screen();
+#endif
 }
 
 void draw_pixel(int x, int y, short int colour) {
@@ -55,14 +63,14 @@ void clear_screen() {
 }
 
 void wait_for_vsync() {
-
     *(pixel_ctrl_ptr + 1) = back_buffer_start;
 
     // init synchronization.
     *pixel_ctrl_ptr = 1;
     while ((*(pixel_ctrl_ptr + 3) & 0x01) != 0) { }
 
-    //old front becomes  back.
+#if GRAPHICS_USE_DOUBLE_BUFFER
+    //old front becomes back.
     unsigned int tmp = front_buffer_start;
     front_buffer_start = back_buffer_start;
     back_buffer_start = tmp;
@@ -70,6 +78,10 @@ void wait_for_vsync() {
     // get nextback buffer and update the draw pointer.
     *(pixel_ctrl_ptr + 1) = back_buffer_start;
     pixel_buffer_start = back_buffer_start;
+#else
+
+    pixel_buffer_start = back_buffer_start;
+#endif
 }
 
 void set_pixel_buffer(unsigned int addr) {
