@@ -37,7 +37,8 @@ void draw_sprite_any(const unsigned short *sprite,
 void draw_circle(int cx, int cy, int radius, short int colour);
 void draw_circle_filled(int cx, int cy, int radius, short int colour);
 void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
-
+void draw_textbox_instant_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);
+void draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);
 void draw_char(int x, int y, char c, short int colour);
 void draw_string(int x, int y, const char *string, short colour);
 #endif

@@ -1,5 +1,6 @@
 #include "font8x8_basic.h"
 #include "../../address_map.h"
+#include <string.h>
 
 #define TILE_SIZE 16
 #define TRANSPARENT_COLOUR 0xF81F //anyy pink pixels will be transparent
@@ -162,6 +163,43 @@ void draw_sprite_any(const unsigned short *sprite,
             }
         }
     }
+}
+
+void draw_textbox_instant_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour) {
+    draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, x, y, TRANSPARENT_COLOUR);
+    draw_string(x + 30, y + 30, string, colour);
+}
+
+void draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour) {
+    // text cursor variables
+    static int cursor = 0;
+    static int frameTimer = 0;
+    const int speedFrames = 4; // frames per character
+
+    int len = (int)strlen(string);
+    if (len <= 0) return;
+
+    // increment cursor location
+    if (cursor < len) {
+        frameTimer++;
+        if (frameTimer >= speedFrames) {
+            frameTimer = 0;
+            cursor++;
+        }
+    }
+
+    // Draw textbox
+    draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, x, y, TRANSPARENT_COLOUR);
+
+    char buffer[128];
+    int n = cursor;
+    if (n > len) n = len;
+    if (n > (int)sizeof(buffer) - 1) n = (int)sizeof(buffer) - 1;
+
+    memcpy(buffer, string, n);
+    buffer[n] = '\0';
+
+    draw_string(x + 30, y + 30, buffer, colour);
 }
 
 void draw_char(int x, int y, char c, short int colour) {
