@@ -55,19 +55,18 @@ int main(void)
     clear_screen();
 
     initTitleScreen();
-    drawTitleScreen();
-    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
-    wait_for_vsync();  
-    
-    drawTitleScreen();
-    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
-    wait_for_vsync();  
     unsigned int titleFrames = 0;
     while (titleFrames < 100) {
-        wait_for_vsync();  
+        drawTitleScreen();
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
+        wait_for_vsync();
+        titleFrames++;
+        
+        drawTitleScreen();
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
+        wait_for_vsync();
         titleFrames++;
     }
-
     
     init_map();
     load_map_preset(MAP_PRESET_ROUTE);
@@ -76,14 +75,14 @@ int main(void)
     
 
     draw_map();
-    draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
-    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
-    wait_for_vsync(); 
-    
-
     draw_map();
     draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
-    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, BLACK);
+    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, colour);
+    wait_for_vsync();
+    
+    draw_map();
+    draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, TEXTBOX_X, TEXTBOX_Y, TRANSPARENT_COLOUR);
+    draw_string(TEXTBOX_X + 30, TEXTBOX_Y + 30, TITLE_TEXT_STRING, colour);
     wait_for_vsync();
 
     while (1) {
