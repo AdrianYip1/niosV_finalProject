@@ -7,6 +7,13 @@
 
 Sprite playerSprite;
 
+static inline int is_magenta_key(unsigned short c) {
+    const int r = (c >> 11) & 31;
+    const int g = (c >> 5) & 63;
+    const int b = c & 31;
+    return (r >= 28 && b >= 28 && g <= 3);
+}
+
 void initCharizardBackSprite(void) {
     playerSprite.frames     = charizardFrames;
     playerSprite.frameCount = CHARIZARD_FRAME_COUNT;
@@ -25,7 +32,7 @@ void drawSpriteAnimation(void) {
     for (int y = 0; y < sprite->tileSize; y++) {
         for (int x = 0; x < sprite->tileSize; x++) {
             unsigned short color = frame[y * sprite->tileSize + x];
-            if (color == 0xF81F) {
+            if (is_magenta_key(color)) {
                 continue; // transparent
             }
             draw_pixel(sprite->x + x, sprite->y + y, color);
@@ -45,7 +52,7 @@ void drawSpriteCurrentFrameOnly(void) {
     for (int y = 0; y < sprite->tileSize; y++) {
         for (int x = 0; x < sprite->tileSize; x++) {
             unsigned short color = frame[y * sprite->tileSize + x];
-            if (color == 0xF81F) continue;
+            if (is_magenta_key(color)) continue;
             draw_pixel(sprite->x + x, sprite->y + y, color);
         }
     }
@@ -70,7 +77,7 @@ void drawSpriteAnimationWithMap(void) {
     for (int y = 0; y < sprite->tileSize; y++) {
         for (int x = 0; x < sprite->tileSize; x++) {
             unsigned short color = frame[y * sprite->tileSize + x];
-            if (color == 0xF81F) {
+            if (is_magenta_key(color)) {
                 continue; // transparent
             }
             draw_pixel(sprite->x + x, sprite->y + y, color);

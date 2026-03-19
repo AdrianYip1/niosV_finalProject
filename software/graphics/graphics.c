@@ -1,6 +1,8 @@
 #include "font8x8_basic.h"
 #include "../../address_map.h"
 #include "textbox/textBoxSprite.h"
+#include "map.h"
+#include "tiles.h"
 #include <string.h>
 
 #define TILE_SIZE 16
@@ -156,10 +158,21 @@ void draw_sprite_any(const unsigned short *sprite,
                      int x, int y,
                      short transparent)
 {
+    //RGB565 range as transparent.
+    const int useMagentaTolerance = (transparent == TRANSPARENT_COLOUR);
     for (int sy = 0; sy < height; sy++) {
         for (int sx = 0; sx < width; sx++) {
-            short colour = sprite[sy * width + sx];
-            if (colour != transparent) {
+            unsigned short colour = sprite[sy * width + sx];
+            if (useMagentaTolerance) {
+                const int r = (colour >> 11) & 31;
+                const int g = (colour >> 5) & 63;
+                const int b = colour & 31;
+                // key is r=31,g=0,b=31; allow small tolerance on conversion artifacts
+                if (r >= 28 && b >= 28 && g <= 3) continue;
+            } else if (colour == (unsigned short)transparent) {
+                continue;
+            }
+            {
                 draw_pixel(x + sx, y + sy, colour);
             }
         }
@@ -211,6 +224,31 @@ int draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y
     draw_string(x + 30, y + 30, buffer, colour);
 
     return cursor >= len;
+}
+
+void hide_textbox(int x, int y)
+{
+    // Restore the background map tiles underneath the textbox rectangle.
+    const int x0 = x;
+    const int y0 = y;
+    const int x1 = x + TEXT_BOX_WIDTH - 1;
+    const int y1 = y + TEXT_BOX_HEIGHT - 1;
+
+    int leftTile   = x0 / TILE_SIZE;
+    int rightTile  = x1 / TILE_SIZE;
+    int topTile    = y0 / TILE_SIZE;
+    int bottomTile = y1 / TILE_SIZE;
+
+    if (leftTile < 0) leftTile = 0;
+    if (topTile < 0) topTile = 0;
+    if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
+    if (bottomTile >= MAP_HEIGHT) bottomTile = MAP_HEIGHT - 1;
+
+    for (int ty = topTile; ty <= bottomTile; ty++) {
+        for (int tx = leftTile; tx <= rightTile; tx++) {
+            drawTile(tx, ty, map[ty][tx]);
+        }
+    }
 }
 
 void draw_char(int x, int y, char c, short int colour) {
