@@ -10,6 +10,7 @@ bool is_key_a_pressed(void);
 bool is_key_s_pressed(void);
 bool is_key_d_pressed(void);
 bool is_key_space_pressed(void);
+bool is_key_shift_pressed(void);
 
 
 // Returns false if no character is available.
