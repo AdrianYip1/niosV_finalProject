@@ -29,6 +29,11 @@
 #define SPACEBAR_SPEED_FRAMES 8
 #define SPACEBAR_TITLE_Y (SCREEN_HEIGHT - SPACEBAR_HEIGHT - 12)
 
+
+#define TITLE_TEXT_PIXEL_WIDTH ((int)((sizeof(TEXT_TITLE) - 1) * 8))
+#define TITLE_TEXT_X_CENTERED   ((SCREEN_WIDTH - TITLE_TEXT_PIXEL_WIDTH) / 2)
+#define TITLE_TEXT_Y_ABOVE_BAR  (SPACEBAR_TITLE_Y - 8)
+
 int main(void)
 {
 
@@ -57,7 +62,6 @@ int main(void)
         }
 
         drawTitleScreen();
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, WHITE);
 
         spacebarTimer++;
         if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
@@ -70,6 +74,8 @@ int main(void)
                         SPACEBAR_X,
                         SPACEBAR_TITLE_Y,
                         TRANSPARENT_COLOUR);
+
+        draw_string(TITLE_TEXT_X_CENTERED, TITLE_TEXT_Y_ABOVE_BAR, TEXT_TITLE, WHITE);
 
         wait_for_vsync();
     }

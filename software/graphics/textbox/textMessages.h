@@ -1,6 +1,6 @@
 #pragma once
 
-static const char TEXT_TITLE[] = "Text for testing 123";
+static const char TEXT_TITLE[] = "PRESS SPACE TO START";
 static const char TEXTBOX_MSG_2[] = "Second message!";
 static const char TEXTBOX_MSG_3[] = "Another message";
 
