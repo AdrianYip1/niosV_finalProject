@@ -40,8 +40,8 @@ void gainExp(pokemonInBattle pokemon, pokemonInBattle defeatedPokemon) {
     }
 }
 
-void dealDamage(pokemonInBattle attacker, pokemonInBattle target, int baseDamage, char* damageType) {
-    int modifierID = (damageType == "Physical") ? 1 : 2; //physical uses attack, special uses sp attack
+void dealDamage(pokemonInBattle attacker, pokemonInBattle target, int baseDamage, int damageType) { //0 is physical, 1 is special, 2 is status
+    int modifierID = (damageType == 1) ? 1 : 2; //physical uses attack, special uses sp attack
     int dealtDamage = ((baseDamage * attacker.level + 10) / 250) * (int)attacker.scaledStatsWithLevel[modifierID];
 
     takeDamage(target, dealDamage, damageType);
@@ -49,7 +49,7 @@ void dealDamage(pokemonInBattle attacker, pokemonInBattle target, int baseDamage
     return;
 }
 
-void takeDamage(pokemonInBattle target, int incomingDamage, char* damageType) {
+void takeDamage(pokemonInBattle target, int incomingDamage, int damageType) {
     srand(time(NULL));
 
     double min = 0.85;
@@ -62,7 +62,7 @@ void takeDamage(pokemonInBattle target, int incomingDamage, char* damageType) {
     random_num = min + scale * (max - min);
 
     //calculate damage with basestats
-    int modifierID = (damageType == "Physical") ? 3 : 4; // physicaluses def, "Special" uses spdef
+    int modifierID = (damageType == 1) ? 3 : 4; // physicaluses def, "Special" uses spdef
     int actualDamage = (incomingDamage / (int)target.scaledStatsWithLevel[modifierID]) * random_num; //damage calculations
 
     if (actualDamage > target.scaledStatsWithLevel[0]) {

@@ -1,6 +1,6 @@
 from PIL import Image
 
-TILE_SIZE = 36
+TILE_SIZE = 320
 TRANSPARENT_KEY = (255, 0, 255)  # FF00FF pink
 OUTPUT_C_FILE = "mcIdle_frames.c"
 VAR_NAME = "mcIdle"

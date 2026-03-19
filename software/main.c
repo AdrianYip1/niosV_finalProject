@@ -31,8 +31,8 @@
 #define SPACEBAR_SPEED_FRAMES 8
 #define SPACEBAR_TITLE_Y (SCREEN_HEIGHT - SPACEBAR_HEIGHT - 12)
 
-#define SMALL_SPACEBAR_X SPACEBAR_X + SPACEBAR_WIDTH - 5
-#define SMALL_SPACEBAR_Y SPACEBAR_Y + SPACEBAR_HEIGHT -5
+#define SMALL_SPACEBAR_X SPACEBAR_X + SPACEBAR_WIDTH + 75
+#define SMALL_SPACEBAR_Y SPACEBAR_Y + SPACEBAR_HEIGHT + 55
 
 
 #define TITLE_TEXT_PIXEL_WIDTH ((int)((sizeof(TEXT_TITLE) - 1) * 8))
@@ -175,7 +175,7 @@ int main(void)
                 load_map_preset(MAP_PRESET_ROUTE);
                 colour = BLACK;
             } else {
-                load_map_preset(MAP_PRESET_BLACK);
+                load_map_preset(MAP_PRESET_BOSS);
                 colour = WHITE;
             }
         }

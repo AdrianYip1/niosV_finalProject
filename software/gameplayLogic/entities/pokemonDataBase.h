@@ -31,7 +31,7 @@ typedef struct {
 } PokemonData;
 
 // Placeholder move for early battle-system
-static const AttackData ATTACK_PLACEHOLDER_TACKLE = {
+static const AttackData TACKLE = {
     .id = 1,
     .name = "Tackle",
     .power = 40,
@@ -41,17 +41,17 @@ static const AttackData ATTACK_PLACEHOLDER_TACKLE = {
 };
 
 // Placeholder Pokemon entry with one valid move.
-static const PokemonData POKEMON_PLACEHOLDER_CHARMANDER = {
-    .id = 4,
-    .name = "Charmander",
-    .baseHp = 39,
-    .baseAttack = 52,
-    .baseSpAttack = 60,
-    .baseDefense = 43,
-    .baseSpDefense = 50,
-    .baseSpeed = 65,
+static const PokemonData CHARIZARD = {
+    .id = 1,
+    .name = "Charizard",
+    .baseHp = 78,
+    .baseAttack = 84,
+    .baseSpAttack = 109,
+    .baseDefense = 78,
+    .baseSpDefense = 85,
+    .baseSpeed = 100,
     .moves = {
-        &ATTACK_PLACEHOLDER_TACKLE,
+        &TACKLE,
         NULL,
         NULL,
         NULL
