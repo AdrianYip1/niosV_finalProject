@@ -9,6 +9,7 @@ SRCS := software/main.c \
         software/graphics/graphics.c \
         software/textinput/getTextFromUser.c \
         software/graphics/textbox/textBoxSprite.c \
+		software/graphics/textbox/small_spacebar.c \
         software/graphics/mcWalkingDraw.c \
         software/graphics/map.c \
         software/graphics/predefined_graphics.c \
