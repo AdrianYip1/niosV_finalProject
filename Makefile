@@ -7,6 +7,7 @@ SRCS := software/main.c \
         hardware/keyboard.c \
         hardware/mouse.c \
         software/graphics/graphics.c \
+        software/textinput/getTextFromUser.c \
         software/graphics/textbox/textBoxSprite.c \
         software/graphics/mcWalkingDraw.c \
         software/graphics/map.c \

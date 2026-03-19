@@ -11,6 +11,13 @@ bool is_key_s_pressed(void);
 bool is_key_d_pressed(void);
 bool is_key_space_pressed(void);
 
+
+// Returns false if no character is available.
+bool keyboard_pop_char(char *out);
+
+// true if enter was typed.
+bool is_key_enter_pressed(void);
+
 bool is_key_up_pressed(void);
 bool is_key_down_pressed(void);
 bool is_key_left_pressed(void);

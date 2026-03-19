@@ -10,6 +10,7 @@
 #include "graphics/textbox/textMessages.h"
 #include "graphics/sprites/spacebar/spacebar_frames.h"
 #include "../hardware/keyboard.h"
+#include "textinput/getTextFromUser.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -34,12 +35,16 @@
 #define TITLE_TEXT_X_CENTERED   ((SCREEN_WIDTH - TITLE_TEXT_PIXEL_WIDTH) / 2)
 #define TITLE_TEXT_Y_ABOVE_BAR  (SPACEBAR_TITLE_Y - 8)
 
+
 int main(void)
 {
 
     int textboxMsgIndex = TEXTMSG_TITLE;
     const char *textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
-    int textboxPrevDone = 0; 
+    int textboxPreviousDone = 0;
+
+    char msg3Render[96];
+    char msg4Render[96];
     int spacebarFrame = 0;
     int spacebarTimer = 0;
 
@@ -75,27 +80,57 @@ int main(void)
                         SPACEBAR_TITLE_Y,
                         TRANSPARENT_COLOUR);
 
-        draw_string(TITLE_TEXT_X_CENTERED, TITLE_TEXT_Y_ABOVE_BAR, TEXT_TITLE, WHITE);
+        draw_string(TITLE_TEXT_X_CENTERED, TITLE_TEXT_Y_ABOVE_BAR, textboxMsg, WHITE);
 
         wait_for_vsync();
     }
-    
+
+    textboxMsgIndex = TEXTMSG_SECOND;
+    textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
+
+    init_map();
+    load_map_preset(MAP_PRESET_BLACK);
+    draw_map();
+
+    // Ensure both buffers have the same background before typing.
+    wait_for_vsync();
+    draw_map();
+    wait_for_vsync();
+
+
+    getTextFromUserIntoTextbox(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, BLACK, textboxMsg);
+
+
+    const char *userName = getUserText();
+    formatTextWithNameToken(msg3Render, sizeof(msg3Render), TEXT_MESSAGES[TEXTMSG_THIRD], userName);
+    formatTextWithNameToken(msg4Render, sizeof(msg4Render), TEXT_MESSAGES[TEXTMSG_FOURTH], userName);
+
+    int textboxDone = 0;
+    while (textboxDone == 0) {
+        textboxDone = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg3Render, BLACK);
+        wait_for_vsync();
+    }
+
+    textboxDone = 0;
+    while (textboxDone == 0) {
+        textboxDone = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
+        wait_for_vsync();
+    }
+
+
+    // Switch to gameplay map.
     init_map();
     load_map_preset(MAP_PRESET_ROUTE);
     initCharizardBackSprite();
     mcMovingInit(80, 112, MC_FACING_S);
-    
 
     draw_map();
     draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
-    textboxPrevDone = draw_textbox_animated_text(textBoxSprite,
-                                                   TEXTBOX_X,
-                                                   TEXTBOX_Y,
-                                                   textboxMsg,
-                                                   BLACK);
+    // Keep textbox drawing in the animated path as well.
+    // (It will already be fully typed by now, but this keeps behavior consistent.)
+    (void)draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
     wait_for_vsync();
 
-    bool prev_space = false;
     while (1) {
         update_keyboard();
         
@@ -109,12 +144,6 @@ int main(void)
                 load_map_preset(MAP_PRESET_BLACK);
                 colour = WHITE;
             }
-
-        
-
-            draw_map();
-            draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
-
         }
         frame_count++;
 
@@ -128,21 +157,7 @@ int main(void)
         mcMovingTick(up, down, left, right);
         
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
-
-        {
-            int textboxDone = draw_textbox_animated_text(textBoxSprite,
-                                                          TEXTBOX_X,
-                                                          TEXTBOX_Y,
-                                                          textboxMsg,
-                                                          BLACK);
-
-            bool curr_space = is_key_space_pressed();
-            if (textboxDone && curr_space && !prev_space) {
-                textboxMsgIndex = (textboxMsgIndex == TEXTMSG_TITLE) ? TEXTMSG_SECOND : TEXTMSG_TITLE;
-                textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
-            }
-            prev_space = curr_space;
-        }
+        (void)draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
         wait_for_vsync();
     }
 
