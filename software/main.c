@@ -39,7 +39,7 @@
 int main(void)
 {
 
-    int textboxMsgIndex = TEXTMSG_TITLE;
+    int textboxMsgIndex = 0;
     const char *textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
     int textboxPreviousDone = 0;
 
@@ -85,7 +85,7 @@ int main(void)
         wait_for_vsync();
     }
 
-    textboxMsgIndex = TEXTMSG_SECOND;
+    textboxMsgIndex++;
     textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
 
     init_map();
@@ -99,21 +99,44 @@ int main(void)
 
 
     getTextFromUserIntoTextbox(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, BLACK, textboxMsg);
+    
 
-
+    textboxMsgIndex++;
     const char *userName = getUserText();
-    formatTextWithNameToken(msg3Render, sizeof(msg3Render), TEXT_MESSAGES[TEXTMSG_THIRD], userName);
-    formatTextWithNameToken(msg4Render, sizeof(msg4Render), TEXT_MESSAGES[TEXTMSG_FOURTH], userName);
+    formatTextWithNameToken(msg3Render, sizeof(msg3Render), TEXT_MESSAGES[textboxMsgIndex], userName);
+    textboxMsgIndex++;
+    formatTextWithNameToken(msg4Render, sizeof(msg4Render), TEXT_MESSAGES[textboxMsgIndex], userName);
 
     int textboxDone = 0;
-    while (textboxDone == 0) {
+    bool prevSpaceDown = false;
+
+    // Wait for msg3 typing to finish, then require a space press to continue.
+    prevSpaceDown = false;
+    while (1) {
+        update_keyboard();
+
         textboxDone = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg3Render, BLACK);
+
+        const bool spaceDown = is_key_space_pressed();
+        const bool spacePressed = (spaceDown && !prevSpaceDown);
+        prevSpaceDown = spaceDown;
+
+        if (textboxDone && spacePressed) break;
         wait_for_vsync();
     }
 
-    textboxDone = 0;
-    while (textboxDone == 0) {
+    // Wait for msg4 typing to finish, then require a space press to continue.
+    prevSpaceDown = false;
+    while (1) {
+        update_keyboard();
+
         textboxDone = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
+
+        const bool spaceDown = is_key_space_pressed();
+        const bool spacePressed = (spaceDown && !prevSpaceDown);
+        prevSpaceDown = spaceDown;
+
+        if (textboxDone && spacePressed) break;
         wait_for_vsync();
     }
 
@@ -126,14 +149,21 @@ int main(void)
 
     draw_map();
     draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
-    // Keep textbox drawing in the animated path as well.
-    // (It will already be fully typed by now, but this keeps behavior consistent.)
-    (void)draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
+    textboxMsgIndex++;
     wait_for_vsync();
+
+    textboxDone = 0;
+    prevSpaceDown = false;
+
+    // Gameplay dialog state (textbox updates while you move).
+    int gameplayTextboxIndex = textboxMsgIndex;
+    bool dialogActive = (gameplayTextboxIndex >= 0 && gameplayTextboxIndex < (int)TEXT_MESSAGES_COUNT);
+    bool prevSpaceDownGameplay = false;
+    int gameplayTextboxDone = 0;
 
     while (1) {
         update_keyboard();
-        
+
         int phase = (frame_count / 300) & 1; // swap every 5 seconds
         if (phase != current_phase) {
             current_phase = phase;
@@ -152,13 +182,47 @@ int main(void)
         bool left = is_key_a_pressed();
         bool right = is_key_d_pressed();
         bool shift = is_key_shift_pressed();
-//full map redraw 
+
+        const bool spaceDown = is_key_space_pressed();
+        const bool spacePressed = (spaceDown && !prevSpaceDownGameplay);
+        prevSpaceDownGameplay = spaceDown;
+
+        // full map redraw
         draw_map();
         drawSpriteAnimation();
         mcMovingTick(up, down, left, right, shift);
-        
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
-        (void)draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
+
+        if (dialogActive) {
+            gameplayTextboxDone = draw_textbox_animated_text(
+                textBoxSprite, TEXTBOX_X, TEXTBOX_Y, TEXT_MESSAGES[gameplayTextboxIndex], BLACK);
+
+            if (gameplayTextboxDone) {
+                // Animate and show the "press space" prompt only when done typing.
+                spacebarTimer++;
+                if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
+                    spacebarTimer = 0;
+                    spacebarFrame = (spacebarFrame + 1) % SPACEBAR_FRAME_COUNT;
+                }
+
+                draw_sprite_any(spacebarFrames[spacebarFrame],
+                                 SPACEBAR_WIDTH, SPACEBAR_HEIGHT,
+                                 SPACEBAR_X, SPACEBAR_Y,
+                                 TRANSPARENT_COLOUR);
+
+                if (spacePressed) {
+                    gameplayTextboxIndex++;
+                    if (gameplayTextboxIndex >= (int)TEXT_MESSAGES_COUNT) {
+                        dialogActive = false;
+                        hide_textbox(TEXTBOX_X, TEXTBOX_Y);
+                    }
+                }
+            } else {
+                spacebarTimer = 0;
+                spacebarFrame = 0;
+            }
+        }
+
         wait_for_vsync();
     }
 

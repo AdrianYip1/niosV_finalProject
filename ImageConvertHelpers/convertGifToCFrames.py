@@ -6,14 +6,14 @@ from PIL import Image
 
 
 SRC_GIF = Path("ImageConvertHelpers/spacebar.gif")
-# Emit directly into the project's sprites folder (what you include/build).
+# directly into the project's sprites folder 
 OUT_C = Path("software/graphics/sprites/spacebar/spacebar_frames.c")
 OUT_H = Path("software/graphics/sprites/spacebar/spacebar_frames.h")
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
 
-# Treat near-magenta pixels as transparent too (GIF palette/anti-aliasing).
+
 def is_magentaish(r: int, g: int, b: int) -> bool:
     return r >= 200 and b >= 200 and g <= 100
 
