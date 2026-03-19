@@ -7,13 +7,14 @@
 #include "graphics/map.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
 #include "graphics/textbox/textBoxSprite.h"
+#include "graphics/textbox/textMessages.h"
 #include "graphics/sprites/spacebar/spacebar_frames.h"
 #include "../hardware/keyboard.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
-#define TITLE_TEXT_STRING "Text for testing 123"
+
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
@@ -31,9 +32,8 @@
 int main(void)
 {
 
-    const char *textboxMsg1 = TITLE_TEXT_STRING;
-    const char *textboxMsg2 = "Second message!";
-    const char *textboxMsg = textboxMsg1;
+    int textboxMsgIndex = TEXTMSG_TITLE;
+    const char *textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
     int textboxPrevDone = 0; 
     int spacebarFrame = 0;
     int spacebarTimer = 0;
@@ -57,7 +57,7 @@ int main(void)
         }
 
         drawTitleScreen();
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, WHITE);
 
         spacebarTimer++;
         if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
@@ -81,7 +81,7 @@ int main(void)
     
 
     draw_map();
-    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, BLACK);
+    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
     textboxPrevDone = draw_textbox_animated_text(textBoxSprite,
                                                    TEXTBOX_X,
                                                    TEXTBOX_Y,
@@ -107,7 +107,7 @@ int main(void)
         
 
             draw_map();
-            draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
+            draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
 
         }
         frame_count++;
@@ -121,7 +121,7 @@ int main(void)
         drawSpriteAnimation();
         mcMovingTick(up, down, left, right);
         
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
+        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
 
         {
             int textboxDone = draw_textbox_animated_text(textBoxSprite,
@@ -132,7 +132,8 @@ int main(void)
 
             bool curr_space = is_key_space_pressed();
             if (textboxDone && curr_space && !prev_space) {
-                textboxMsg = (textboxMsg == textboxMsg1) ? textboxMsg2 : textboxMsg1;
+                textboxMsgIndex = (textboxMsgIndex == TEXTMSG_TITLE) ? TEXTMSG_SECOND : TEXTMSG_TITLE;
+                textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
             }
             prev_space = curr_space;
         }
