@@ -151,7 +151,6 @@ void draw_sprite_any(const unsigned short *sprite,
                 const int r = (colour >> 11) & 31;
                 const int g = (colour >> 5) & 63;
                 const int b = colour & 31;
-                // key is r=31,g=0,b=31; allow small tolerance on conversion artifacts
                 if (r >= 28 && b >= 28 && g <= 3) continue;
             } else if (colour == (unsigned short)transparent) {
                 continue;
