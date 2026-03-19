@@ -49,7 +49,7 @@ static void moveDiagonal(McDirection dir, unsigned int stepCounter) {
 }
 
 //connect to keyboard polling
-void mcMovingTick(bool up, bool down, bool left, bool right) {
+void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     static McDirection lastDir = MC_DIR_NONE;
     static unsigned int stepCounter = 0;
 
@@ -71,29 +71,32 @@ void mcMovingTick(bool up, bool down, bool left, bool right) {
         }
     }
 
-    stepCounter++;
+    int speed_multiplier = shift ? 2 : 1;
+    for (int i = 0; i < speed_multiplier; i++) {
+        stepCounter++;
 
-    switch (dir) {
-        case MC_DIR_N:
-            goUp();
-            break;
-        case MC_DIR_S:
-            goDown();
-            break;
-        case MC_DIR_W:
-            goLeft();
-            break;
-        case MC_DIR_E:
-            goRight();
-            break;
-        case MC_DIR_NE:
-        case MC_DIR_NW:
-        case MC_DIR_SE:
-        case MC_DIR_SW:
-            moveDiagonal(dir, stepCounter);
-            break;
-        default:
-            break;
+        switch (dir) {
+            case MC_DIR_N:
+                goUp();
+                break;
+            case MC_DIR_S:
+                goDown();
+                break;
+            case MC_DIR_W:
+                goLeft();
+                break;
+            case MC_DIR_E:
+                goRight();
+                break;
+            case MC_DIR_NE:
+            case MC_DIR_NW:
+            case MC_DIR_SE:
+            case MC_DIR_SW:
+                moveDiagonal(dir, stepCounter);
+                break;
+            default:
+                break;
+        }
     }
 
     if (dir == MC_DIR_NONE) {
