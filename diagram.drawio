@@ -1,57 +1,63 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1">
-  <diagram name="ページ-1" id="SdUGIDfRy5zEONNyFrn6">
-    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-3" edge="1" parent="1" source="aX36ZGtlaTwRiCIW_akK-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aX36ZGtlaTwRiCIW_akK-2">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-4" connectable="0" parent="aX36ZGtlaTwRiCIW_akK-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Key States (WASD &amp;amp; Space)" vertex="1">
-          <mxGeometry relative="1" x="-0.2615" y="-2" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="PS2 Keyboard Driver" vertex="1">
-          <mxGeometry height="60" width="120" x="160" y="380" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-6" edge="1" parent="1" source="aX36ZGtlaTwRiCIW_akK-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aX36ZGtlaTwRiCIW_akK-5">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-11" connectable="0" parent="aX36ZGtlaTwRiCIW_akK-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Sound Effect Trigger" vertex="1">
-          <mxGeometry relative="1" x="0.6571" y="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-9" edge="1" parent="1" source="aX36ZGtlaTwRiCIW_akK-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aX36ZGtlaTwRiCIW_akK-7">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-10" connectable="0" parent="aX36ZGtlaTwRiCIW_akK-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Entity Position/MapID/Text&lt;/font&gt;" vertex="1">
-          <mxGeometry relative="1" x="0.7333" y="-4" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Game State &amp;amp; Movement&amp;nbsp;" vertex="1">
-          <mxGeometry height="65" width="120" x="160" y="505" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Audio Driver" vertex="1">
-          <mxGeometry height="60" width="120" x="50" y="690" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-14" edge="1" parent="1" source="aX36ZGtlaTwRiCIW_akK-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aX36ZGtlaTwRiCIW_akK-13">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-15" connectable="0" parent="aX36ZGtlaTwRiCIW_akK-14" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="RGB Pixel values" vertex="1">
-          <mxGeometry relative="1" x="-0.2444" y="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Rendering Logic" vertex="1">
-          <mxGeometry height="60" width="120" x="270" y="690" as="geometry" />
-        </mxCell>
-        <mxCell id="aX36ZGtlaTwRiCIW_akK-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="VGA Buffer" vertex="1">
-          <mxGeometry height="60" width="120" x="270" y="790" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram name="ページ-1" id="SdUGIDfRy5zEONNyFrn6">
+        <mxGraphModel dx="385" dy="460" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="aX36ZGtlaTwRiCIW_akK-1" target="aX36ZGtlaTwRiCIW_akK-2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-4" value="Key States (WASD &amp;amp; Space)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="aX36ZGtlaTwRiCIW_akK-3" connectable="0" vertex="1">
+                    <mxGeometry x="-0.2615" y="-2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-1" value="PS2 Keyboard Driver" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="380" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="aX36ZGtlaTwRiCIW_akK-2" target="aX36ZGtlaTwRiCIW_akK-5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-11" value="Sound Effect Trigger" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="aX36ZGtlaTwRiCIW_akK-6" connectable="0" vertex="1">
+                    <mxGeometry x="0.6571" y="1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="aX36ZGtlaTwRiCIW_akK-2" target="aX36ZGtlaTwRiCIW_akK-7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-10" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Entity Position/MapID/Text&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="aX36ZGtlaTwRiCIW_akK-9" connectable="0" vertex="1">
+                    <mxGeometry x="0.7333" y="-4" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-2" value="Game State &amp;amp; Movement&amp;nbsp;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="505" width="120" height="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-5" value="Audio Driver" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="690" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="aX36ZGtlaTwRiCIW_akK-7" target="2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-15" value="RGB Pixel values" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="aX36ZGtlaTwRiCIW_akK-14" connectable="0" vertex="1">
+                    <mxGeometry x="-0.2444" y="1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-7" value="Rendering Logic" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="270" y="690" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="aX36ZGtlaTwRiCIW_akK-13" value="VGA Buffer" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="270" y="910" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="aX36ZGtlaTwRiCIW_akK-13">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="Frame Buffer Control&lt;br&gt;(Double Buffering / VSync)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="250" y="810" width="160" height="60" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

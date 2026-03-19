@@ -8,6 +8,7 @@
 #include "graphics/titleScreen/titleScreenDraw.h"
 #include "graphics/textbox/textBoxSprite.h"
 #include "graphics/sprites/spacebar/spacebar_frames.h"
+#include "../hardware/keyboard.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -47,8 +48,14 @@ int main(void)
     clear_screen();
 
     initTitleScreen();
-    unsigned int titleFrames = 0;
-    while (titleFrames < 100) {
+    bool title_done = false;
+    while (!title_done) { // waiting for the space key
+        update_keyboard();
+        
+        if (is_key_space_pressed()) { 
+            title_done = true;
+        }
+
         drawTitleScreen();
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, WHITE);
 
@@ -65,7 +72,6 @@ int main(void)
                         TRANSPARENT_COLOUR);
 
         wait_for_vsync();
-        titleFrames++;
     }
     
     init_map();
@@ -83,7 +89,10 @@ int main(void)
                                                    BLACK);
     wait_for_vsync();
 
+    bool prev_space = false;
     while (1) {
+        update_keyboard();
+        
         int phase = (frame_count / 300) & 1; // swap every 5 seconds
         if (phase != current_phase) {
             current_phase = phase;
@@ -103,28 +112,10 @@ int main(void)
         }
         frame_count++;
 
-        bool up = false, down = false, left = false, right = false;
-        int t = (int)(frame_count % 540);   // 9 phases of 60 frames
-        int movePhase = t / 60;
-        if (movePhase == 0) {
-            right = true;                   // E
-        } else if (movePhase == 1) {
-            down = true;                    // S
-        } else if (movePhase == 2) {
-            left = true;                    // W
-        } else if (movePhase == 3) {
-            up = true;                      // N
-        } else if (movePhase == 4) {
-            up = true; right = true;        // NE
-        } else if (movePhase == 5) {
-            up = true; left = true;         // NW
-        } else if (movePhase == 6) {
-            down = true; right = true;      // SE
-        } else if (movePhase == 7) {
-            down = true; left = true;       // SW
-        } else {
-            // movePhase == 8 -> idle (all false)
-        }
+        bool up = is_key_w_pressed();
+        bool down = is_key_s_pressed();
+        bool left = is_key_a_pressed();
+        bool right = is_key_d_pressed();
 //full map redraw 
         draw_map();
         drawSpriteAnimation();
@@ -139,10 +130,11 @@ int main(void)
                                                           textboxMsg,
                                                           BLACK);
 
-            if (textboxDone && !textboxPrevDone) {
+            bool curr_space = is_key_space_pressed();
+            if (textboxDone && curr_space && !prev_space) {
                 textboxMsg = (textboxMsg == textboxMsg1) ? textboxMsg2 : textboxMsg1;
             }
-            textboxPrevDone = textboxDone;
+            prev_space = curr_space;
         }
         wait_for_vsync();
     }
