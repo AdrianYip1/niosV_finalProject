@@ -1,5 +1,6 @@
 #include "map.h"
 #include "tiles.h"
+#include "backdrops/backdrop1_tiles.h"
 
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 
@@ -41,10 +42,16 @@ static const TileId preset_black[MAP_HEIGHT][MAP_WIDTH] = {
     { TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK, TILE_BLACK },
 };
 
-static const TileId *const preset_ptrs[MAP_PRESET_COUNT] = {
+static const TileId *const preset_ptrs[] = {
     (const TileId *)preset_route,
     (const TileId *)preset_black,
+    (const TileId *)preset_backdrop1,
 };
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+_Static_assert((sizeof(preset_ptrs) / sizeof(preset_ptrs[0])) == MAP_PRESET_COUNT,
+               "preset_ptrs out of sync with MapPresetId");
+#endif
 
 void load_map_preset(MapPresetId preset) {
     if (preset >= MAP_PRESET_COUNT) return;

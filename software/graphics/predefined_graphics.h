@@ -7,7 +7,9 @@
 typedef enum {
     TILE_GRASS = 0,
     TILE_BLACK,
-    TILE_COUNT
+    TILE_BACKDROP1_START,
+    TILE_BACKDROP1_END = TILE_BACKDROP1_START + 299,
+    TILE_COUNT = TILE_BACKDROP1_END + 1,
 } TileId;
 
 // 16x16 tiles 
