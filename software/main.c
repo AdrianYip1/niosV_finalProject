@@ -11,6 +11,7 @@
 #include "graphics/sprites/spacebar/spacebar_frames.h"
 #include "../hardware/keyboard.h"
 #include "textinput/getTextFromUser.h"
+#include "graphics/textbox/small_spacebar.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -29,6 +30,9 @@
 #define SPACEBAR_Y (TEXTBOX_Y - SPACEBAR_HEIGHT - 4)
 #define SPACEBAR_SPEED_FRAMES 8
 #define SPACEBAR_TITLE_Y (SCREEN_HEIGHT - SPACEBAR_HEIGHT - 12)
+
+#define SMALL_SPACEBAR_X SPACEBAR_X + SPACEBAR_WIDTH - 5
+#define SMALL_SPACEBAR_Y SPACEBAR_Y + SPACEBAR_HEIGHT -5
 
 
 #define TITLE_TEXT_PIXEL_WIDTH ((int)((sizeof(TEXT_TITLE) - 1) * 8))
@@ -198,16 +202,9 @@ int main(void)
                 textBoxSprite, TEXTBOX_X, TEXTBOX_Y, TEXT_MESSAGES[gameplayTextboxIndex], BLACK);
 
             if (gameplayTextboxDone) {
-                // Animate and show the "press space" prompt only when done typing.
-                spacebarTimer++;
-                if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
-                    spacebarTimer = 0;
-                    spacebarFrame = (spacebarFrame + 1) % SPACEBAR_FRAME_COUNT;
-                }
-
-                draw_sprite_any(spacebarFrames[spacebarFrame],
-                                 SPACEBAR_WIDTH, SPACEBAR_HEIGHT,
-                                 SPACEBAR_X, SPACEBAR_Y,
+                draw_sprite_any(small_spacebar,
+                                 16, 16,
+                                 SMALL_SPACEBAR_X, SMALL_SPACEBAR_Y,
                                  TRANSPARENT_COLOUR);
 
                 if (spacePressed) {
@@ -217,9 +214,6 @@ int main(void)
                         hide_textbox(TEXTBOX_X, TEXTBOX_Y);
                     }
                 }
-            } else {
-                spacebarTimer = 0;
-                spacebarFrame = 0;
             }
         }
 
