@@ -1,6 +1,6 @@
 #include "getTextFromUser.h"
 
-#include "../hardware/keyboard.h"
+#include "../../hardware/keyboard.h"
 #include "../graphics/graphics.h"
 #include "../graphics/textbox/textMessages.h"
 
