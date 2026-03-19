@@ -116,10 +116,11 @@ int main(void)
         bool down = is_key_s_pressed();
         bool left = is_key_a_pressed();
         bool right = is_key_d_pressed();
+        bool shift = is_key_shift_pressed();
 //full map redraw 
         draw_map();
         drawSpriteAnimation();
-        mcMovingTick(up, down, left, right);
+        mcMovingTick(up, down, left, right, shift);
         
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TITLE_TEXT_STRING, colour);
 

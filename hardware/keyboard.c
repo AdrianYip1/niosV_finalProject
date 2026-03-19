@@ -7,6 +7,7 @@ static bool a_pressed = false;
 static bool s_pressed = false;
 static bool d_pressed = false;
 static bool space_pressed = false;
+static bool shift_pressed = false;
 
 static bool up_pressed = false;
 static bool down_pressed = false;
@@ -51,6 +52,8 @@ void update_keyboard(void) {
                         case 0x1C: a_pressed = state; break;
                         case 0x1B: s_pressed = state; break;
                         case 0x23: d_pressed = state; break;
+                        case 0x12:
+                        case 0x59: shift_pressed = state; break;
                         case 0x29: 
                             if (state) space_pressed = true; // Latch Make Code only
                             break;
@@ -75,6 +78,8 @@ bool is_key_space_pressed(void) {
     space_pressed = false; // クリアして「読んだ」ことにする（Fast-Tap対策）
     return temp; 
 }
+
+bool is_key_shift_pressed(void) { return shift_pressed; }
 
 bool is_key_up_pressed(void) { return up_pressed; }
 bool is_key_down_pressed(void) { return down_pressed; }
