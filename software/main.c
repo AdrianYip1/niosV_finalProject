@@ -27,7 +27,7 @@
 #define TEXTBOX_Y (SCREEN_HEIGHT - TEXT_BOX_HEIGHT)
 
 #define SPACEBAR_X ((SCREEN_WIDTH - SPACEBAR_WIDTH) / 2)
-#define SPACEBAR_Y (TEXTBOX_Y - SPACEBAR_HEIGHT - 4)
+#define SPACEBAR_Y (TEXTBOX_Y - SPACEBAR_HEIGHT - 8)
 #define SPACEBAR_SPEED_FRAMES 8
 #define SPACEBAR_TITLE_Y (SCREEN_HEIGHT - SPACEBAR_HEIGHT - 12)
 
@@ -175,7 +175,7 @@ int main(void)
                 load_map_preset(MAP_PRESET_ROUTE);
                 colour = BLACK;
             } else {
-                load_map_preset(MAP_PRESET_BOSS);
+                load_map_preset(MAP_PRESET_BACKDROP1);
                 colour = WHITE;
             }
         }
