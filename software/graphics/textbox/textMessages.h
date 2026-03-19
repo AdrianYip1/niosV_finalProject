@@ -16,9 +16,9 @@
 static const char TEXT_TITLE[] = "PRESS SPACE TO START";
 
 //question + (then) appended live name while typing.
-static const char TEXTBOX_MSG_2[] = "Hello! What is your name? \n\{NAME}";
+static const char TEXTBOX_MSG_2[] = "Hello! What is your name?\n{NAME}";
 static const char TEXTBOX_MSG_3[] = "{NAME}... Is that correct?";
-static const char TEXTBOX_MSG_4[] = "Ok! Welcome{NAME}";
+static const char TEXTBOX_MSG_4[] = "Ok! Welcome {NAME}";
 static const char TEXTBOX_MSG_5[] = "placeholder text 123!@#$%^&*()";
 
 static const char *const TEXT_MESSAGES[] = {

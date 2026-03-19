@@ -1,14 +1,14 @@
 from PIL import Image
 import os
 
-TILE_SIZE = 36  # change this to the size of the sprite whenever you switch
+TILE_SIZE = 16  # change this to the size of the sprite whenever you switch
 # sprites will be 48x48 to preserve detail and tiles are 16x16
 TRANSPARENT_KEY = (255, 0, 255)  # FF00FF pink
 WHITE_THRESHOLD = 240  # treat near-white as transparent too
-OUTPUT_C_FILE = "mcIdle_frames.c"
-OUTPUT_H_FILE = "mcIdle_frames.h"
-TILE_SIZE_DEFINE = "MC_IDLE_TILE_SIZE"
-SPRITE_PREFIX = "mcIdle_frame_"
+OUTPUT_C_FILE = "small_spacebar.c"
+OUTPUT_H_FILE = "small_spacebar.h"
+TILE_SIZE_DEFINE = "SMALL_SPACEBAR"
+SPRITE_PREFIX = "small_spacebar_"
 
 
 def rgb_to_565(r, g, b):
@@ -41,16 +41,16 @@ def convert(name, var_name, out_file):
 def write_header(header_name, frame_count): #automatically writes the header file for the sprite
     with open(header_name, "w") as h:
         h.write("#pragma once\n\n")
-        h.write(f"#define MC_IDLE_TILE_SIZE {TILE_SIZE}\n") 
-        h.write(f"#define MC_IDLE_FRAME_COUNT {frame_count}\n\n")
+        h.write(f"#define SMALL_SPACEBAR_TILE_SIZE {TILE_SIZE}\n") 
+        h.write(f"#define SMALL_SPACEBAR_FRAME_COUNT {frame_count}\n\n")
 
         for i in range(frame_count):
             h.write(
-                f"extern const unsigned short mcIdle_frame_{i}[TILE_SIZE * TILE_SIZE];\n"
+                f"extern const unsigned short small_spacebar_{i}[TILE_SIZE * TILE_SIZE];\n"
             )
 
         h.write(
-            "\nextern const unsigned short* const mcIdleFrames[MC_IDLE_FRAME_COUNT];\n"
+            "\nextern const unsigned short* const smallSpacebar[SMALL_SPACEBAR_FRAME_COUNT];\n"
         )
 
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":  # loop through every single frame_#.png file, delete
 
         if frame_count > 0:
             out.write(
-                f"const unsigned short* const mcIdleFrames[MC_IDLE_FRAME_COUNT] = {{\n"
+                f"const unsigned short* const smallSpacebar[SMALL_SPACEBAR_FRAME_COUNT] = {{\n"
             )
             for i in range(frame_count):
                 end = "," if i + 1 < frame_count else ""

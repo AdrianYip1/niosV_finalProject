@@ -1,4 +1,3 @@
-// Auto-generated from ImageConvertHelpers/newTextBox.png
 #include "textBoxSprite.h"
 
 const unsigned short textBoxSprite[TEXT_BOX_WIDTH * TEXT_BOX_HEIGHT] = {
