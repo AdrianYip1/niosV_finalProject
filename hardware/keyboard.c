@@ -9,9 +9,6 @@ static bool d_pressed = false;
 static bool space_pressed = false;
 static bool shift_pressed = false;
 
-//for uppercase letters
-static bool shift_pressed = false;
-
 static bool up_pressed = false;
 static bool down_pressed = false;
 static bool left_pressed = false;
@@ -51,9 +48,6 @@ bool is_key_enter_pressed(void) {
 }
 
 static char scan_to_char(unsigned char code) {
-    const char base_upper = 'A';
-    const char base_lower = 'a';
-
     bool upper = shift_pressed;
 
     switch (code) {
@@ -144,13 +138,10 @@ void update_keyboard(void) {
                         case 0x1C: a_pressed = state; break;
                         case 0x1B: s_pressed = state; break;
                         case 0x23: d_pressed = state; break;
-                        case 0x12:
-                        case 0x59: shift_pressed = state; break;
+                        case 0x12: // Left Shift
+                        case 0x59: shift_pressed = state; break; // Right Shift
                         case 0x29: 
                             if (state) space_pressed = true; // Latch Make Code only
-                            break;
-                        case 0x12: // Left Shift
-                            shift_pressed = state;
                             break;
                         default: break;
                     }
