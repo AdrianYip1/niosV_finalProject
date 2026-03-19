@@ -1,29 +1,26 @@
 from PIL import Image
 import os
 
-TILE_SIZE = 16  # change this to the size of the sprite whenever you switch
-# sprites will be 48x48 to preserve detail and tiles are 16x16
+IMAGE_WIDTH = 320
+IMAGE_HEIGHT = 149
 TRANSPARENT_KEY = (255, 0, 255)  # FF00FF pink
 WHITE_THRESHOLD = 240  # treat near-white as transparent too
-OUTPUT_C_FILE = "small_spacebar.c"
-OUTPUT_H_FILE = "small_spacebar.h"
-TILE_SIZE_DEFINE = "SMALL_SPACEBAR"
-SPRITE_PREFIX = "small_spacebar_"
-
+OUTPUT_C_FILE = "backdrop1.c"
+OUTPUT_H_FILE = "backdrop1.h"
+SPRITE_VAR_NAME = "backdrop1"
 
 def rgb_to_565(r, g, b):
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
 
-
 def convert(name, var_name, out_file):
     img = Image.open(name).convert("RGB")
     w, h = img.size
-    assert w == TILE_SIZE and h == TILE_SIZE, f"{name} must be {TILE_SIZE}x{TILE_SIZE}"
+    assert w == IMAGE_WIDTH and h == IMAGE_HEIGHT, f"{name} must be {IMAGE_WIDTH}x{IMAGE_HEIGHT}"
 
-    out_file.write(f"const unsigned short {var_name}[TILE_SIZE * TILE_SIZE] = {{\n")
+    out_file.write(f"const unsigned short {var_name}[BACKDROP1_WIDTH * BACKDROP1_HEIGHT] = {{\n")
     vals = []
-    for y in range(TILE_SIZE):
-        for x in range(TILE_SIZE):
+    for y in range(IMAGE_HEIGHT):
+        for x in range(IMAGE_WIDTH):
             r, g, b = img.getpixel((x, y))
             if (r, g, b) == TRANSPARENT_KEY or (r > WHITE_THRESHOLD and g > WHITE_THRESHOLD and b > WHITE_THRESHOLD):
                 val = 0xF81F  # PINK_TRANSPARENT
@@ -37,45 +34,20 @@ def convert(name, var_name, out_file):
         out_file.write(f"    {line}{end}\n")
     out_file.write("};\n\n")
 
-
-def write_header(header_name, frame_count): #automatically writes the header file for the sprite
+def write_header(header_name):
     with open(header_name, "w") as h:
         h.write("#pragma once\n\n")
-        h.write(f"#define SMALL_SPACEBAR_TILE_SIZE {TILE_SIZE}\n") 
-        h.write(f"#define SMALL_SPACEBAR_FRAME_COUNT {frame_count}\n\n")
+        h.write(f"#define BACKDROP1_WIDTH  {IMAGE_WIDTH}\n")
+        h.write(f"#define BACKDROP1_HEIGHT {IMAGE_HEIGHT}\n\n")
+        h.write(f"extern const unsigned short backdrop1[BACKDROP1_WIDTH * BACKDROP1_HEIGHT];\n")
 
-        for i in range(frame_count):
-            h.write(
-                f"extern const unsigned short small_spacebar_{i}[TILE_SIZE * TILE_SIZE];\n"
-            )
+if __name__ == "__main__":
+    name = "backdrop1.png"
+    assert os.path.exists(name), f"{name} not found"
 
-        h.write(
-            "\nextern const unsigned short* const smallSpacebar[SMALL_SPACEBAR_FRAME_COUNT];\n"
-        )
-
-
-if __name__ == "__main__":  # loop through every single frame_#.png file, deletes the pngs and makes the h adn c files
-    frame_count = 0
     with open(OUTPUT_C_FILE, "w") as out:
         out.write(f'#include "{OUTPUT_H_FILE}"\n\n')
-        out.write(f"#define TILE_SIZE {TILE_SIZE_DEFINE}\n\n")
-        i = 0
-        while True:
-            name = f"frame_{i}.png"
-            if not os.path.exists(name):
-                break
-            convert(name, f"{SPRITE_PREFIX}{i}", out)
-            os.remove(name)
-            frame_count += 1
-            i += 1
+        convert(name, SPRITE_VAR_NAME, out)
 
-        if frame_count > 0:
-            out.write(
-                f"const unsigned short* const smallSpacebar[SMALL_SPACEBAR_FRAME_COUNT] = {{\n"
-            )
-            for i in range(frame_count):
-                end = "," if i + 1 < frame_count else ""
-                out.write(f"    {SPRITE_PREFIX}{i}{end}\n")
-            out.write("};\n")
-
-    write_header(OUTPUT_H_FILE, frame_count)
+    write_header(OUTPUT_H_FILE)
+    print(f"Done! Generated {OUTPUT_C_FILE} and {OUTPUT_H_FILE}")
