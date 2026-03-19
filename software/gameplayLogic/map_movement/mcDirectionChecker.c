@@ -21,7 +21,7 @@ static int countTrue4(bool W, bool A, bool S, bool D) {
 
 McDirection mcPickDirection(bool up, bool down, bool left, bool right) {
     if (countTrue4(up, left, down, right) >= 3) {
-        return MC_DIR_INVALID;
+        return MC_DIR_NONE;
     }
 
     if (up && down) {
