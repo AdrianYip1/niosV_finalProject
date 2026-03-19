@@ -13,26 +13,16 @@
 #define FRAMEBUFFER_0 0x02000000
 #define FRAMEBUFFER_1 0x02040000
 
-#ifndef GRAPHICS_USE_DOUBLE_BUFFER
-#define GRAPHICS_USE_DOUBLE_BUFFER 1
-#endif
-
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
 static unsigned int pixel_buffer_start;   // address drawing into (back buffer)
-#if GRAPHICS_USE_DOUBLE_BUFFER
 static unsigned int front_buffer_start;   // address currently being displayed
-#endif
 static unsigned int back_buffer_start;    // address draw the next frame into
 
 void init_graphics() {
     pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
 
-#if GRAPHICS_USE_DOUBLE_BUFFER
     front_buffer_start = FRAMEBUFFER_0;
     back_buffer_start = FRAMEBUFFER_1;
-#else
-    back_buffer_start = FRAMEBUFFER_0;
-#endif
 
     // configure the back buffer for drawing.
     *(pixel_ctrl_ptr + 1) = back_buffer_start;
@@ -41,12 +31,10 @@ void init_graphics() {
     clear_screen();
     wait_for_vsync();
 
-#if GRAPHICS_USE_DOUBLE_BUFFER
     // Clear the other buffer
     pixel_buffer_start = (back_buffer_start == FRAMEBUFFER_0) ? FRAMEBUFFER_1 : FRAMEBUFFER_0;
     clear_screen();
     pixel_buffer_start = back_buffer_start;
-#endif
 }
 
 void draw_pixel(int x, int y, short int colour) {
@@ -72,7 +60,6 @@ void wait_for_vsync() {
     *pixel_ctrl_ptr = 1;
     while ((*(pixel_ctrl_ptr + 3) & 0x01) != 0) { }
 
-#if GRAPHICS_USE_DOUBLE_BUFFER
     //old front becomes  back.
     unsigned int tmp = front_buffer_start;
     front_buffer_start = back_buffer_start;
@@ -81,9 +68,6 @@ void wait_for_vsync() {
     // get nextback buffer and update the draw pointer.
     *(pixel_ctrl_ptr + 1) = back_buffer_start;
     pixel_buffer_start = back_buffer_start;
-#else
-    pixel_buffer_start = back_buffer_start;
-#endif
 }
 
 void set_pixel_buffer(unsigned int addr) {
@@ -94,8 +78,8 @@ void set_pixel_buffer(unsigned int addr) {
 }
 
 unsigned int get_other_buffer(void) {
-    // Returns the buffer that is not currently being drawn into.
-    return (pixel_buffer_start == FRAMEBUFFER_0) ? FRAMEBUFFER_1 : FRAMEBUFFER_0;
+    // With double buffering, other is the currently displayed front buffer.
+    return front_buffer_start;
 }
 
 
