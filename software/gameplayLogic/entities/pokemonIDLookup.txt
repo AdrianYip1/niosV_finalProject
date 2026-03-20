@@ -1,1 +1,3 @@
-ID 1 = Charizard
+ID 1 = Charmander
+ID 2 = Charmeleon
+ID 3 = Charizard
