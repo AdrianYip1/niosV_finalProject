@@ -2,12 +2,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define NUM_TYPES 18
+
 typedef enum {
     TYPE_NORMAL = 0,
     TYPE_FIRE,
     TYPE_WATER,
-    TYPE_GRASS,
     TYPE_ELECTRIC,
+    TYPE_GRASS,
     TYPE_ICE,
     TYPE_FIGHTING,
     TYPE_POISON,
@@ -18,6 +20,9 @@ typedef enum {
     TYPE_ROCK,
     TYPE_GHOST,
     TYPE_DRAGON,
+    TYPE_DARK,
+    TYPE_STEEL,
+    TYPE_FAIRY,
     TYPE_NONE
 } PokemonType;
 
@@ -73,27 +78,21 @@ static inline const PokemonData *checkEvolution(const PokemonData *species, int 
     return NULL;
 }
 
-// normal type
+// attacks
 extern const AttackData TACKLE;
 extern const AttackData SCRATCH;
 extern const AttackData GROWL;
 extern const AttackData SLASH;
 extern const AttackData SCARY_FACE;
 extern const AttackData SMOKESCREEN;
-
-// fire type
 extern const AttackData EMBER;
 extern const AttackData FIRE_FANG;
 extern const AttackData FLAMETHROWER;
 extern const AttackData FIRE_SPIN;
 extern const AttackData INFERNO;
 extern const AttackData HEAT_WAVE;
-
-// dragon type
 extern const AttackData DRAGON_RAGE;
 extern const AttackData DRAGON_CLAW;
-
-// flying type
 extern const AttackData WING_ATTACK;
 extern const AttackData AIR_SLASH;
 
@@ -101,3 +100,6 @@ extern const AttackData AIR_SLASH;
 extern const PokemonData CHARMANDER;
 extern const PokemonData CHARMELEON;
 extern const PokemonData CHARIZARD;
+
+// type chart — defined once in pokemonObject.c
+extern const float typeChart[NUM_TYPES][NUM_TYPES];
