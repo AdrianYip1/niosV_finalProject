@@ -1,1 +1,20 @@
 ID 1 = Tackle
+ID 2 = Scratch
+ID 3 = Growl
+ID 4 = Slash
+ID 5 = Scary Face
+ID 6 = Smokescreen
+
+ID 20 = Ember
+ID 21 = Fire Fang
+ID 22 = Flamethrower
+ID 23 = Fire Spin
+ID 24 = Inferno
+ID 25 = Heat Wave
+
+ID 40 = Dragon Rage
+ID 41 = Dragon Claw
+
+ID 50 = Wing Attack
+ID 51 = Air Slash
+
