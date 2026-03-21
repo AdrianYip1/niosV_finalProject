@@ -156,7 +156,7 @@ int main(void)
     draw_map();
     draw_sprite_any(battleIconBag, 10, 50, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconFight, 200, 100, TRANSPARENT_COLOUR);
-    draw_sprite_any(battleIconRun, 50, 20, TRANSPARENT_COLOUR)
+    draw_sprite_any(battleIconRun, 50, 20, TRANSPARENT_COLOUR);
     draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
     textboxMsgIndex++;
     wait_for_vsync();
