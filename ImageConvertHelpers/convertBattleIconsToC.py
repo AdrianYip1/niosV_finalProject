@@ -117,7 +117,7 @@ def main() -> None:
         Sprite(
             name="fight",
             var_name="battleIconFight",
-            img_path=repo_root / "ImageConvertHelpers" / "110x58Fight.png",
+            img_path=repo_root / "ImageConvertHelpers" / "110x85Fight.png",
             group="fight",
         ),
     ]
