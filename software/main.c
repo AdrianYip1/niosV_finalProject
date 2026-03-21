@@ -12,11 +12,12 @@
 #include "../hardware/keyboard.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
-#include "graphics/sprites/battleicons.h"
+#include "graphics/sprites/battleicons/battle_icons.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
+
 
 
 #define SCREEN_WIDTH 320
