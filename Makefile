@@ -15,6 +15,7 @@ SRCS := software/main.c \
         software/graphics/predefined_graphics.c \
         software/graphics/tiles.c \
         software/graphics/backdrops/backdrop1_tiles.c \
+        software/graphics/sprites/battleIcons/battle_icons.c \
         software/graphics/sprites/mainCharacter/idle/mcIdle_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingEast_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingNorth_frames.c \
