@@ -154,9 +154,9 @@ int main(void)
     mcMovingInit(80, 112, MC_FACING_S);
 
     draw_map();
-    draw_sprite_any(battleIconBag, 10, 50, TRANSPARENT_COLOUR);
-    draw_sprite_any(battleIconFight, 200, 100, TRANSPARENT_COLOUR);
-    draw_sprite_any(battleIconRun, 50, 20, TRANSPARENT_COLOUR);
+    draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, 10, 50, TRANSPARENT_COLOUR);
+    draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,200, 100, TRANSPARENT_COLOUR);
+    draw_sprite_any(battleIconRun,BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, 50, 20, TRANSPARENT_COLOUR);
     draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
     textboxMsgIndex++;
     wait_for_vsync();
