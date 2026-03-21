@@ -48,6 +48,11 @@ void getTextFromUserIntoTextbox(const unsigned short *textBoxSprite,
                 continue;
             }
 
+            // Ignore spaces during name entry.
+            if (c == ' ') {
+                continue;
+            }
+
             if (c >= ' ' && c <= '~') { //normal character input
                 if (len < (USER_TEXT_MAX - 1)) {
                     g_userText[len++] = c;
