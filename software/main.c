@@ -18,7 +18,7 @@
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
 
-
+#define FIGHT_BUTTON_LOCATION_Y 240 - BATTLE_ICON_FIGHT_HEIGHT - 20
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
@@ -155,7 +155,7 @@ int main(void)
 
     draw_map();
     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, 10, 50, TRANSPARENT_COLOUR);
-    draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,200, 100, TRANSPARENT_COLOUR);
+    draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,200, FIGHT_BUTTON_LOCATION_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconRun,BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, 50, 20, TRANSPARENT_COLOUR);
     draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
     textboxMsgIndex++;
@@ -201,7 +201,7 @@ int main(void)
         drawSpriteAnimation();
         mcMovingTick(up, down, left, right, shift);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, 10, 50, TRANSPARENT_COLOUR);
-        draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,200, 100, TRANSPARENT_COLOUR);
+        draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, 200, FIGHT_BUTTON_LOCATION_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconRun,BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, 50, 20, TRANSPARENT_COLOUR);
         draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
 
