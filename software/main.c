@@ -12,7 +12,7 @@
 #include "../hardware/keyboard.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
-#include "graphics/sprites/battle_icons.h"
+#include "graphics/sprites/battleicons.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
