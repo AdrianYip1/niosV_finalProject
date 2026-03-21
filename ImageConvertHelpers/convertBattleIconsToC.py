@@ -1,0 +1,228 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+from PIL import Image
+
+
+TRANSPARENT_565 = 0xF81F  # project transparent key (pink)
+
+# Fight icon sizing rules:
+# - run/bag are cropped to non-pink bbox then padded (top-left) to a shared size
+# - fight is padded (top-left) to be ~2x the small icon height + a little extra padding
+FIGHT_EXTRA_PAD_Y = 8
+FIGHT_MAX_HEIGHT = 90
+
+
+def is_magentaish(r: int, g: int, b: int, a: int) -> bool:
+    if a == 0:
+        return True
+    # Exact #FF00FF and also near-magenta from conversion artifacts
+    return r >= 200 and b >= 200 and g <= 100
+
+
+def rgb_to_565(r: int, g: int, b: int) -> int:
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+
+
+@dataclass(frozen=True)
+class Sprite:
+    name: str
+    var_name: str
+    img_path: Path
+    group: str
+
+
+def find_non_magenta_bbox(im: Image.Image) -> tuple[int, int, int, int]:
+    rgba = im.convert("RGBA")
+    w, h = rgba.size
+    px = rgba.load()
+
+    left = w
+    top = h
+    right = -1
+    bottom = -1
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if is_magentaish(r, g, b, a):
+                continue
+            if x < left:
+                left = x
+            if y < top:
+                top = y
+            if x > right:
+                right = x
+            if y > bottom:
+                bottom = y
+
+    if right < left or bottom < top:
+        return (0, 0, 1, 1)
+    return (left, top, right + 1, bottom + 1)
+
+
+def crop_and_pad_top_left(im: Image.Image, target_w: int, target_h: int) -> Image.Image:
+    bbox = find_non_magenta_bbox(im)
+    cropped = im.convert("RGBA").crop(bbox)
+
+    out = Image.new("RGBA", (target_w, target_h), (255, 0, 255, 255))
+    out.paste(cropped, (0, 0))
+    return out
+
+
+def image_to_565_vals(im: Image.Image) -> list[str]:
+    rgba = im.convert("RGBA")
+    w, h = rgba.size
+    px = rgba.load()
+
+    vals: list[str] = []
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if is_magentaish(r, g, b, a):
+                v = TRANSPARENT_565
+            else:
+                v = rgb_to_565(r, g, b)
+            vals.append(f"0x{v:04X}")
+    return vals
+
+
+def emit_array(
+    lines: list[str],
+    c_type: str,
+    var_name: str,
+    w_macro: str,
+    h_macro: str,
+    vals: list[str],
+) -> None:
+    lines.append(f"const {c_type} {var_name}[{w_macro} * {h_macro}] = {{")
+    for i in range(0, len(vals), 16):
+        chunk = vals[i : i + 16]
+        end = "," if i + 16 < len(vals) else ""
+        lines.append("    " + ", ".join(chunk) + end)
+    lines.append("};")
+    lines.append("")
+
+
+def main() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+
+    sprites = [
+        Sprite(
+            name="run",
+            var_name="battleIconRun",
+            img_path=repo_root / "ImageConvertHelpers" / "60x41Run.png",
+            group="small",
+        ),
+        Sprite(
+            name="bag",
+            var_name="battleIconBag",
+            img_path=repo_root / "ImageConvertHelpers" / "60x41Bag.png",
+            group="small",
+        ),
+        Sprite(
+            name="fight",
+            var_name="battleIconFight",
+            img_path=repo_root / "ImageConvertHelpers" / "100x53Fight.png",
+            group="fight",
+        ),
+    ]
+
+    for s in sprites:
+        if not s.img_path.exists():
+            raise FileNotFoundError(f"Missing input image: {s.img_path}")
+
+    # Compute cropped sizes per sprite (ignoring magenta)
+    cropped_sizes: dict[str, tuple[int, int]] = {}
+    for s in sprites:
+        im = Image.open(s.img_path)
+        l, t, r, b = find_non_magenta_bbox(im)
+        cropped_sizes[s.name] = (r - l, b - t)
+
+    # Determine base target sizes per group (max within the group)
+    groups: dict[str, list[Sprite]] = {}
+    for s in sprites:
+        groups.setdefault(s.group, []).append(s)
+
+    target_sizes: dict[str, tuple[int, int]] = {}
+    for group_name, group_sprites in groups.items():
+        target_w = max(cropped_sizes[s.name][0] for s in group_sprites)
+        target_h = max(cropped_sizes[s.name][1] for s in group_sprites)
+        target_sizes[group_name] = (target_w, target_h)
+
+    # Special rule: fight height should be ~2x small height (+ padding), but capped.
+    small_w, small_h = target_sizes["small"]
+    fight_w, fight_h = target_sizes["fight"]
+    desired_fight_h = small_h * 2 + FIGHT_EXTRA_PAD_Y
+    fight_h = max(fight_h, min(FIGHT_MAX_HEIGHT, desired_fight_h))
+    target_sizes["fight"] = (fight_w, fight_h)
+
+    out_dir = repo_root / "software" / "graphics" / "sprites" / "battleIcons"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_h = out_dir / "battle_icons.h"
+    out_c = out_dir / "battle_icons.c"
+
+    # Header
+    h_lines: list[str] = []
+    h_lines.append("#pragma once")
+    h_lines.append("")
+    h_lines.append("// Auto-generated by ImageConvertHelpers/convertBattleIconsToC.py")
+    h_lines.append("")
+    h_lines.append(f"#define BATTLE_ICON_SMALL_WIDTH  {target_sizes['small'][0]}")
+    h_lines.append(f"#define BATTLE_ICON_SMALL_HEIGHT {target_sizes['small'][1]}")
+    h_lines.append(f"#define BATTLE_ICON_FIGHT_WIDTH  {target_sizes['fight'][0]}")
+    h_lines.append(f"#define BATTLE_ICON_FIGHT_HEIGHT {target_sizes['fight'][1]}")
+    h_lines.append("")
+    h_lines.append("extern const unsigned short battleIconRun[BATTLE_ICON_SMALL_WIDTH * BATTLE_ICON_SMALL_HEIGHT];")
+    h_lines.append("extern const unsigned short battleIconBag[BATTLE_ICON_SMALL_WIDTH * BATTLE_ICON_SMALL_HEIGHT];")
+    h_lines.append("extern const unsigned short battleIconFight[BATTLE_ICON_FIGHT_WIDTH * BATTLE_ICON_FIGHT_HEIGHT];")
+    h_lines.append("")
+
+    out_h.write_text("\n".join(h_lines) + "\n", encoding="utf-8")
+
+    # C
+    c_lines: list[str] = []
+    c_lines.append('#include "battle_icons.h"')
+    c_lines.append("")
+
+    for s in sprites:
+        im = Image.open(s.img_path)
+        target_w, target_h = target_sizes[s.group]
+        padded = crop_and_pad_top_left(im, target_w, target_h)
+        vals = image_to_565_vals(padded)
+
+        if s.group == "small":
+            emit_array(
+                c_lines,
+                "unsigned short",
+                s.var_name,
+                "BATTLE_ICON_SMALL_WIDTH",
+                "BATTLE_ICON_SMALL_HEIGHT",
+                vals,
+            )
+        else:
+            emit_array(
+                c_lines,
+                "unsigned short",
+                s.var_name,
+                "BATTLE_ICON_FIGHT_WIDTH",
+                "BATTLE_ICON_FIGHT_HEIGHT",
+                vals,
+            )
+
+    out_c.write_text("\n".join(c_lines), encoding="utf-8")
+
+    print("Cropped (non-pink) sizes:")
+    for name, (w, h) in cropped_sizes.items():
+        print(f"  {name}: {w}x{h}")
+    print("Target sizes (after pad, anchored top-left):")
+    for group_name, (w, h) in target_sizes.items():
+        print(f"  {group_name}: {w}x{h}")
+    print(f"Wrote: {out_h}")
+    print(f"Wrote: {out_c}")
+
+
+if __name__ == "__main__":
+    main()
+
