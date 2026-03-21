@@ -105,13 +105,13 @@ def main() -> None:
         Sprite(
             name="run",
             var_name="battleIconRun",
-            img_path=repo_root / "ImageConvertHelpers" / "60x41Run.png",
+            img_path=repo_root / "ImageConvertHelpers" / "60x47Run.png",
             group="small",
         ),
         Sprite(
             name="bag",
             var_name="battleIconBag",
-            img_path=repo_root / "ImageConvertHelpers" / "60x41Bag.png",
+            img_path=repo_root / "ImageConvertHelpers" / "60x47Bag.png",
             group="small",
         ),
         Sprite(
