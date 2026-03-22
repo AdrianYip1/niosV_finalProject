@@ -50,6 +50,7 @@ SRCS := software/main.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
+		software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
         software/gameplayLogic/map_movement/mcMoving.c
 
 SHELL	:= cmd.exe
