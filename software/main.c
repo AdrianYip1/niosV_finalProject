@@ -92,6 +92,8 @@
 #define PARTY_6_X 253 + 3
 #define PARTY_6_Y 240 - 91 + 23
 
+#define battleBackdropY 240 - 91
+
 //location for status effects for opponent hp
 
 //location for drawing names, hp, level
@@ -242,6 +244,7 @@ int main(void)
     int bobTimer = 0;
     const int bobSpeedFrames = 3;
     int shadePulseFrame = 0;
+    int shakeFrame = 0
 
     GameState gameState = GAME_STATE_BATTLE;
     BattleUiState battleUiState = BATTLE_UI_MENU;
@@ -355,12 +358,12 @@ int main(void)
                         charizardBackSprite.x, charizardBackSprite.y,
                         TRANSPARENT_COLOUR,
                         0);
-    draw_sprite_any_flash(charmanderFrontSprite.pixels,
+    draw_sprite_any_shake(charmanderFrontSprite.pixels,
                           charmanderFrontSprite.width, charmanderFrontSprite.height,
                           charmanderFrontSprite.x, charmanderFrontSprite.y,
                           TRANSPARENT_COLOUR,
                           0);
-    draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, 91, TRANSPARENT_COLOUR);
+    draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
     if (cursorIndex == 0) {
         draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
                                     BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, 0);
@@ -503,13 +506,13 @@ int main(void)
                             charizardBackSprite.x, charizardBackSprite.y,
                             TRANSPARENT_COLOUR,
                             bobFrame);
-        draw_sprite_any_flash(charmanderFrontSprite.pixels,
+        draw_sprite_any_shake(charmanderFrontSprite.pixels,
                               charmanderFrontSprite.width, charmanderFrontSprite.height,
                               charmanderFrontSprite.x, charmanderFrontSprite.y,
                               TRANSPARENT_COLOUR,
-                              flashFrame);
+                              shakeFrame);
 
-        draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, 91, TRANSPARENT_COLOUR);
+        draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
         if (cursorIndex == 0) {
             draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
