@@ -46,9 +46,9 @@
 #define BATTLE_ICON_RUN_X (BATTLE_ICON_BAG_X)
 #define BATTLE_ICON_RUN_Y (230 - BATTLE_ICON_SMALL_HEIGHT + 12)
 
-#define OPP_HP_EMPTY_X (SCREEN_WIDTH - OPP_HP_EMPTY_WIDTH - 8)
+#define OPP_HP_EMPTY_X 0
 #define OPP_HP_EMPTY_Y 8
-#define MY_HP_EMPTY_X  8
+#define MY_HP_EMPTY_X  240 - MY_HP_EMPTY_WIDTH
 #define MY_HP_EMPTY_Y  (TEXTBOX_Y - MY_HP_EMPTY_HEIGHT - 8)
 
 #define SPACEBAR_X ((SCREEN_WIDTH - SPACEBAR_WIDTH) / 2)
@@ -64,7 +64,6 @@
 #define TITLE_TEXT_X_CENTERED   ((SCREEN_WIDTH - TITLE_TEXT_PIXEL_WIDTH) / 2)
 #define TITLE_TEXT_Y_ABOVE_BAR  (SPACEBAR_TITLE_Y - 12)
 
-#define DEBUG_DRAW_CHARIZARD 1
 
 int main(void)
 {
@@ -84,6 +83,8 @@ int main(void)
 
     StaticSprite charizardBackSprite;
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
+    StaticSprite charmanderFrontSprite;
+    initPokemonFrontBattleSpriteDefault(&charmanderFrontSprite, POKEMON_ID_CHARMANDER);
 
     // Init VGA and tiles
     init_graphics();
@@ -180,6 +181,7 @@ int main(void)
 
     draw_map();
     drawStaticSprite(&charizardBackSprite);
+    drawStaticSprite(&charmanderFrontSprite);
     draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
@@ -227,6 +229,7 @@ int main(void)
         // full map redraw
         draw_map();
         drawStaticSprite(&charizardBackSprite);
+        drawStaticSprite(&charmanderFrontSprite);
         mcMovingTick(up, down, left, right, shift);
         draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);

@@ -10,10 +10,10 @@
 
 
 #define POKEMON_BATTLE_BACK_X  40
-#define POKEMON_BATTLE_BACK_Y  120
+#define POKEMON_BATTLE_BACK_Y  30
 
 #define POKEMON_BATTLE_FRONT_X 200
-#define POKEMON_BATTLE_FRONT_Y 40
+#define POKEMON_BATTLE_FRONT_Y 0
 
 // Battle sprite initializers (front/back only). Returns false if pokemon_id is unknown.
 bool initPokemonBackBattleSprite(StaticSprite* out, int pokemon_id, int x, int y);
