@@ -13,7 +13,7 @@ def convert_mp3_to_c_array(mp3_path, output_c_path, output_h_path, array_name="a
     # -f WAVE : format is WAV
     # -d UI8@8000 : Unsigned 8-bit integers at 8000Hz
     # -c 1 : 1 channel (Mono)
-    cmd = ["afconvert", "-f", "WAVE", "-d", "UI8@8000", "-c", "1", mp3_path, wav_path]
+    cmd = ["afconvert", "-f", "WAVE", "-d", "UI8@48000", "-c", "1", mp3_path, wav_path]
     try:
         subprocess.run(cmd, check=True)
     except Exception as e:
@@ -74,8 +74,8 @@ extern const unsigned int {array_name}_length;
 
 if __name__ == "__main__":
     mp3_file = "opening.mp3"
-    c_file = "opening_audio.c"
-    h_file = "opening_audio.h"
+    c_file = "../software/se/opening_audio.c"
+    h_file = "../software/se/opening_audio.h"
     
     if not os.path.exists(mp3_file):
         print(f"File not found: {mp3_file}")

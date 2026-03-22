@@ -42,20 +42,16 @@ void audio_update(void) {
             noise_remaining--;
         }
 
-        // BGM logic (8-bit Mono @ 8000Hz)
+        // BGM logic (8-bit Mono @ 48000Hz)
         if (bgm_ptr != NULL && bgm_pos < bgm_len) {
             // Convert 8-bit unsigned (0-255) to signed and scale up to 32-bit range
             int sample8 = bgm_ptr[bgm_pos];
             int sample_signed = (sample8 - 128) << 20; 
             final_sample += sample_signed;
             
-            // Audio core is 48kHz, BGM is 8kHz. Repeat each sample 6 times.
-            static int resample_count = 0;
-            if (++resample_count >= 6) { 
-                resample_count = 0;
-                bgm_pos++;
-                if (bgm_pos >= bgm_len) bgm_pos = 0; // Loop BGM
-            }
+            // Audio core is 48kHz, BGM is now 48kHz. Increment each sample.
+            bgm_pos++;
+            if (bgm_pos >= bgm_len) bgm_pos = 0; // Loop BGM
         }
         
         *(audio_ptr + 2) = final_sample; // Left

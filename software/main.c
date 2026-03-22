@@ -13,7 +13,7 @@
 #include "graphics/sprites/spacebar/spacebar_frames.h"
 #include "../hardware/keyboard.h"
 #include "../hardware/audio.h"
-#include "../mp3_converter/opening_audio.h"
+#include "../software/se/opening_audio.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
 #include "graphics/sprites/battleicons/battle_icons.h"
