@@ -43,6 +43,7 @@ SRCS := software/main.c \
         software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
         software/graphics/sprites/statEffects/statUp.c \
         software/graphics/sprites/statEffects/statDown.c \
+        software/graphics/sprites/battleParty/battlePartySprite.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/sprites/spacebar/spacebar_frames.c \
         software/graphics/sprites/arrowGif/arrowGif_frames.c \
