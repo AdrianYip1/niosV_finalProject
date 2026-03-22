@@ -3,17 +3,16 @@
 #include <stdbool.h>
 #include "../staticSprite.h"
 
-// PokemonData.id values (see `software/gameplayLogic/entities/pokemonDataBase.c`)
 #define POKEMON_ID_CHARMANDER 1
 #define POKEMON_ID_CHARMELEON 2
 #define POKEMON_ID_CHARIZARD  3
 
 
-#define POKEMON_BATTLE_BACK_X  40
-#define POKEMON_BATTLE_BACK_Y  30
+#define POKEMON_BATTLE_BACK_X  32
+#define POKEMON_BATTLE_BACK_Y  70
 
-#define POKEMON_BATTLE_FRONT_X 200
-#define POKEMON_BATTLE_FRONT_Y 0
+#define POKEMON_BATTLE_FRONT_X 190
+#define POKEMON_BATTLE_FRONT_Y 17
 
 // Battle sprite initializers (front/back only). Returns false if pokemon_id is unknown.
 bool initPokemonBackBattleSprite(StaticSprite* out, int pokemon_id, int x, int y);
