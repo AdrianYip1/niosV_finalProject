@@ -47,9 +47,9 @@
 #define BATTLE_ICON_RUN_Y (230 - BATTLE_ICON_SMALL_HEIGHT + 12)
 
 #define OPP_HP_EMPTY_X 0
-#define OPP_HP_EMPTY_Y 8
-#define MY_HP_EMPTY_X  240 - MY_HP_EMPTY_WIDTH
-#define MY_HP_EMPTY_Y  (TEXTBOX_Y - MY_HP_EMPTY_HEIGHT - 8)
+#define OPP_HP_EMPTY_Y 15
+#define MY_HP_EMPTY_X  340 - MY_HP_EMPTY_WIDTH - 20
+#define MY_HP_EMPTY_Y  (TEXTBOX_Y - MY_HP_EMPTY_HEIGHT - 20)
 
 #define SPACEBAR_X ((SCREEN_WIDTH - SPACEBAR_WIDTH) / 2)
 #define SPACEBAR_Y (TEXTBOX_Y - SPACEBAR_HEIGHT - 6)
@@ -187,7 +187,7 @@ int main(void)
     draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(myHpEmpty, MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT, MY_HP_EMPTY_X, MY_HP_EMPTY_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
-    draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, BLACK);
+    
     textboxMsgIndex++;
     wait_for_vsync();
 
@@ -236,7 +236,6 @@ int main(void)
         draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(myHpEmpty, MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT, MY_HP_EMPTY_X, MY_HP_EMPTY_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
-        draw_string(TITLE_TEXT_X, TITLE_TEXT_Y, TEXT_TITLE, colour);
 
         if (dialogActive) {
             gameplayTextboxDone = draw_textbox_animated_text(
