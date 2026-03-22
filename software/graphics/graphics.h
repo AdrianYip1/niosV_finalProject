@@ -50,6 +50,14 @@ void draw_sprite_any_flash(const unsigned short *sprite,
                            short transparent,
                            int flash_frame);
 
+#define SHADE_PULSE_FRAME_COUNT 16
+// Draws the sprite with a pulsing brightness (uses shade_565 on each non-transparent pixel).
+void draw_sprite_any_shade_pulse(const unsigned short *sprite,
+                                 int width, int height,
+                                 int x, int y,
+                                 short transparent,
+                                 int pulse_frame);
+
 #define BOB_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_bob(const unsigned short *sprite,
                          int width, int height,

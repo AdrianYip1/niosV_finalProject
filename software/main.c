@@ -11,6 +11,7 @@
 #include "graphics/textbox/textBoxSprite.h"
 #include "graphics/textbox/textMessages.h"
 #include "graphics/sprites/spacebar/spacebar_frames.h"
+#include "graphics/sprites/arrowGif/arrowGif_frames.h"
 #include "../hardware/keyboard.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
@@ -95,6 +96,131 @@
 //location for drawing names, hp, level
 
 
+// Game States
+typedef enum {
+    GAME_STATE_MAP = 0,
+    GAME_STATE_BATTLE = 1,
+} GameState;
+
+
+//states for battle
+typedef enum {
+    BATTLE_UI_MENU = 0,
+    BATTLE_UI_ATTACK_MENU = 1,
+    BATTLE_UI_BAG_MENU = 2,
+} BattleUiState;
+
+typedef enum {
+    ARROW_CTX_NONE = 0,
+    ARROW_CTX_BATTLE_MENU = 1,
+    ARROW_CTX_BATTLE_ATTACK = 2,
+    ARROW_CTX_BATTLE_BAG = 3,
+} ArrowContext;
+
+static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
+    if (state != GAME_STATE_BATTLE) return ARROW_CTX_NONE;
+    if (battleUi == BATTLE_UI_ATTACK_MENU) return ARROW_CTX_BATTLE_ATTACK;
+    if (battleUi == BATTLE_UI_BAG_MENU) return ARROW_CTX_BATTLE_BAG;
+    return ARROW_CTX_BATTLE_MENU;
+}
+
+static int arrowCursorCount(ArrowContext ctx) {
+    switch (ctx) {
+        case ARROW_CTX_BATTLE_MENU: return 9;   // Fight/Bag/Run/party members
+        case ARROW_CTX_BATTLE_ATTACK: return 4; 
+        case ARROW_CTX_BATTLE_BAG: return 1;   
+        default: return 0;
+    }
+}
+
+static void arrowGetPos(ArrowContext ctx, int index, int* out_x, int* out_y) {
+    if (!out_x || !out_y) return;
+
+    if (ctx == ARROW_CTX_BATTLE_BAG) {
+        *out_x = BATTLE_ICON_BAG_X + (BATTLE_ICON_SMALL_WIDTH / 2) - (ARROWGIF_WIDTH / 2);
+        *out_y = BATTLE_ICON_BAG_Y - ARROWGIF_HEIGHT - 2;
+        return;
+    }
+
+    if (ctx == ARROW_CTX_BATTLE_ATTACK) {
+
+        const int baseX = 30;
+        const int baseY = TEXTBOX_Y + 10;
+        const int stepX = 120;
+        const int stepY = 18;
+        if (index < 0) index = 0;
+        if (index > 3) index = 3;
+        const int row = index / 2;
+        const int col = index % 2;
+        *out_x = baseX + (col * stepX);
+        *out_y = baseY + (row * stepY);
+        return;
+    }
+
+    if (ctx == ARROW_CTX_BATTLE_MENU) {
+        const int xs[9] = {
+            BATTLE_ICON_FIGHT_X + (BATTLE_ICON_FIGHT_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            BATTLE_ICON_BAG_X + (BATTLE_ICON_SMALL_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            BATTLE_ICON_RUN_X + (BATTLE_ICON_SMALL_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            PARTY_1_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            PARTY_2_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            PARTY_3_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            PARTY_4_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            PARTY_5_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+            PARTY_6_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
+        };
+        const int ys[9] = {
+            BATTLE_ICON_FIGHT_Y - ARROWGIF_HEIGHT - 2,
+            BATTLE_ICON_BAG_Y - ARROWGIF_HEIGHT - 2,
+            BATTLE_ICON_RUN_Y - ARROWGIF_HEIGHT - 2,
+            PARTY_1_Y - ARROWGIF_HEIGHT - 2,
+            PARTY_2_Y - ARROWGIF_HEIGHT - 2,
+            PARTY_3_Y - ARROWGIF_HEIGHT - 2,
+            PARTY_4_Y - ARROWGIF_HEIGHT - 2,
+            PARTY_5_Y - ARROWGIF_HEIGHT - 2,
+            PARTY_6_Y - ARROWGIF_HEIGHT - 2,
+        };
+        if (index < 0) index = 0;
+        if (index > 8) index = 8;
+        *out_x = xs[index];
+        *out_y = ys[index];
+        return;
+    }
+
+    *out_x = 0;
+    *out_y = 0;
+}
+
+// Navigation map for the 9 "battle menu" cursor targets (0..8).
+// Index meanings:
+// 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
+typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
+static int navBattleMenu9(int index, NavDir dir) {
+    static const signed char nav[9][4] = {
+        /*0 Fight*/ {0, 0, 0, 1},
+        /*1 Bag */ {1, 0, 2, 3},
+        /*2 Run */ {1, 0, 2, 3},
+        /*3 P1  */ {3, 1, 6, 4},
+        /*4 P2  */ {4, 3, 7, 5},
+        /*5 P3  */ {5, 4, 8, 5},
+        /*6 P4  */ {3, 1, 6, 7},
+        /*7 P5  */ {4, 6, 7, 8},
+        /*8 P6  */ {5, 7, 8, 8},
+    };
+
+    if (index < 0) index = 0;
+    if (index > 8) index = 8;
+
+    int d = (int)dir;
+    if (d < 0) d = 0;
+    if (d > 3) d = 3;
+
+    const int next = (int)nav[index][d];
+    if (next < 0 || next > 8) return index;
+    return next;
+}
+
+
 int main(void)
 {
 
@@ -114,6 +240,15 @@ int main(void)
     int bobFrame = 0;
     int bobTimer = 0;
     const int bobSpeedFrames = 3;
+    int shadePulseFrame = 0;
+
+    GameState gameState = GAME_STATE_BATTLE;
+    BattleUiState battleUiState = BATTLE_UI_MENU;
+    int cursorIndex = 0;
+    int arrowAnimFrame = 0;
+    int arrowAnimTimer = 0;
+    const int arrowAnimSpeedFrames = 8;
+    bool prevW = false, prevA = false, prevS = false, prevD = false;
 
     StaticSprite charizardBackSprite;
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
@@ -224,9 +359,21 @@ int main(void)
                           charmanderFrontSprite.x, charmanderFrontSprite.y,
                           TRANSPARENT_COLOUR,
                           0);
-    draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
+                                BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, 0);
     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
+    {
+        int ax = 0, ay = 0;
+        ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
+        if (arrowCtx != ARROW_CTX_NONE) {
+            arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
+            draw_sprite_any(arrowGifFrames[arrowAnimFrame],
+                            ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
+                            ax, ay,
+                            TRANSPARENT_COLOUR);
+        }
+    }
     draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
     draw_sprite_any_bob(myHpEmpty,
                         MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
@@ -259,18 +406,70 @@ int main(void)
     while (1) {
         update_keyboard();
 
+        // Battle-menu-only testing: ignore Enter transitions for now.
+
+        // Cursor input
+        const bool wDown = is_key_w_pressed();
+        const bool aDown = is_key_a_pressed();
+        const bool sDown = is_key_s_pressed();
+        const bool dDown = is_key_d_pressed();
+        const bool wPressed = wDown && !prevW;
+        const bool aPressed = aDown && !prevA;
+        const bool sPressed = sDown && !prevS;
+        const bool dPressed = dDown && !prevD;
+        prevW = wDown; prevA = aDown; prevS = sDown; prevD = dDown;
+
+        {
+            const ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
+            const int cursorCount = arrowCursorCount(arrowCtx);
+
+            if (cursorCount > 0) {
+                if (arrowCtx == ARROW_CTX_BATTLE_ATTACK) {
+                    // 2 rows x 2 columns
+                    const int row = cursorIndex / 2;
+                    const int col = cursorIndex % 2;
+                    int newRow = row;
+                    int newCol = col;
+
+                    if (aPressed) newCol = (col + 1) % 2;
+                    if (dPressed) newCol = (col + 1) % 2;
+                    if (wPressed) newRow = (row + 1) % 2;
+                    if (sPressed) newRow = (row + 1) % 2;
+
+                    cursorIndex = (newRow * 2) + newCol;
+                } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
+                    // 9-icon directional navigation (W/A/S/D = up/left/down/right)
+                    if (wPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_UP);
+                    if (aPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_LEFT);
+                    if (sPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_DOWN);
+                    if (dPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_RIGHT);
+                } else {
+                    // Bag menu (single option) or none
+                    cursorIndex = 0;
+                }
+            }
+        }
+
+        // Arrow animation (2 frames)
+        arrowAnimTimer++;
+        if (arrowAnimTimer >= arrowAnimSpeedFrames) {
+            arrowAnimTimer = 0;
+            arrowAnimFrame = (arrowAnimFrame + 1) % ARROWGIF_FRAME_COUNT;
+        }
+
         flashFrame = (flashFrame + 1) % FLASH_SPRITE_FRAME_COUNT;
+        shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
         bobTimer++;
         if (bobTimer >= bobSpeedFrames) {
             bobTimer = 0;
             bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
         }
 
-        bool up = is_key_w_pressed();
-        bool down = is_key_s_pressed();
-        bool left = is_key_a_pressed();
-        bool right = is_key_d_pressed();
-        bool shift = is_key_shift_pressed();
+        bool up = false;
+        bool down = false;
+        bool left = false;
+        bool right = false;
+        bool shift = false;
 
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = (spaceDown && !prevSpaceDownGameplay);
@@ -288,10 +487,22 @@ int main(void)
                               charmanderFrontSprite.x, charmanderFrontSprite.y,
                               TRANSPARENT_COLOUR,
                               flashFrame);
-        mcMovingTick(up, down, left, right, shift);
-        draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
+
+        draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
+                                    BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, shadePulseFrame);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
+        {
+            int ax = 0, ay = 0;
+            ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
+            if (arrowCtx != ARROW_CTX_NONE) {
+                arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
+                draw_sprite_any(arrowGifFrames[arrowAnimFrame],
+                                ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
+                                ax, ay,
+                                TRANSPARENT_COLOUR);
+            }
+        }
         draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
         draw_sprite_any_bob(myHpEmpty,
                             MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,

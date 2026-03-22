@@ -226,6 +226,33 @@ static unsigned short shade_565(unsigned short colour, int delta) {
     return (unsigned short)((red << 11) | (green << 5) | blue);
 }
 
+void draw_sprite_any_shade_pulse(const unsigned short *sprite,
+                                 int width, int height,
+                                 int x, int y,
+                                 short transparent,
+                                 int pulse_frame)
+{
+    if (!sprite || width <= 0 || height <= 0) return;
+
+    const int frame = (pulse_frame < 0) ? 0 : (pulse_frame % SHADE_PULSE_FRAME_COUNT);
+    static const signed char shade_pattern[SHADE_PULSE_FRAME_COUNT] = {
+        -6, -3, 0, 3, 6, 3, 0, -3,
+        -6, -3, 0, 3, 6, 3, 0, -3
+    };
+
+    const int delta = (int)shade_pattern[frame];
+
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            unsigned short colour = sprite[sy * width + sx];
+            if (colour == (unsigned short)transparent) {
+                continue;
+            }
+            draw_pixel(x + sx, y + sy, shade_565(colour, delta));
+        }
+    }
+}
+
 void draw_sprite_any_silhouette(const unsigned short *sprite,
                                 int width, int height,
                                 int x, int y,
