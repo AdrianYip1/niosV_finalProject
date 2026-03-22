@@ -16,6 +16,14 @@ SRCS := software/main.c \
         software/graphics/tiles.c \
         software/graphics/backdrops/backdrop1_tiles.c \
         software/graphics/sprites/battleIcons/battle_icons.c \
+        software/graphics/sprites/battleIcons/battleHp/burned.c \
+        software/graphics/sprites/battleIcons/battleHp/caught.c \
+        software/graphics/sprites/battleIcons/battleHp/frozen.c \
+        software/graphics/sprites/battleIcons/battleHp/myHpEmpty.c \
+        software/graphics/sprites/battleIcons/battleHp/oppHpEmpty.c \
+        software/graphics/sprites/battleIcons/battleHp/para.c \
+        software/graphics/sprites/battleIcons/battleHp/poison.c \
+        software/graphics/sprites/battleIcons/battleHp/sleep.c \
         software/graphics/sprites/mainCharacter/idle/mcIdle_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingEast_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingNorth_frames.c \
