@@ -96,8 +96,19 @@
 
 //location for status effects for opponent hp
 
+#define STATUS_EFFECT_X
+#define STATUS_EFFECT_Y
+
+#define CAUGHT_ICON_X
+#define CAUGHT_ICON_Y
+
 //location for drawing names, hp, level
 
+#define myName_X
+#define myName_Y
+
+#define oppName_X
+#define oppName_Y
 
 // Game States
 typedef enum {
