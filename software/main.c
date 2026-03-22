@@ -158,34 +158,13 @@ int main(void)
         wait_for_vsync();
     }
 
-#if DEBUG_DRAW_CHARIZARD
-    const int debugCharizardBackX = 20;
-    const int debugCharizardBackY = 120;
-    const int debugCharizardFrontX = 200;
-    const int debugCharizardFrontY = 80;
-
-    while (1) {
-        update_keyboard();
-
-        // Simple render loop so the sprites stay visible across buffer swaps.
-        draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
-        draw_string(10, 10, "Charizard draw test (SPACE to continue)", WHITE);
-        draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT,
-                        debugCharizardBackX, debugCharizardBackY, TRANSPARENT_COLOUR);
-        draw_sprite_any(charizardFront, CHARIZARD_FRONT_WIDTH, CHARIZARD_FRONT_HEIGHT,
-                        debugCharizardFrontX, debugCharizardFrontY, TRANSPARENT_COLOUR);
-
-        if (is_key_space_pressed()) break;
-        wait_for_vsync();
-    }
-#endif
-
     // Switch to gameplay map.
     init_map();
     load_map_preset(MAP_PRESET_ROUTE);
     mcMovingInit(80, 112, MC_FACING_S);
 
     draw_map();
+    draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT, charizardBackX, charizardBackY, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
@@ -230,8 +209,7 @@ int main(void)
 
         // full map redraw
         draw_map();
-        draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT,
-                        charizardBackX, charizardBackY, TRANSPARENT_COLOUR);
+        draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT, charizardBackX, charizardBackY, TRANSPARENT_COLOUR);
         mcMovingTick(up, down, left, right, shift);
         draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
