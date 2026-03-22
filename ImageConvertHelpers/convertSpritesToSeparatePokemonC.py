@@ -25,56 +25,56 @@ def rgb_to_565(r: int, g: int, b: int) -> int:
 
 
 def camel_to_screaming_snake(name: str) -> str:
-    s1 = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
-    s1 = re.sub(r"[^A-Za-z0-9_]", "_", s1)
-    s1 = re.sub(r"_+", "_", s1).strip("_")
-    return s1.upper()
+    with_underscores = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
+    with_safe_chars = re.sub(r"[^A-Za-z0-9_]", "_", with_underscores)
+    normalized = re.sub(r"_+", "_", with_safe_chars).strip("_")
+    return normalized.upper()
 
 
 def first_frame_rgba(path: Path) -> Image.Image:
-    im = Image.open(path)
+    image = Image.open(path)
     try:
-        im.seek(0)
+        image.seek(0)
     except EOFError:
         pass
-    return im.convert("RGBA")
+    return image.convert("RGBA")
 
 
 def pad_to_96x96(img: Image.Image) -> Image.Image:
-    w, h = img.size
+    width, height = img.size
     canvas = Image.new("RGBA", (POKEMON_BATTLE_SIZE, POKEMON_BATTLE_SIZE), (255, 0, 255, 0))
-    x0 = max(0, (POKEMON_BATTLE_SIZE - w) // 2)
-    y0 = max(0, (POKEMON_BATTLE_SIZE - h) // 2)
-    canvas.alpha_composite(img, (x0, y0))
+    x_offset = max(0, (POKEMON_BATTLE_SIZE - width) // 2)
+    y_offset = max(0, (POKEMON_BATTLE_SIZE - height) // 2)
+    canvas.alpha_composite(img, (x_offset, y_offset))
     return canvas
 
 
 def sprite_to_565_lines(var_name: str, macro_prefix: str, img: Image.Image) -> tuple[list[str], list[str]]:
-    w, h = img.size
-    px = img.load()
-    vals: list[int] = []
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if a == 0 or is_magentaish(r, g, b):
-                v = TRANSPARENT_565
+    width, height = img.size
+    pixels = img.load()
+    rgb565_values: list[int] = []
+    for y in range(height):
+        for x in range(width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha == 0 or is_magentaish(red, green, blue):
+                rgb565 = TRANSPARENT_565
             else:
-                v = rgb_to_565(r, g, b)
-            vals.append(v)
+                rgb565 = rgb_to_565(red, green, blue)
+            rgb565_values.append(rgb565)
 
     h_lines = [
-        f"#define {macro_prefix}_WIDTH  {w}",
-        f"#define {macro_prefix}_HEIGHT {h}",
+        f"#define {macro_prefix}_WIDTH  {width}",
+        f"#define {macro_prefix}_HEIGHT {height}",
         f"extern const unsigned short {var_name}[{macro_prefix}_WIDTH * {macro_prefix}_HEIGHT];",
         "",
     ]
 
     c_lines: list[str] = []
     c_lines.append(f"const unsigned short {var_name}[{macro_prefix}_WIDTH * {macro_prefix}_HEIGHT] = {{")
-    for k in range(0, len(vals), 16):
-        chunk = vals[k : k + 16]
-        chunk_s = ", ".join(f"0x{v:04X}" for v in chunk)
-        end = "," if k + 16 < len(vals) else ""
+    for k in range(0, len(rgb565_values), 16):
+        chunk = rgb565_values[k : k + 16]
+        chunk_s = ", ".join(f"0x{value:04X}" for value in chunk)
+        end = "," if k + 16 < len(rgb565_values) else ""
         c_lines.append(f"    {chunk_s}{end}")
     c_lines.append("};")
     c_lines.append("")
@@ -97,24 +97,38 @@ class BoxSprite:
 
 def discover_inputs() -> tuple[list[BattlePair], list[BoxSprite]]:
     # Battle GIFs
-    front = {p.stem[:-5].lower(): p for p in SPRITES_DIR.glob("*Front.gif")}
-    back = {p.stem[:-4].lower(): p for p in SPRITES_DIR.glob("*Back.gif")}
-    png = {p.stem.lower(): p for p in SPRITES_DIR.glob("*.png")}
+    front_gif_paths_by_name = {path.stem[:-5].lower(): path for path in SPRITES_DIR.glob("*Front.gif")}
+    back_gif_paths_by_name = {path.stem[:-4].lower(): path for path in SPRITES_DIR.glob("*Back.gif")}
+    png_paths_by_name = {path.stem.lower(): path for path in SPRITES_DIR.glob("*.png")}
 
     pairs: list[BattlePair] = []
-    for pokemon in sorted(set(front.keys()) & set(back.keys())):
-        pairs.append(BattlePair(pokemon=pokemon, back_path=back[pokemon], front_path=front[pokemon]))
+    for pokemon in sorted(set(front_gif_paths_by_name.keys()) & set(back_gif_paths_by_name.keys())):
+        pairs.append(
+            BattlePair(
+                pokemon=pokemon,
+                back_path=back_gif_paths_by_name[pokemon],
+                front_path=front_gif_paths_by_name[pokemon],
+            )
+        )
 
     # If a Front GIF exists but no Back GIF, fall back to `<name>.png` as the back sprite.
     # (This matches your current asset set where Charizard has only `charizardFront.gif`.)
-    for pokemon in sorted(set(front.keys()) - set(back.keys())):
-        if pokemon in png:
-            pairs.append(BattlePair(pokemon=pokemon, back_path=png[pokemon], front_path=front[pokemon]))
+    for pokemon in sorted(set(front_gif_paths_by_name.keys()) - set(back_gif_paths_by_name.keys())):
+        if pokemon in png_paths_by_name:
+            pairs.append(
+                BattlePair(
+                    pokemon=pokemon,
+                    back_path=png_paths_by_name[pokemon],
+                    front_path=front_gif_paths_by_name[pokemon],
+                )
+            )
 
     # Box PNGs (68x56 in your current assets)
     box_sprites: list[BoxSprite] = []
-    for p in sorted(SPRITES_DIR.glob("*.png"), key=lambda p: p.name.lower()):
-        box_sprites.append(BoxSprite(pokemon=p.stem.lower(), path=p))
+    for png_path in sorted(SPRITES_DIR.glob("*.png"), key=lambda path: path.name.lower()):
+        if png_path.stem.lower() in {"statup", "statdown"}:
+            continue
+        box_sprites.append(BoxSprite(pokemon=png_path.stem.lower(), path=png_path))
 
     if not pairs and not box_sprites:
         raise RuntimeError(f"No inputs found in {SPRITES_DIR}")
