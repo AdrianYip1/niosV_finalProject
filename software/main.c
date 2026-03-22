@@ -2,6 +2,8 @@
 #include "graphics/predefined_graphics.h"
 #include "graphics/predefined_colours.h"
 #include "graphics/sprites/pokemon/charizardSprite.h"
+#include "graphics/sprites/pokemon/pokemonSpriteInit.h"
+#include "graphics/sprites/staticSprite.h"
 #include "gameplayLogic/map_movement/mcMoving.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
@@ -69,6 +71,8 @@ int main(void)
 
     int charizardBackX = 40;
     int charizardBackY = 120;
+    StaticSprite charizardBackSprite;
+    initCharizardBackBattleSprite(&charizardBackSprite, charizardBackX, charizardBackY);
 
     // Init VGA and tiles
     init_graphics();
@@ -164,7 +168,9 @@ int main(void)
     mcMovingInit(80, 112, MC_FACING_S);
 
     draw_map();
-    draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT, charizardBackX, charizardBackY, TRANSPARENT_COLOUR);
+    charizardBackSprite.x = charizardBackX;
+    charizardBackSprite.y = charizardBackY;
+    drawStaticSprite(&charizardBackSprite);
     draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
@@ -209,7 +215,9 @@ int main(void)
 
         // full map redraw
         draw_map();
-        draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT, charizardBackX, charizardBackY, TRANSPARENT_COLOUR);
+        charizardBackSprite.x = charizardBackX;
+        charizardBackSprite.y = charizardBackY;
+        drawStaticSprite(&charizardBackSprite);
         mcMovingTick(up, down, left, right, shift);
         draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
