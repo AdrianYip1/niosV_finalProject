@@ -25,6 +25,7 @@
 #include "graphics/sprites/battleIcons/battleHp/para.h"
 #include "graphics/sprites/battleIcons/battleHp/poison.h"
 #include "graphics/sprites/battleIcons/battleHp/sleep.h"
+#include "graphics/sprites/battleParty/battlePartySprite.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -47,6 +48,9 @@
 
 #define BATTLE_ICON_RUN_X (BATTLE_ICON_BAG_X)
 #define BATTLE_ICON_RUN_Y (230 - BATTLE_ICON_SMALL_HEIGHT + 12)
+
+#define BATTLE_PARTY_X 320 / 2 + 14
+#define BATTLE_PARTY_Y 240 - 91 + 1
 
 #define OPP_HP_EMPTY_X 0
 #define OPP_HP_EMPTY_Y 15
@@ -82,8 +86,10 @@ int main(void)
     unsigned int frame_count = 0;
     int current_phase = 0;      // 0 = route, 1 = black
     short colour = BLACK;    
-    int shakeFrame = 0;
     int flashFrame = 0;
+    int bobFrame = 0;
+    int bobTimer = 0;
+    const int bobSpeedFrames = 3;
 
     StaticSprite charizardBackSprite;
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
@@ -185,15 +191,15 @@ int main(void)
 
     // Switch to gameplay map.
     init_map();
-    load_map_preset(MAP_PRESET_ROUTE);
+    load_map_preset(MAP_PRESET_BACKDROP1);
     mcMovingInit(80, 112, MC_FACING_S);
 
     draw_map();
-    draw_sprite_any_shake(charizardBackSprite.pixels,
-                          charizardBackSprite.width, charizardBackSprite.height,
-                          charizardBackSprite.x, charizardBackSprite.y,
-                          TRANSPARENT_COLOUR,
-                          0);
+    draw_sprite_any_bob(charizardBackSprite.pixels,
+                        charizardBackSprite.width, charizardBackSprite.height,
+                        charizardBackSprite.x, charizardBackSprite.y,
+                        TRANSPARENT_COLOUR,
+                        0);
     draw_sprite_any_flash(charmanderFrontSprite.pixels,
                           charmanderFrontSprite.width, charmanderFrontSprite.height,
                           charmanderFrontSprite.x, charmanderFrontSprite.y,
@@ -202,7 +208,12 @@ int main(void)
     draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
-    draw_sprite_any(myHpEmpty, MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT, MY_HP_EMPTY_X, MY_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any_bob(myHpEmpty,
+                        MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                        MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                        TRANSPARENT_COLOUR,
+                        0);
     draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
     textboxMsgIndex++;
@@ -220,21 +231,12 @@ int main(void)
     while (1) {
         update_keyboard();
 
-        shakeFrame = (shakeFrame + 1) % SHAKE_SPRITE_FRAME_COUNT;
         flashFrame = (flashFrame + 1) % FLASH_SPRITE_FRAME_COUNT;
-
-        int phase = (frame_count / 300) & 1; // swap every 5 seconds
-        if (phase != current_phase) {
-            current_phase = phase;
-            if (current_phase == 0) {
-                load_map_preset(MAP_PRESET_ROUTE);
-                colour = BLACK;
-            } else {
-                load_map_preset(MAP_PRESET_BACKDROP1);
-                colour = WHITE;
-            }
+        bobTimer++;
+        if (bobTimer >= bobSpeedFrames) {
+            bobTimer = 0;
+            bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
         }
-        frame_count++;
 
         bool up = is_key_w_pressed();
         bool down = is_key_s_pressed();
@@ -248,11 +250,11 @@ int main(void)
 
         // full map redraw
         draw_map();
-        draw_sprite_any_shake(charizardBackSprite.pixels,
-                              charizardBackSprite.width, charizardBackSprite.height,
-                              charizardBackSprite.x, charizardBackSprite.y,
-                              TRANSPARENT_COLOUR,
-                              shakeFrame);
+        draw_sprite_any_bob(charizardBackSprite.pixels,
+                            charizardBackSprite.width, charizardBackSprite.height,
+                            charizardBackSprite.x, charizardBackSprite.y,
+                            TRANSPARENT_COLOUR,
+                            bobFrame);
         draw_sprite_any_flash(charmanderFrontSprite.pixels,
                               charmanderFrontSprite.width, charmanderFrontSprite.height,
                               charmanderFrontSprite.x, charmanderFrontSprite.y,
@@ -262,7 +264,12 @@ int main(void)
         draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
-        draw_sprite_any(myHpEmpty, MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT, MY_HP_EMPTY_X, MY_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any_bob(myHpEmpty,
+                            MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                            MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                            TRANSPARENT_COLOUR,
+                            bobFrame);
         draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
         if (dialogActive) {
