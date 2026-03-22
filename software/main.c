@@ -555,7 +555,7 @@ int main(void)
         draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_5_X, PARTY_5_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_6_X, PARTY_6_Y, TRANSPARENT_COLOUR);
 
-        if (dialogActive) {
+ /*       if (dialogActive) {
             gameplayTextboxDone = draw_textbox_animated_text(
                 textBoxSprite, TEXTBOX_X, TEXTBOX_Y, TEXT_MESSAGES[gameplayTextboxIndex], BLACK);
 
@@ -574,6 +574,8 @@ int main(void)
                 }
             }
         }
+
+        */
 
         // Arrow cursor drawn last (on top of everything, including textbox).
         {
