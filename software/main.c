@@ -47,8 +47,8 @@
 #define BATTLE_ICON_RUN_X (BATTLE_ICON_BAG_X)
 #define BATTLE_ICON_RUN_Y (230 - BATTLE_ICON_SMALL_HEIGHT + 12)
 
-#define BATTLE_PARTY_X 320 / 2
-#define BATTLE_PARTY_Y 240 - 91
+#define BATTLE_PARTY_X 320 / 2 + 10
+#define BATTLE_PARTY_Y 240 - 91 + 3
 
 #define OPP_HP_EMPTY_X 0
 #define OPP_HP_EMPTY_Y 15
@@ -86,6 +86,8 @@ int main(void)
     short colour = BLACK;    
     int flashFrame = 0;
     int bobFrame = 0;
+    int bobTimer = 0;
+    const int bobSpeedFrames = 3;
 
     StaticSprite charizardBackSprite;
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
@@ -223,7 +225,11 @@ int main(void)
         update_keyboard();
 
         flashFrame = (flashFrame + 1) % FLASH_SPRITE_FRAME_COUNT;
-        bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
+        bobTimer++;
+        if (bobTimer >= bobSpeedFrames) {
+            bobTimer = 0;
+            bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
+        }
 
         bool up = is_key_w_pressed();
         bool down = is_key_s_pressed();

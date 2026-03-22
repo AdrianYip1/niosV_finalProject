@@ -197,8 +197,8 @@ void draw_sprite_any_bob(const unsigned short *sprite,
 {
 
     static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
-        0, -1, -2, -2, -1, 0, 1, 2,
-        2, 1, 0, -1, -2, -2, -1, 0
+        0, -1, -1, 0, 0, 1, 1, 0,
+        0, -1, -1, 0, 0, 1, 1, 0
     };
 
     int dy = 0;
