@@ -16,7 +16,8 @@ void initCharizardBackSprite(void) {
 }
 
 void drawSpriteAnimation(void) {
-    drawStaticSprite(&g_playerPokemon);
+    draw_sprite_any(g_playerPokemon.pixels, g_playerPokemon.width, g_playerPokemon.height,
+                    g_playerPokemon.x, g_playerPokemon.y, TRANSPARENT_COLOUR);
 }
 
 void drawSpriteCurrentFrameOnly(void) {

@@ -1,8 +1,7 @@
 #include "graphics/graphics.h"
 #include "graphics/predefined_graphics.h"
 #include "graphics/predefined_colours.h"
-#include "graphics/sprites/staticSprite.h"
-#include "graphics/sprites/pokemon/pokemonSpriteInit.h"
+#include "graphics/sprites/pokemon/charizardSprite.h"
 #include "gameplayLogic/map_movement/mcMoving.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
@@ -50,6 +49,7 @@
 #define TITLE_TEXT_X_CENTERED   ((SCREEN_WIDTH - TITLE_TEXT_PIXEL_WIDTH) / 2)
 #define TITLE_TEXT_Y_ABOVE_BAR  (SPACEBAR_TITLE_Y - 12)
 
+#define DEBUG_DRAW_CHARIZARD 1
 
 int main(void)
 {
@@ -67,7 +67,8 @@ int main(void)
     int current_phase = 0;      // 0 = route, 1 = black
     short colour = BLACK;    
 
-    StaticSprite charizardBackSprite;
+    int charizardBackX = 40;
+    int charizardBackY = 120;
 
     // Init VGA and tiles
     init_graphics();
@@ -157,11 +158,31 @@ int main(void)
         wait_for_vsync();
     }
 
+#if DEBUG_DRAW_CHARIZARD
+    const int debugCharizardBackX = 20;
+    const int debugCharizardBackY = 120;
+    const int debugCharizardFrontX = 200;
+    const int debugCharizardFrontY = 80;
+
+    while (1) {
+        update_keyboard();
+
+        // Simple render loop so the sprites stay visible across buffer swaps.
+        draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+        draw_string(10, 10, "Charizard draw test (SPACE to continue)", WHITE);
+        draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT,
+                        debugCharizardBackX, debugCharizardBackY, TRANSPARENT_COLOUR);
+        draw_sprite_any(charizardFront, CHARIZARD_FRONT_WIDTH, CHARIZARD_FRONT_HEIGHT,
+                        debugCharizardFrontX, debugCharizardFrontY, TRANSPARENT_COLOUR);
+
+        if (is_key_space_pressed()) break;
+        wait_for_vsync();
+    }
+#endif
 
     // Switch to gameplay map.
     init_map();
     load_map_preset(MAP_PRESET_ROUTE);
-    initCharizardBackBattleSprite(&charizardBackSprite, 40, 120);
     mcMovingInit(80, 112, MC_FACING_S);
 
     draw_map();
@@ -209,7 +230,8 @@ int main(void)
 
         // full map redraw
         draw_map();
-        drawStaticSprite(&charizardBackSprite);
+        draw_sprite_any(charizardBack, CHARIZARD_BACK_WIDTH, CHARIZARD_BACK_HEIGHT,
+                        charizardBackX, charizardBackY, TRANSPARENT_COLOUR);
         mcMovingTick(up, down, left, right, shift);
         draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
