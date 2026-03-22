@@ -24,6 +24,9 @@
 #include "graphics/sprites/battleIcons/battleHp/poison.h"
 #include "graphics/sprites/battleIcons/battleHp/sleep.h"
 #include "graphics/sprites/battleParty/battlePartySprite.h"
+#include "graphics/sprites/boxSprites/charizardBoxSprite.h"
+#include "graphics/sprites/boxSprites/charmeleonBoxSprite.h"
+#include "graphics/sprites/boxSprites/charmanderBoxSprite.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -67,6 +70,29 @@
 #define TITLE_TEXT_PIXEL_WIDTH ((int)((sizeof(TEXT_TITLE) - 1) * 8))
 #define TITLE_TEXT_X_CENTERED   ((SCREEN_WIDTH - TITLE_TEXT_PIXEL_WIDTH) / 2)
 #define TITLE_TEXT_Y_ABOVE_BAR  (SPACEBAR_TITLE_Y - 12)
+
+//location for battle switch party
+#define PARTY_1_X 170 - 2
+#define PARTY_1_Y 240 - 91 - 18
+
+#define PARTY_2_X 210 + 1
+#define PARTY_2_Y 240 - 91 - 18
+
+#define PARTY_3_X 250 + 3
+#define PARTY_3_Y 240 - 91 - 18
+
+#define PARTY_4_X 173 - 2
+#define PARTY_4_Y 240 - 91 + 23
+
+#define PARTY_5_X 213 + 1
+#define PARTY_5_Y 240 - 91 + 23
+
+#define PARTY_6_X 253 + 3
+#define PARTY_6_Y 240 - 91 + 23
+
+//location for status effects for opponent hp
+
+//location for drawing names, hp, level
 
 
 int main(void)
@@ -209,6 +235,15 @@ int main(void)
                         0);
     draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
+    draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_1_X, PARTY_1_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_2_X, PARTY_2_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_3_X, PARTY_3_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_4_X, PARTY_4_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_5_X, PARTY_5_Y, TRANSPARENT_COLOUR);
+    draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_6_X, PARTY_6_Y, TRANSPARENT_COLOUR);
+    
+    
+
     textboxMsgIndex++;
     wait_for_vsync();
 
@@ -264,6 +299,13 @@ int main(void)
                             TRANSPARENT_COLOUR,
                             bobFrame);
         draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+
+        draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_1_X, PARTY_1_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_2_X, PARTY_2_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_3_X, PARTY_3_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_4_X, PARTY_4_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_5_X, PARTY_5_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_6_X, PARTY_6_Y, TRANSPARENT_COLOUR);
 
         if (dialogActive) {
             gameplayTextboxDone = draw_textbox_animated_text(
