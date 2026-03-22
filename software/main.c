@@ -23,6 +23,7 @@
 #include "graphics/sprites/battleIcons/battleHp/para.h"
 #include "graphics/sprites/battleIcons/battleHp/poison.h"
 #include "graphics/sprites/battleIcons/battleHp/sleep.h"
+#include "graphics/sprites/battleParty/battlePartySprite.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -85,6 +86,7 @@ int main(void)
     short colour = BLACK;    
     int shakeFrame = 0;
     int flashFrame = 0;
+    int bobFrame = 0;
 
     StaticSprite charizardBackSprite;
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
