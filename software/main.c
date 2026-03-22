@@ -28,6 +28,7 @@
 #include "graphics/sprites/boxSprites/charizardBoxSprite.h"
 #include "graphics/sprites/boxSprites/charmeleonBoxSprite.h"
 #include "graphics/sprites/boxSprites/charmanderBoxSprite.h"
+#include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
 #include <stdbool.h>
 
 #define TITLE_TEXT_X 10
@@ -359,20 +360,27 @@ int main(void)
                           charmanderFrontSprite.x, charmanderFrontSprite.y,
                           TRANSPARENT_COLOUR,
                           0);
-    draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
-                                BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, 0);
-    draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
-    draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
-    {
-        int ax = 0, ay = 0;
-        ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
-        if (arrowCtx != ARROW_CTX_NONE) {
-            arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
-            draw_sprite_any(arrowGifFrames[arrowAnimFrame],
-                            ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
-                            ax, ay,
-                            TRANSPARENT_COLOUR);
-        }
+    draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, 91, TRANSPARENT_COLOUR);
+    if (cursorIndex == 0) {
+        draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
+                                    BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, 0);
+    } else {
+        draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
+                        BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
+    }
+    if (cursorIndex == 1) {
+        draw_sprite_any_shade_pulse(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                                    BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR, 0);
+    } else {
+        draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                        BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
+    }
+    if (cursorIndex == 2) {
+        draw_sprite_any_shade_pulse(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                                    BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR, 0);
+    } else {
+        draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                        BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
     }
     draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
     draw_sprite_any_bob(myHpEmpty,
@@ -388,6 +396,19 @@ int main(void)
     draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_4_X, PARTY_4_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_5_X, PARTY_5_Y, TRANSPARENT_COLOUR);
     draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_6_X, PARTY_6_Y, TRANSPARENT_COLOUR);
+
+    // Arrow cursor drawn last (on top of everything).
+    {
+        int ax = 0, ay = 0;
+        ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
+        if (arrowCtx != ARROW_CTX_NONE) {
+            arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
+            draw_sprite_any(arrowGifFrames[arrowAnimFrame],
+                            ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
+                            ax, ay,
+                            TRANSPARENT_COLOUR);
+        }
+    }
     
     
 
@@ -406,7 +427,7 @@ int main(void)
     while (1) {
         update_keyboard();
 
-        // Battle-menu-only testing: ignore Enter transitions for now.
+        // Battle menu only testing
 
         // Cursor input
         const bool wDown = is_key_w_pressed();
@@ -438,19 +459,19 @@ int main(void)
 
                     cursorIndex = (newRow * 2) + newCol;
                 } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
-                    // 9-icon directional navigation (W/A/S/D = up/left/down/right)
+
                     if (wPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_UP);
                     if (aPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_LEFT);
                     if (sPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_DOWN);
                     if (dPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_RIGHT);
                 } else {
-                    // Bag menu (single option) or none
+
                     cursorIndex = 0;
                 }
             }
         }
 
-        // Arrow animation (2 frames)
+        // Arrow animation 
         arrowAnimTimer++;
         if (arrowAnimTimer >= arrowAnimSpeedFrames) {
             arrowAnimTimer = 0;
@@ -488,20 +509,28 @@ int main(void)
                               TRANSPARENT_COLOUR,
                               flashFrame);
 
-        draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
-                                    BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, shadePulseFrame);
-        draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
-        draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
-        {
-            int ax = 0, ay = 0;
-            ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
-            if (arrowCtx != ARROW_CTX_NONE) {
-                arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
-                draw_sprite_any(arrowGifFrames[arrowAnimFrame],
-                                ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
-                                ax, ay,
-                                TRANSPARENT_COLOUR);
-            }
+        draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, 91, TRANSPARENT_COLOUR);
+
+        if (cursorIndex == 0) {
+            draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
+                                        BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+        } else {
+            draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
+                            BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
+        }
+        if (cursorIndex == 1) {
+            draw_sprite_any_shade_pulse(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                                        BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+        } else {
+            draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                            BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
+        }
+        if (cursorIndex == 2) {
+            draw_sprite_any_shade_pulse(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                                        BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+        } else {
+            draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                            BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
         }
         draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
         draw_sprite_any_bob(myHpEmpty,
@@ -535,6 +564,19 @@ int main(void)
                         hide_textbox(TEXTBOX_X, TEXTBOX_Y);
                     }
                 }
+            }
+        }
+
+        // Arrow cursor drawn last (on top of everything, including textbox).
+        {
+            int ax = 0, ay = 0;
+            ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
+            if (arrowCtx != ARROW_CTX_NONE) {
+                arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
+                draw_sprite_any(arrowGifFrames[arrowAnimFrame],
+                                ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
+                                ax, ay,
+                                TRANSPARENT_COLOUR);
             }
         }
 

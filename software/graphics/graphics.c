@@ -172,6 +172,8 @@ void draw_sprite_any_shake(const unsigned short *sprite,
     draw_sprite_any(sprite, width, height, x + dx, y, transparent);
 }
 
+static unsigned short shade_565(unsigned short colour, int delta);
+
 void draw_sprite_any_flash(const unsigned short *sprite,
                            int width, int height,
                            int x, int y,
@@ -179,13 +181,26 @@ void draw_sprite_any_flash(const unsigned short *sprite,
                            int flash_frame)
 {
 
-    // 16 frames total, every 2 frames on,on,off,off
-    if (flash_frame >= 0 && flash_frame < FLASH_SPRITE_FRAME_COUNT) {
-        const int visible = ((flash_frame / 2) % 2) == 0;
-        if (!visible) return;
+    if (flash_frame < 0 || flash_frame >= FLASH_SPRITE_FRAME_COUNT) {
+        draw_sprite_any(sprite, width, height, x, y, transparent);
+        return;
     }
 
-    draw_sprite_any(sprite, width, height, x, y, transparent);
+    const int on = ((flash_frame / 2) % 2) == 0;
+    if (on) {
+        draw_sprite_any(sprite, width, height, x, y, transparent);
+        return;
+    }
+
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            unsigned short colour = sprite[sy * width + sx];
+            if (colour == (unsigned short)transparent) {
+                continue;
+            }
+            draw_pixel(x + sx, y + sy, shade_565(colour, 8));
+        }
+    }
 }
 
 //up and down motion
