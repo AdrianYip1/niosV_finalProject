@@ -64,3 +64,17 @@ bool initPokemonBackBattleSprite(StaticSprite* out, int pokemon_id, int x, int y
 bool initPokemonFrontBattleSprite(StaticSprite* out, int pokemon_id, int x, int y) {
     return initPokemonBattleSprite(out, pokemon_id, true, x, y);
 }
+
+bool setPokemonBattleSpriteId(StaticSprite* sprite, int pokemon_id, bool want_front) {
+    if (!sprite) return false;
+
+    const unsigned short* pixels = 0;
+    int w = 0;
+    int h = 0;
+
+    const bool ok = getPixelsById(pokemon_id, want_front, &pixels, &w, &h);
+    sprite->pixels = ok ? pixels : 0;
+    sprite->width  = ok ? w : 0;
+    sprite->height = ok ? h : 0;
+    return ok;
+}
