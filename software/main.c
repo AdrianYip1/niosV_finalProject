@@ -239,12 +239,13 @@ int main(void)
     unsigned int frame_count = 0;
     int current_phase = 0;      // 0 = route, 1 = black
     short colour = BLACK;    
-    int flashFrame = 0;
     int bobFrame = 0;
     int bobTimer = 0;
     const int bobSpeedFrames = 3;
     int shadePulseFrame = 0;
-    int shakeFrame = 0
+    int shakeFrame = 0;
+    int shakeTimer = 0;
+    const int shakeSpeedFrames = 3;
 
     GameState gameState = GAME_STATE_BATTLE;
     BattleUiState battleUiState = BATTLE_UI_MENU;
@@ -481,8 +482,12 @@ int main(void)
             arrowAnimFrame = (arrowAnimFrame + 1) % ARROWGIF_FRAME_COUNT;
         }
 
-        flashFrame = (flashFrame + 1) % FLASH_SPRITE_FRAME_COUNT;
         shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+        shakeTimer++;
+        if (shakeTimer >= shakeSpeedFrames) {
+            shakeTimer = 0;
+            shakeFrame = (shakeFrame + 1) % SHAKE_SPRITE_FRAME_COUNT;
+        }
         bobTimer++;
         if (bobTimer >= bobSpeedFrames) {
             bobTimer = 0;
