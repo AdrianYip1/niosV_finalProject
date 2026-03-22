@@ -35,11 +35,31 @@ def load_rgba(path: Path) -> Image.Image:
 def image_to_565_vals(img: Image.Image) -> list[int]:
     w, h = img.size
     px = img.load()
+    # These PNGs often come with a solid/gradient background instead of alpha.
+    # Treat the most common border colours as transparent "background".
+    border: list[tuple[int, int, int, int]] = []
+    for x in range(w):
+        border.append(px[x, 0])
+        border.append(px[x, h - 1])
+    for y in range(h):
+        border.append(px[0, y])
+        border.append(px[w - 1, y])
+
+    # Take the top few border colours as background palette.
+    # Exact-match is intentional to avoid nuking real sprite colours.
+    from collections import Counter
+
+    bg_palette = {
+        (r, g, b)
+        for (r, g, b, a), _ in Counter(border).most_common(8)
+        if a != 0
+    }
+
     vals: list[int] = []
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
-            if a == 0 or (r, g, b) == TRANSPARENT_PINK_RGB:
+            if a == 0 or (r, g, b) == TRANSPARENT_PINK_RGB or (r, g, b) in bg_palette:
                 vals.append(TRANSPARENT_565)
             else:
                 vals.append(rgb_to_565(r, g, b))
@@ -92,4 +112,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
