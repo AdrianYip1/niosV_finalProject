@@ -162,6 +162,123 @@ void draw_sprite_any(const unsigned short *sprite,
     }
 }
 
+void draw_sprite_any_shake(const unsigned short *sprite,
+                           int width, int height,
+                           int x, int y,
+                           short transparent,
+                           int shake_frame)
+{
+
+    static const signed char dx_pattern[SHAKE_SPRITE_FRAME_COUNT] = {0, -4, 4, -4, 4, -2, 2, -2, 2, -1, 1, 0};
+
+    int dx = 0;
+    if (shake_frame >= 0 && shake_frame < SHAKE_SPRITE_FRAME_COUNT) {
+        dx = (int)dx_pattern[shake_frame];
+    }
+
+    draw_sprite_any(sprite, width, height, x + dx, y, transparent);
+}
+
+void draw_sprite_any_flash(const unsigned short *sprite,
+                           int width, int height,
+                           int x, int y,
+                           short transparent,
+                           int flash_frame)
+{
+
+    // 16 frames total, every 2 frames on,on,off,off
+    if (flash_frame >= 0 && flash_frame < FLASH_SPRITE_FRAME_COUNT) {
+        const int visible = ((flash_frame / 2) % 2) == 0;
+        if (!visible) return;
+    }
+
+    draw_sprite_any(sprite, width, height, x, y, transparent);
+}
+
+//up and down motion
+void draw_sprite_any_bob(const unsigned short *sprite,
+                         int width, int height,
+                         int x, int y,
+                         short transparent,
+                         int bob_frame)
+{
+
+    static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
+        0, -1, -2, -2, -1, 0, 1, 2,
+        2, 1, 0, -1, -2, -2, -1, 0
+    };
+
+    int dy = 0;
+    if (bob_frame >= 0 && bob_frame < BOB_SPRITE_FRAME_COUNT) {
+        dy = (int)dy_pattern[bob_frame];
+    }
+
+    draw_sprite_any(sprite, width, height, x, y + dy, transparent);
+}
+
+static unsigned short shade_565(unsigned short c, int delta) {
+    // delta in roughly [-8..+8]. Green has twice the steps.
+    int r = (c >> 11) & 31;
+    int g = (c >> 5) & 63;
+    int b = c & 31;
+
+    r += delta;
+    g += (delta * 2);
+    b += delta;
+
+    if (r < 0) r = 0; else if (r > 31) r = 31;
+    if (g < 0) g = 0; else if (g > 63) g = 63;
+    if (b < 0) b = 0; else if (b > 31) b = 31;
+
+    return (unsigned short)((r << 11) | (g << 5) | b);
+}
+
+void draw_sprite_any_silhouette(const unsigned short *sprite,
+                                int width, int height,
+                                int x, int y,
+                                short transparent,
+                                short silhouette_colour,
+                                int silhouette_frame)
+{
+    if (silhouette_frame < 0 || silhouette_frame >= SILHOUETTE_SPRITE_FRAME_COUNT) {
+        draw_sprite_any(sprite, width, height, x, y, transparent);
+        return;
+    }
+
+    // Animated silhouette: slight jitter + blink + pulsing brightness.
+    static const signed char dx_pattern[SILHOUETTE_SPRITE_FRAME_COUNT] = {
+        0, 0, -1, 0, 1, 0, -1, 0,
+        1, 0, 0, 0, -1, 0, 1, 0
+    };
+    static const signed char shade_pattern[SILHOUETTE_SPRITE_FRAME_COUNT] = {
+        -6, -3, 0, 3, 6, 3, 0, -3,
+        -6, -3, 0, 3, 6, 3, 0, -3
+    };
+
+    const int visible = ((silhouette_frame / 2) % 2) == 0;
+    if (!visible) return;
+
+    const int dx = (int)dx_pattern[silhouette_frame];
+    const unsigned short draw_colour = shade_565((unsigned short)silhouette_colour, (int)shade_pattern[silhouette_frame]);
+
+    const int useMagentaTolerance = (transparent == TRANSPARENT_COLOUR);
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            unsigned short colour = sprite[sy * width + sx];
+            if (useMagentaTolerance) {
+                const int r = (colour >> 11) & 31;
+                const int g = (colour >> 5) & 63;
+                const int b = colour & 31;
+                if (r >= 28 && b >= 28 && g <= 3) continue;
+            } else if (colour == (unsigned short)transparent) {
+                continue;
+            }
+
+            draw_pixel(x + dx + sx, y + sy, draw_colour);
+        }
+    }
+}
+
 void draw_textbox_instant_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour) {
     draw_sprite_any(textBoxSprite, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT, x, y, TRANSPARENT_COLOUR);
     draw_string(x + 30, y + 30, string, colour);

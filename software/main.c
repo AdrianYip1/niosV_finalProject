@@ -1,7 +1,8 @@
 #include "graphics/graphics.h"
 #include "graphics/predefined_graphics.h"
 #include "graphics/predefined_colours.h"
-#include "graphics/sprites/playerSprite.h"
+#include "graphics/sprites/staticSprite.h"
+#include "graphics/sprites/pokemon/pokemonSpriteInit.h"
 #include "gameplayLogic/map_movement/mcMoving.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
@@ -65,6 +66,8 @@ int main(void)
     unsigned int frame_count = 0;
     int current_phase = 0;      // 0 = route, 1 = black
     short colour = BLACK;    
+
+    StaticSprite charizardBackSprite;
 
     // Init VGA and tiles
     init_graphics();
@@ -158,7 +161,7 @@ int main(void)
     // Switch to gameplay map.
     init_map();
     load_map_preset(MAP_PRESET_ROUTE);
-    initCharizardBackSprite();
+    initCharizardBackBattleSprite(&charizardBackSprite, 40, 120);
     mcMovingInit(80, 112, MC_FACING_S);
 
     draw_map();
@@ -206,7 +209,7 @@ int main(void)
 
         // full map redraw
         draw_map();
-        drawSpriteAnimation();
+        drawStaticSprite(&charizardBackSprite);
         mcMovingTick(up, down, left, right, shift);
         draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT, BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
         draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT, BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);

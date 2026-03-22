@@ -34,6 +34,37 @@ void draw_sprite_any(const unsigned short *sprite,
                      int x, int y,
                      short transparent);
 
+
+#define SHAKE_SPRITE_FRAME_COUNT 12
+void draw_sprite_any_shake(const unsigned short *sprite,
+                           int width, int height,
+                           int x, int y,
+                           short transparent,
+                           int shake_frame);
+
+
+#define FLASH_SPRITE_FRAME_COUNT 16
+void draw_sprite_any_flash(const unsigned short *sprite,
+                           int width, int height,
+                           int x, int y,
+                           short transparent,
+                           int flash_frame);
+
+#define BOB_SPRITE_FRAME_COUNT 16
+void draw_sprite_any_bob(const unsigned short *sprite,
+                         int width, int height,
+                         int x, int y,
+                         short transparent,
+                         int bob_frame);
+
+#define SILHOUETTE_SPRITE_FRAME_COUNT 16
+void draw_sprite_any_silhouette(const unsigned short *sprite,
+                                int width, int height,
+                                int x, int y,
+                                short transparent,
+                                short silhouette_colour,
+                                int silhouette_frame);
+
 void draw_circle(int cx, int cy, int radius, short int colour);
 void draw_circle_filled(int cx, int cy, int radius, short int colour);
 void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);

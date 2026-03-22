@@ -25,7 +25,14 @@ SRCS := software/main.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingSouthEast_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingSouthWest_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingWest_frames.c \
-        software/graphics/sprites/charizard_back_frames.c \
+        software/graphics/sprites/staticSprite.c \
+        software/graphics/sprites/pokemon/charizardSprite.c \
+        software/graphics/sprites/pokemon/charmanderSprite.c \
+        software/graphics/sprites/pokemon/charmeleonSprite.c \
+        software/graphics/sprites/pokemon/pokemonSpriteInit.c \
+        software/graphics/sprites/boxSprites/charizardBoxSprite.c \
+        software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
+        software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/sprites/spacebar/spacebar_frames.c \
         software/graphics/sprites/arrowGif/arrowGif_frames.c \
