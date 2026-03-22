@@ -4,7 +4,7 @@
 #include "mcMoving.h"
 #include "../../../hardware/keyboard.h"
 #include "../../graphics/mcWalkingDraw.h"
-
+#include "../../../hardware/audio.h"
 
 void mcMovingInit(int startX, int startY, McFacing facing) {
     initMCWalkingSprite(startX, startY, facing);
@@ -74,7 +74,11 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     int speed_multiplier = shift ? 2 : 1;
     for (int i = 0; i < speed_multiplier; i++) {
         stepCounter++;
-
+        // only when mc is walking
+        if (dir !=MC_DIR_NONE && dir !=MC_DIR_INVALID){
+            if (stepCounter % 10 == 0) play_step_sound();
+        }
+        audio_update();
         switch (dir) {
             case MC_DIR_N:
                 goUp();
