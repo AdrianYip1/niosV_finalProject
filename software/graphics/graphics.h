@@ -65,6 +65,23 @@ void draw_sprite_any_silhouette(const unsigned short *sprite,
                                 short silhouette_colour,
                                 int silhouette_frame);
 
+// Draw a rectangular region from a larger sprite sheet.
+void draw_sprite_any_region(const unsigned short *sprite,
+                            int sprite_width, int sprite_height,
+                            int source_x, int source_y,
+                            int region_width, int region_height,
+                            int dst_x, int dst_y,
+                            short transparent);
+
+// Draw a region as a solid silhouette colour (for stat-up/down).
+void draw_sprite_any_region_silhouette(const unsigned short *sprite,
+                                       int sprite_width, int sprite_height,
+                                       int source_x, int source_y,
+                                       int region_width, int region_height,
+                                       int dst_x, int dst_y,
+                                       short transparent,
+                                       short silhouette_colour);
+
 void draw_circle(int cx, int cy, int radius, short int colour);
 void draw_circle_filled(int cx, int cy, int radius, short int colour);
 void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);

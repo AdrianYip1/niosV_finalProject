@@ -142,17 +142,10 @@ void draw_sprite_any(const unsigned short *sprite,
                      int x, int y,
                      short transparent)
 {
-    //RGB565 range as transparent.
-    const int useMagentaTolerance = (transparent == TRANSPARENT_COLOUR);
     for (int sy = 0; sy < height; sy++) {
         for (int sx = 0; sx < width; sx++) {
             unsigned short colour = sprite[sy * width + sx];
-            if (useMagentaTolerance) {
-                const int r = (colour >> 11) & 31;
-                const int g = (colour >> 5) & 63;
-                const int b = colour & 31;
-                if (r >= 28 && b >= 28 && g <= 3) continue;
-            } else if (colour == (unsigned short)transparent) {
+            if (colour == (unsigned short)transparent) {
                 continue;
             }
             {
@@ -216,21 +209,21 @@ void draw_sprite_any_bob(const unsigned short *sprite,
     draw_sprite_any(sprite, width, height, x, y + dy, transparent);
 }
 
-static unsigned short shade_565(unsigned short c, int delta) {
+static unsigned short shade_565(unsigned short colour, int delta) {
     // delta in roughly [-8..+8]. Green has twice the steps.
-    int r = (c >> 11) & 31;
-    int g = (c >> 5) & 63;
-    int b = c & 31;
+    int red = (colour >> 11) & 31;
+    int green = (colour >> 5) & 63;
+    int blue = colour & 31;
 
-    r += delta;
-    g += (delta * 2);
-    b += delta;
+    red += delta;
+    green += (delta * 2);
+    blue += delta;
 
-    if (r < 0) r = 0; else if (r > 31) r = 31;
-    if (g < 0) g = 0; else if (g > 63) g = 63;
-    if (b < 0) b = 0; else if (b > 31) b = 31;
+    if (red < 0) red = 0; else if (red > 31) red = 31;
+    if (green < 0) green = 0; else if (green > 63) green = 63;
+    if (blue < 0) blue = 0; else if (blue > 31) blue = 31;
 
-    return (unsigned short)((r << 11) | (g << 5) | b);
+    return (unsigned short)((red << 11) | (green << 5) | blue);
 }
 
 void draw_sprite_any_silhouette(const unsigned short *sprite,
@@ -261,20 +254,72 @@ void draw_sprite_any_silhouette(const unsigned short *sprite,
     const int dx = (int)dx_pattern[silhouette_frame];
     const unsigned short draw_colour = shade_565((unsigned short)silhouette_colour, (int)shade_pattern[silhouette_frame]);
 
-    const int useMagentaTolerance = (transparent == TRANSPARENT_COLOUR);
     for (int sy = 0; sy < height; sy++) {
         for (int sx = 0; sx < width; sx++) {
             unsigned short colour = sprite[sy * width + sx];
-            if (useMagentaTolerance) {
-                const int r = (colour >> 11) & 31;
-                const int g = (colour >> 5) & 63;
-                const int b = colour & 31;
-                if (r >= 28 && b >= 28 && g <= 3) continue;
-            } else if (colour == (unsigned short)transparent) {
+            if (colour == (unsigned short)transparent) {
                 continue;
             }
 
             draw_pixel(x + dx + sx, y + sy, draw_colour);
+        }
+    }
+}
+
+void draw_sprite_any_region(const unsigned short *sprite,
+                            int sprite_width, int sprite_height,
+                            int source_x, int source_y,
+                            int region_width, int region_height,
+                            int dst_x, int dst_y,
+                            short transparent)
+{
+    if (!sprite || sprite_width <= 0 || sprite_height <= 0) return;
+    if (region_width <= 0 || region_height <= 0) return;
+
+    if (source_x < 0) { dst_x -= source_x; region_width += source_x; source_x = 0; }
+    if (source_y < 0) { dst_y -= source_y; region_height += source_y; source_y = 0; }
+    if (source_x + region_width > sprite_width) region_width = sprite_width - source_x;
+    if (source_y + region_height > sprite_height) region_height = sprite_height - source_y;
+    if (region_width <= 0 || region_height <= 0) return;
+
+    for (int sy = 0; sy < region_height; sy++) {
+        const int source_row = (source_y + sy) * sprite_width;
+        for (int sx = 0; sx < region_width; sx++) {
+            unsigned short colour = sprite[source_row + (source_x + sx)];
+            if (colour == (unsigned short)transparent) {
+                continue;
+            }
+            draw_pixel(dst_x + sx, dst_y + sy, colour);
+        }
+    }
+}
+
+void draw_sprite_any_region_silhouette(const unsigned short *sprite,
+                                       int sprite_width, int sprite_height,
+                                       int source_x, int source_y,
+                                       int region_width, int region_height,
+                                       int dst_x, int dst_y,
+                                       short transparent,
+                                       short silhouette_colour)
+{
+    if (!sprite || region_width <= 0 || region_height <= 0) return;
+
+    if (source_x < 0) { dst_x -= source_x; region_width += source_x; source_x = 0; }
+    if (source_y < 0) { dst_y -= source_y; region_height += source_y; source_y = 0; }
+    if (source_x + region_width > sprite_width) region_width = sprite_width - source_x;
+    if (source_y + region_height > sprite_height) region_height = sprite_height - source_y;
+    if (region_width <= 0 || region_height <= 0) return;
+
+    const unsigned short draw_colour = (unsigned short)silhouette_colour;
+
+    for (int sy = 0; sy < region_height; sy++) {
+        const int source_row = (source_y + sy) * sprite_width;
+        for (int sx = 0; sx < region_width; sx++) {
+            unsigned short colour = sprite[source_row + (source_x + sx)];
+            if (colour == (unsigned short)transparent) {
+                continue;
+            }
+            draw_pixel(dst_x + sx, dst_y + sy, draw_colour);
         }
     }
 }
