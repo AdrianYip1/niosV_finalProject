@@ -647,30 +647,34 @@ int main(void)
             }
 
             if (battleUiState == BATTLE_UI_ATTACK_MENU) {
-                //attack menu
                 draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-
-                const unsigned short* moveSprites[4] = { move1, move2, move3, move4 };
-
-                draw_sprite_any(bugTypeSprite, BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-                draw_sprite_any(darkTypeSprite, DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
-                draw_sprite_any(dragonTypeSprite, DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
-                draw_sprite_any(electricTypeSprite, ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
-
-
-                for (int i = 0; i < 4; i++) {
-                    int mx = (i % 2 == 0) ? MOVE_LEFT_X : MOVE_RIGHT_X;
-                    int my = (i / 2 == 0) ? MOVE_TOP_Y  : MOVE_BOT_Y;
             
-                    if (cursorIndex == i) {
-                        draw_sprite_any_shade_pulse(moveSprites[i], MOVE_WIDTH, MOVE_HEIGHT,
-                                                    mx, my, TRANSPARENT_COLOUR, shadePulseFrame);
-                    } else {
-                        draw_sprite_any(moveSprites[i], MOVE_WIDTH, MOVE_HEIGHT,
-                                        mx, my, TRANSPARENT_COLOUR);
-                    }
+                const unsigned short* moveSprites[4] = { bugTypeSprite, darkTypeSprite, dragonTypeSprite, electricTypeSprite };
+                //location of moves
+                const int mxs[4] = { 0, 100, 150, 200 };
+                const int mys[4] = { 0, 100, 150, 200 };
+            
+                if (cursorIndex == 0) {
+                    draw_sprite_any_shade_pulse(moveSprites[0], MOVE_WIDTH, MOVE_HEIGHT, 0, 0, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(moveSprites[0], MOVE_WIDTH, MOVE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+                }
+                if (cursorIndex == 1) {
+                    draw_sprite_any_shade_pulse(moveSprites[1], MOVE_WIDTH, MOVE_HEIGHT, 100, 100, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(moveSprites[1], MOVE_WIDTH, MOVE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
+                }
+                if (cursorIndex == 2) {
+                    draw_sprite_any_shade_pulse(moveSprites[2], MOVE_WIDTH, MOVE_HEIGHT, 150, 150, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(moveSprites[2], MOVE_WIDTH, MOVE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
+                }
+                if (cursorIndex == 3) {
+                    draw_sprite_any_shade_pulse(moveSprites[3], MOVE_WIDTH, MOVE_HEIGHT, 200, 200, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(moveSprites[3], MOVE_WIDTH, MOVE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
+                }
             }
-        }
     
             break;
         }
