@@ -24,7 +24,6 @@ SRCS := software/main.c \
         software/graphics/sprites/battleIcons/battleHp/para.c \
         software/graphics/sprites/battleIcons/battleHp/poison.c \
         software/graphics/sprites/battleIcons/battleHp/sleep.c \
-        software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
         software/graphics/sprites/mainCharacter/idle/mcIdle_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingEast_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingNorth_frames.c \
@@ -52,13 +51,13 @@ SRCS := software/main.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
-		
         software/gameplayLogic/map_movement/mcMoving.c \
         software/se/opening_audio.c \
         software/se/introduction_audio.c \
         software/se/battle_audio.c \
         software/se/map_audio.c \
         software/se/plink_audio.c \
+		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
         software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c
 
 SHELL	:= cmd.exe
