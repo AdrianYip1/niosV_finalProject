@@ -50,7 +50,8 @@ SRCS := software/main.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
-        software/gameplayLogic/map_movement/mcMoving.c
+        software/gameplayLogic/map_movement/mcMoving.c \
+        software/se/opening_audio.c
 
 SHELL	:= cmd.exe
 
