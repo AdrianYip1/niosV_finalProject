@@ -516,6 +516,14 @@ int main(void)
             if (movedBattleCursor) {
                 play_sfx(plink_audio, plink_audio_len);
             }
+            
+            if (spacePressed && battleUiState == BATTLE_UI_MENU && cursorIndex == 0) {
+                play_sfx(plink_audio, plink_audio_len);
+            }
+            
+            if (escPressed && battleUiState == BATTLE_UI_ATTACK_MENU) {
+                play_sfx(plink_audio, plink_audio_len);
+            }
 
             // Animations (battle only).
             arrowAnimTimer++;
@@ -684,27 +692,45 @@ int main(void)
         }
 
         case GAME_STATE_BATTLE_TRANSITION: {
-            // Draw the battle scene underneath first
+            // Draw battle scene underneath
             draw_map();
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
         
-            const int GRID_SPACING = 40;
-            const int maxRadius = (GRID_SPACING) - transitionFrame;
+            // Fill entire screen black
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
         
-            for (int cy = 0; cy <= SCREEN_HEIGHT + GRID_SPACING; cy += GRID_SPACING) {
-                for (int cx = 0; cx <= SCREEN_WIDTH + GRID_SPACING; cx += GRID_SPACING) {
-                    for (int dy = -maxRadius; dy <= maxRadius; dy++) {
-                        int rowWidth = maxRadius - (dy < 0 ? -dy : dy);
-                        if (rowWidth < 0) rowWidth = 0;
-                        int px = cx - rowWidth;
-                        int py = cy + dy;
-                        if (py < 0 || py >= SCREEN_HEIGHT) continue;
-                        if (px < 0) px = 0;
-                        int endx = cx + rowWidth;
-                        if (endx > SCREEN_WIDTH) endx = SCREEN_WIDTH;
-                        if (endx > px)
-                            draw_rect(px, py, endx - px, 1, BLACK);
-                    }
-                }
+
+            const int centerX = SCREEN_WIDTH / 2;
+            const int centerY = SCREEN_HEIGHT / 2;
+            const int maxRadius = transitionFrame * 3; // *3 so it grows fast enough to cover screen
+        
+            // Draw the revealed area by punching out diamond-shaped rows
+            for (int dy = -maxRadius; dy <= maxRadius; dy++) {
+                int rowWidth = maxRadius - (dy < 0 ? -dy : dy);
+                if (rowWidth <= 0) continue;
+                int py = centerY + dy;
+                if (py < 0 || py >= SCREEN_HEIGHT) continue;
+                int px = centerX - rowWidth;
+                int ex = centerX + rowWidth;
+                if (px < 0) px = 0;
+                if (ex > SCREEN_WIDTH) ex = SCREEN_WIDTH;
+            }
+        
+
+            for (int y = 0; y < SCREEN_HEIGHT; y++) {
+                int dy = y - centerY;
+                int absDy = dy < 0 ? -dy : dy;
+                int openWidth = maxRadius - absDy;
+        
+                // Left black strip
+                int leftEnd = centerX - openWidth;
+                if (leftEnd > 0)
+                    draw_rect(0, y, leftEnd, 1, BLACK);
+        
+                // Right black strip
+                int rightStart = centerX + openWidth;
+                if (rightStart < SCREEN_WIDTH)
+                    draw_rect(rightStart, y, SCREEN_WIDTH - rightStart, 1, BLACK);
             }
         
             transitionTimer++;
@@ -713,7 +739,7 @@ int main(void)
                 transitionFrame++;
             }
         
-            if (transitionFrame >= GRID_SPACING) {
+            if (maxRadius >= (SCREEN_WIDTH / 2 + SCREEN_HEIGHT / 2)) {
                 gameState = GAME_STATE_BATTLE;
                 prevGameState = GAME_STATE_BATTLE;
                 transitionFrame = 0;
