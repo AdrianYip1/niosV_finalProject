@@ -9,6 +9,16 @@
 // Base address for the pixel buffer
 #define PIXEL_BASE 0xFF203020
 
+typedef enum {
+    FONT_8X8 = 0,
+    FONT_5X9 = 1,
+} FontId;
+
+void set_font(FontId font);
+FontId get_font(void);
+void draw_char_f(int x, int y, char c, short int colour, FontId font);
+void draw_string_f(int x, int y, const char *string, short colour, FontId font);
+
 void init_graphics(void);
 
 void draw_pixel(int x, int y, short int colour);

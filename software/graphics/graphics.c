@@ -1,4 +1,5 @@
 #include "font8x8_basic.h"
+#include "font5x9_pokemon.h"
 #include "../../address_map.h"
 #include "textbox/textBoxSprite.h"
 #include "map.h"
@@ -12,6 +13,18 @@
 
 #define FRAMEBUFFER_0 0x02000000
 #define FRAMEBUFFER_1 0x02040000
+
+//fonts
+typedef enum {
+    FONT_8X8 = 0,  // font8x8_basic
+    FONT_5X9 = 1,  // font5x9_pokemon
+} FontId;
+
+static FontId current_font = FONT_8X8;
+
+void set_font(FontId font) { current_font = font; }
+FontId get_font(void)      { return current_font; }
+
 
 static volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
 static unsigned int pixel_buffer_start;   // address drawing into (back buffer)
@@ -438,36 +451,48 @@ void hide_textbox(int x, int y)
     }
 }
 
-void draw_char(int x, int y, char c, short int colour) {
-    unsigned char character = (unsigned char)c;
-    if (character >= 128) return; //out of bounds
+// Draw a single character using the currently active font.
+void draw_char_f(int x, int y, char c, short int colour, FontId font) {
+    unsigned char ch = (unsigned char)c;
+    if (ch >= 128) return;
 
-    const unsigned char *font_data = font8x8_basic[character];
-
-    for (int row = 0; row < 8; row++) {
-        unsigned char bits = font_data[row];
-        for (int col = 0; col < 8; col++) {
-            if (bits & (1 << col)) { //if the bit is 1, draw the pixel. 1 << col masks the bit to col
-                draw_pixel(x + col, y + row, colour);
+    if (font == FONT_5X9) {
+        const uint8_t *glyph = font5x9_basic[ch];
+        for (int row = 0; row < 9; row++) {
+            uint8_t bits = glyph[row];
+            for (int col = 0; col < 5; col++) {
+                if (bits & (1 << (4 - col)))
+                    draw_pixel(x + col, y + row, colour);
+            }
+        }
+    } else {
+        // FONT_8X8
+        const unsigned char *glyph = font8x8_basic[ch];
+        for (int row = 0; row < 8; row++) {
+            unsigned char bits = glyph[row];
+            for (int col = 0; col < 8; col++) {
+                if (bits & (1 << col))
+                    draw_pixel(x + col, y + row, colour);
             }
         }
     }
 }
 
-void draw_string(int x, int y, const char *string, short colour)
-{
+void draw_char(int x, int y, char c, short int colour) {
+    draw_char_f(x, y, c, colour, current_font);
+}
+
+// Draw a string using an explicit font.
+void draw_string_f(int x, int y, const char *string, short colour, FontId font) {
+    int advance = (font == FONT_5X9) ? 6 : 8;  // char width + 1px gap
     int cursor_x = x;
     while (*string) {
-        draw_char(cursor_x, y, *string, colour);
-        cursor_x += 8; // next character cell
+        draw_char_f(cursor_x, y, *string, colour, font);
+        cursor_x += advance;
         string++;
     }
 }
 
-
-
-
-
-
-
-
+void draw_string(int x, int y, const char *string, short colour) {
+    draw_string_f(x, y, string, colour, current_font);
+}
