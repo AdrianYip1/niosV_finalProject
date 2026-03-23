@@ -103,16 +103,18 @@ int main(void)
 
     initTitleScreen();
     bool title_done = false;
-    // play_bgm(opening_audio, opening_audio_length);
+    play_bgm(opening_audio, opening_audio_length);
 
     while (!title_done) { // waiting for the space key
         update_keyboard();
+        audio_update_bgm();
         
         if (is_key_space_pressed()) { 
             title_done = true;
         }
 
         drawTitleScreen();
+        audio_update_bgm();
 
         spacebarTimer++;
         if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
@@ -125,11 +127,15 @@ int main(void)
                         SPACEBAR_X,
                         SPACEBAR_TITLE_Y,
                         TRANSPARENT_COLOUR);
+        audio_update_bgm();
 
         draw_string(TITLE_TEXT_X_CENTERED, TITLE_TEXT_Y_ABOVE_BAR, textboxMsg, WHITE);
+        audio_update_bgm();
 
         wait_for_vsync();
     }
+
+    stop_bgm();
 
     textboxMsgIndex++;
     textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
