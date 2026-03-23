@@ -17,6 +17,7 @@ static bool right_pressed = false;
 // Internal state machine trackers
 static bool is_break = false;
 static bool is_extended = false;
+static bool esc_pressed = false;
 
 
 
@@ -39,9 +40,6 @@ bool keyboard_pop_char(char *out) {
     return true;
 }
 
-bool is_key_escape_pressed(void) {
-    return is_key_pressed(0x76);
-}
 
 bool is_key_enter_pressed(void) {
     char c;
@@ -103,6 +101,9 @@ static char scan_to_char(unsigned char code) {
 
         // enter
         case 0x5A: return '\n';
+
+        //escape
+        case 0x76: return '\0';
 
         default: return '\0';
     }
@@ -175,6 +176,7 @@ bool is_key_space_pressed(void) {
     space_pressed = false; // クリアして「読んだ」ことにする（Fast-Tap対策）
     return temp; 
 }
+bool is_key_escape_pressed(void) { return esc_pressed; }
 
 bool is_key_shift_pressed(void) { return shift_pressed; }
 
