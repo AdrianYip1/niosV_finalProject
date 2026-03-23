@@ -3,10 +3,67 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define AUDIO_CTRL_RE (1u << 0)
+#define AUDIO_CTRL_WE (1u << 1)
+#define AUDIO_CTRL_CR (1u << 2)
+#define AUDIO_CTRL_CW (1u << 3)
+
+#define NIOSV_AUDIO_IRQ_CAUSE 21u
+#define MSTATUS_MIE (1u << 3)
+
 static int noise_remaining = 0;
 static const int16_t *bgm_ptr = NULL;
 static int bgm_len = 0;
 static int bgm_pos = 0;
+static volatile int *const audio_ptr = (int *)AUDIO_BASE;
+
+static inline unsigned int read_mcause(void) {
+    unsigned int value;
+    __asm__ volatile ("csrr %0, mcause" : "=r"(value));
+    return value;
+}
+
+static inline void write_mtvec(void *handler) {
+    __asm__ volatile ("csrw mtvec, %0" :: "r"(handler));
+}
+
+static inline void set_mie_bits(unsigned int mask) {
+    __asm__ volatile ("csrs mie, %0" :: "r"(mask));
+}
+
+static inline void set_mstatus_bits(unsigned int mask) {
+    __asm__ volatile ("csrs mstatus, %0" :: "r"(mask));
+}
+
+static inline void audio_write_control(unsigned int value) {
+    *audio_ptr = (int)value;
+}
+
+static inline unsigned int audio_read_control(void) {
+    return (unsigned int)(*audio_ptr);
+}
+
+static inline unsigned int audio_read_writable_control(void) {
+    return audio_read_control() & 0xFu;
+}
+
+static inline int audio_sources_active(void) {
+    return ((bgm_ptr != NULL && bgm_len > 0) || (noise_remaining > 0));
+}
+
+static void audio_enable_write_interrupt(void) {
+    audio_write_control(audio_read_writable_control() | AUDIO_CTRL_WE);
+}
+
+static void audio_disable_write_interrupt(void) {
+    audio_write_control(audio_read_writable_control() & ~AUDIO_CTRL_WE);
+}
+
+static void audio_kick_output(void) {
+    if (!audio_sources_active()) return;
+    audio_update();
+    audio_enable_write_interrupt();
+}
 
 static int32_t clamp_audio_sample(int64_t sample) {
     const int32_t max_amp = 0x7FFFFFF;
@@ -46,11 +103,37 @@ static int32_t next_step_sample(void) {
     }
 }
 
+void __attribute__((interrupt("machine"))) audio_interrupt_handler(void) {
+    const unsigned int mcause = read_mcause();
+    const unsigned int is_interrupt = mcause >> 31;
+    const unsigned int cause = mcause & 0x7FFFFFFFu;
+
+    if (!is_interrupt || cause != NIOSV_AUDIO_IRQ_CAUSE) {
+        return;
+    }
+
+    if (audio_sources_active()) {
+        audio_update();
+    } else {
+        audio_disable_write_interrupt();
+    }
+}
+
+void audio_init_interrupts(void) {
+    audio_write_control(AUDIO_CTRL_CW);
+    audio_write_control(0);
+
+    write_mtvec((void *)audio_interrupt_handler);
+    set_mie_bits(1u << NIOSV_AUDIO_IRQ_CAUSE);
+    set_mstatus_bits(MSTATUS_MIE);
+}
+
 
 void play_bgm(const int16_t *data, int length) {
     bgm_ptr = data;
     bgm_len = length;
     bgm_pos = 0;
+    audio_kick_output();
 }
 
 void stop_bgm(void) {
@@ -59,10 +142,10 @@ void stop_bgm(void) {
 
 void play_step_sound(void){
     noise_remaining = 500;
+    audio_kick_output();
 }
 
 void audio_update(void){
-    int * audio_ptr = (int*) AUDIO_BASE;
     const int fifospace = *(audio_ptr + 1);
     const int wsrc = (fifospace >> 16) & 0xff;
     const int wslc = (fifospace >> 24) & 0xff;
