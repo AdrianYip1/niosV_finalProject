@@ -123,14 +123,39 @@
 #define HP_WIDTH 48
 #define HP_HEIGHT 4
 
-#define myHP_X MY_HP_EMPTY_X + 20
-#define myHP_Y MY_HP_EMPTY_Y + 63
+#define myHP_X MY_HP_EMPTY_X + 62
+#define myHP_Y MY_HP_EMPTY_Y + 20 
+
+#define myHP_SHOWN_X MY_HP_EMPTY_X + 62
+#define myHP_SHOWN_Y MY_HP_EMPTY_Y + 20 
+
+#define myLVL_X MY_HP_EMPTY_X + 98
+#define myLVL_Y MY_HP_EMPTY_Y + 7
+
+#define oppLVL_X OPP_HP_EMPTY_X + 85
+#define oppLVL_Y OPP_HP_EMPTY_Y + 7
 
 #define myExp_X
 #define myExp_y
 
-#define oppHp_X
-#define oppHp_Y
+#define CAUGHT_X OPP_HP_EMPTY_X + 5
+#define CAUGHT_Y OPP_HP_EMPTY_Y + 18
+
+#define STATUS_X CAUGHT_X + 9
+#define STATUS_Y CAUGHT_Y + 2
+
+#define MYNAME_X MY_HP_EMPTY_X + 15
+#define MYNAME_Y myLVL_Y
+
+#define OPPNAME_X OPP_HP_EMPTY_X + 5
+#define OPPNAME_Y oppLVL_Y
+
+#define EXP_X MY_HP_EMPTY_X + 30
+#define EXP_Y MY_HP_EMPTY_Y + 38
+
+#define EXP_WIDTH 88
+#define EXP_HEIGHT 2
+
 
 //location for attacks and pp
 
@@ -239,11 +264,11 @@ static int navBattleMenu9(int index, NavDir dir) {
     static const signed char nav[9][4] = {
         /*0 Fight*/ {0, 0, 0, 1},
         /*1 Bag */ {1, 0, 2, 3},
-        /*2 Run */ {1, 0, 2, 3},
+        /*2 Run */ {1, 0, 2, 6},
         /*3 P1  */ {3, 1, 6, 4},
         /*4 P2  */ {4, 3, 7, 5},
         /*5 P3  */ {5, 4, 8, 5},
-        /*6 P4  */ {3, 1, 6, 7},
+        /*6 P4  */ {3, 2, 6, 7},
         /*7 P5  */ {4, 6, 7, 8},
         /*8 P6  */ {5, 7, 8, 8},
     };
@@ -547,11 +572,24 @@ int main(void)
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+            //todo: make the top and bottom lines of hp a darker shade to look better
+            
             //opponent hp bar
             draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, HP_WIDTH, HP_HEIGHT, GREEN);
+            draw_string_f(oppLVL_X, oppLVL_Y, "67", BLACK, 1);
+            draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+            draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
 
+
+            //got the bobbing dy pattern array to move hp bar, name, level, etc from myHP bar 
+            static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
+            0, -1, -1, 0, 0, 1, 1, 0,
+            0, -1, -1, 0, 0, 1, 1, 0 };
+            int offsetY = dy_pattern[bobFrame];
             //my hp bar
-            draw_rect(myHP_X, myHP_Y, HP_WIDTH, HP_HEIGHT, GREEN);
+            draw_rect(myHP_X, myHP_Y + offsetY, HP_WIDTH, HP_HEIGHT, GREEN);
+            draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, BLUE);
+            draw_string_f(myLVL_X, myLVL_Y + offsetY, "1", BLACK, 1);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
