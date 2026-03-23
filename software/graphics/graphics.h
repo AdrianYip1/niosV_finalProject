@@ -50,6 +50,13 @@ void draw_sprite_any_shake(const unsigned short *sprite,
                            short transparent,
                            int shake_frame);
 
+#define SHAKE_LESS_SPRITE_FRAME_COUNT 12
+void draw_sprite_any_shake_less(const unsigned short *sprite,
+                           int width, int height,
+                           int x, int y,
+                           short transparent,
+                           int shake_frame);
+
 #define FLASH_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_flash(const unsigned short *sprite,
                            int width, int height,
@@ -66,6 +73,13 @@ void draw_sprite_any_shade_pulse(const unsigned short *sprite,
 
 #define BOB_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_bob(const unsigned short *sprite,
+                         int width, int height,
+                         int x, int y,
+                         short transparent,
+                         int bob_frame);
+
+#define BOB_PARTY_SPRITE_FRAME_COUNT 16
+void draw_sprite_any_bob_party(const unsigned short *sprite,
                          int width, int height,
                          int x, int y,
                          short transparent,

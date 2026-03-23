@@ -114,6 +114,25 @@
 
 #define oppName_X
 #define oppName_Y
+ 
+ //y1 is 20 below 
+ //x1 is 62 right 
+ //y2 24 below
+ //x2 is 48+ 62
+#define myHP_WIDTH 48
+#define myHP_HEIGHT 4
+#define myHP_X MY_HP_EMPTY_X + 20
+#define myHP_Y MY_HP_EMPTY_Y + 63
+
+#define myExp_X
+#define myExp_y
+
+#define oppHp_X
+#define oppHp_Y
+
+//location for attacks and pp
+
+#define MOVE_
 
 // Game States
 typedef enum {
@@ -261,6 +280,8 @@ int main(void)
     int shadePulseFrame = 0;
     int shakeFrame = 0;
     int shakeTimer = 0;
+    int bobPartyFrame = 0;
+    int bobPartyTimer = 0;
     const int shakeSpeedFrames = 3;
 
     GameState gameState = GAME_STATE_BATTLE;
@@ -495,6 +516,14 @@ int main(void)
                 bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
             }
 
+            //for party members to show that they are being selected
+            bobPartyTimer++;
+            if (bobPartyTimer >= bobPartyFrame) {
+                bobPartyTimer = 0;
+                bobPartyFrame = (bobPartyFrame + 1) % BOB_SPRITE_FRAME_COUNT;
+            }
+
+
             // Battle base layer (always drawn in battle state).
             draw_map();
             draw_sprite_any_bob(charizardBackSprite.pixels,
@@ -513,6 +542,9 @@ int main(void)
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+
+            int bobOffsetY = bobFrame;
+            draw_rect(myHP_X, myHP_Y , myHP_WIDTH, myHP_HEIGHT, GREEN);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
@@ -542,26 +574,38 @@ int main(void)
                                     BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
                 }
 
-                const unsigned short* partyBg = battlePartySlot1Sprite;
+                const unsigned short* partyBg;
+                if (cursorIndex <= 2) {
+                    partyBg = battlePartySlotSprites[0];
+                }
+                else {
+                    partyBg = battlePartySlotSprites[cursorIndex - 2];
+                }
+
+                int selectedPartyIndex = -1;
+
                 if (cursorIndex >= 3 && cursorIndex <= 8) {
-                    partyBg = battlePartySlotSprites[cursorIndex - 3];
+                    selectedPartyIndex = cursorIndex - 3; 
+                
                 }
                 draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
                 //box sprites
-                for (int i = 0; i < 6; i++) {
-                    drawStaticSprite(&partyBoxSprites[i]);
-                }
-            }
+                
 
-            {
-                int ax = 0, ay = 0;
-                ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
-                if (arrowCtx != ARROW_CTX_NONE) {
-                    arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
-                    draw_sprite_any(arrowGifFrames[arrowAnimFrame],
-                                    ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
-                                    ax, ay,
-                                    TRANSPARENT_COLOUR);
+                for (int i = 0; i < 6; i++) {
+                    if (i == selectedPartyIndex) {
+                        draw_sprite_any_bob_party(
+                            partyBoxSprites[i].pixels,
+                            partyBoxSprites[i].width,
+                            partyBoxSprites[i].height,
+                            partyBoxSprites[i].x,
+                            partyBoxSprites[i].y,
+                            TRANSPARENT_COLOUR,
+                            bobPartyFrame
+                        );
+                    } else {
+                        drawStaticSprite(&partyBoxSprites[i]);
+                    }
                 }
             }
             break;

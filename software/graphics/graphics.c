@@ -180,6 +180,24 @@ void draw_sprite_any_shake(const unsigned short *sprite,
     draw_sprite_any(sprite, width, height, x + dx, y, transparent);
 }
 
+//shaking less for party
+void draw_sprite_any_shake_less(const unsigned short *sprite,
+                           int width, int height,
+                           int x, int y,
+                           short transparent,
+                           int shake_frame)
+{
+
+    static const signed char dx_pattern[SHAKE_LESS_SPRITE_FRAME_COUNT] = {0, -2, 2, -2, 2, -1, 1, -1, 1, -0, 0, 0};
+
+    int dx = 0;
+    if (shake_frame >= 0 && shake_frame < SHAKE_LESS_SPRITE_FRAME_COUNT) {
+        dx = (int)dx_pattern[shake_frame];
+    }
+
+    draw_sprite_any(sprite, width, height, x + dx, y, transparent);
+}
+
 static unsigned short shade_565(unsigned short colour, int delta);
 
 void draw_sprite_any_flash(const unsigned short *sprite,
@@ -226,6 +244,27 @@ void draw_sprite_any_bob(const unsigned short *sprite,
 
     int dy = 0;
     if (bob_frame >= 0 && bob_frame < BOB_SPRITE_FRAME_COUNT) {
+        dy = (int)dy_pattern[bob_frame];
+    }
+
+    draw_sprite_any(sprite, width, height, x, y + dy, transparent);
+}
+
+//up and down motion
+void draw_sprite_any_bob_party(const unsigned short *sprite,
+                         int width, int height,
+                         int x, int y,
+                         short transparent,
+                         int bob_frame)
+{
+
+    static const signed char dy_pattern[BOB_PARTY_SPRITE_FRAME_COUNT] = {
+        1, -1, 1, -1, 1, -1, 1, -1,
+        1, -1, 1, -1, 1, -1, 1, -1
+    };
+
+    int dy = 0;
+    if (bob_frame >= 0 && bob_frame < BOB_PARTY_SPRITE_FRAME_COUNT) {
         dy = (int)dy_pattern[bob_frame];
     }
 
