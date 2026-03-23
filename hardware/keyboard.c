@@ -19,6 +19,7 @@ static bool is_break = false;
 static bool is_extended = false;
 
 
+
 #define CHAR_QUEUE_SIZE 64
 static char char_queue[CHAR_QUEUE_SIZE];
 static int char_head = 0;
@@ -36,6 +37,10 @@ bool keyboard_pop_char(char *out) {
     *out = char_queue[char_head];
     char_head = (char_head + 1) % CHAR_QUEUE_SIZE;
     return true;
+}
+
+bool is_key_escape_pressed(void) {
+    return is_key_pressed(0x76);
 }
 
 bool is_key_enter_pressed(void) {
