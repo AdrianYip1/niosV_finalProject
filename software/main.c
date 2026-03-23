@@ -488,7 +488,9 @@ int main(void)
             }
             prevGameState = gameState;
         }
-
+        const bool spaceDown = is_key_space_pressed();
+        const bool spacePressed = spaceDown && !prevSpaceDown;
+        prevSpaceDown = spaceDown;
         const bool wDown = is_key_w_pressed();
         const bool aDown = is_key_a_pressed();
         const bool sDown = is_key_s_pressed();
@@ -539,6 +541,11 @@ int main(void)
                         cursorIndex = 0;
                     }
                 }
+            }
+
+            if (spacePressed && battleUiState == BATTLE_UI_MENU && cursorIndex == 0) {
+                battleUiState = BATTLE_UI_ATTACK_MENU;
+                cursorIndex = 0;
             }
 
             if (movedBattleCursor) {
@@ -677,8 +684,37 @@ int main(void)
                     }
                 }
             }
+
+            if (battleUiState == BATTLE_UI_ATTACK_MENU) {
+                //attack menu
+                draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+
+                const unsigned short* moveSprites[4] = { move1, move2, move3, move4 };
+
+                draw_sprite_any(bugTypeSprite, BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+                draw_sprite_any(darkTypeSprite, DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
+                draw_sprite_any(dragonTypeSprite, DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
+                draw_sprite_any(electricTypeSprite, ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
+
+
+                for (int i = 0; i < 4; i++) {
+                    int mx = (i % 2 == 0) ? MOVE_LEFT_X : MOVE_RIGHT_X;
+                    int my = (i / 2 == 0) ? MOVE_TOP_Y  : MOVE_BOT_Y;
+            
+                    if (cursorIndex == i) {
+                        draw_sprite_any_shade_pulse(moveSprites[i], MOVE_WIDTH, MOVE_HEIGHT,
+                                                    mx, my, TRANSPARENT_COLOUR, shadePulseFrame);
+                    } else {
+                        draw_sprite_any(moveSprites[i], MOVE_WIDTH, MOVE_HEIGHT,
+                                        mx, my, TRANSPARENT_COLOUR);
+                    }
+            }
+        }
+    
             break;
         }
+
+      
         case GAME_STATE_MAP:
         default:
 
