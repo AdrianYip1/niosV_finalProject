@@ -655,24 +655,24 @@ int main(void)
                 const int mys[4] = { 0, 100, 150, 200 };
             
                 if (cursorIndex == 0) {
-                    draw_sprite_any_shade_pulse(moveSprites[0], MOVE_WIDTH, MOVE_HEIGHT, 0, 0, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[0], MOVE_WIDTH, MOVE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 1) {
-                    draw_sprite_any_shade_pulse(moveSprites[1], MOVE_WIDTH, MOVE_HEIGHT, 100, 100, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[1], MOVE_WIDTH, MOVE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 2) {
-                    draw_sprite_any_shade_pulse(moveSprites[2], MOVE_WIDTH, MOVE_HEIGHT, 150, 150, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[2], MOVE_WIDTH, MOVE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 3) {
-                    draw_sprite_any_shade_pulse(moveSprites[3], MOVE_WIDTH, MOVE_HEIGHT, 200, 200, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[3], MOVE_WIDTH, MOVE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
                 }
             }
     
