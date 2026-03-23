@@ -17,6 +17,7 @@
 #include "../software/se/opening_audio.h"
 #include "../software/se/introduction_audio.h"
 #include "../software/se/battle_audio.h"
+#include "../software/se/map_audio.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
 #include "graphics/sprites/battleicons/battle_icons.h"
@@ -413,6 +414,8 @@ int main(void)
     load_map_preset(MAP_PRESET_BACKDROP1);
     if (gameState == GAME_STATE_BATTLE) {
         play_bgm(battle_audio, battle_audio_len);
+    } else {
+        play_bgm(map_audio, map_audio_len);
     }
     wait_for_vsync();
 
@@ -437,7 +440,7 @@ int main(void)
         // Re-init on state change.
         if (gameState != prevGameState) {
             if (gameState == GAME_STATE_MAP) {
-                stop_bgm();
+                play_bgm(map_audio, map_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_ROUTE);
                 mcMovingInit(80, 112, MC_FACING_S);

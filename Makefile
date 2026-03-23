@@ -55,6 +55,7 @@ SRCS := software/main.c \
         software/se/opening_audio.c \
         software/se/introduction_audio.c \
         software/se/battle_audio.c \
+        software/se/map_audio.c \
         software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c
 
 SHELL	:= cmd.exe
@@ -197,4 +198,3 @@ GDB_CLIENT:
 # EXTRAS
 
 .SILENT: SYMBOLS OBJDUMP
-
