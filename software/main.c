@@ -18,6 +18,7 @@
 #include "../software/se/introduction_audio.h"
 #include "../software/se/battle_audio.h"
 #include "../software/se/map_audio.h"
+#include "../software/se/plink_audio.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
 #include "graphics/sprites/battleicons/battle_icons.h"
@@ -467,6 +468,7 @@ int main(void)
 
         switch (gameState) {
         case GAME_STATE_BATTLE: {
+            bool movedBattleCursor = false;
 
             {
                 const ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
@@ -488,17 +490,26 @@ int main(void)
                         if (wPressed) newRow = (row + 1) % 2;
                         if (sPressed) newRow = (row + 1) % 2;
 
-                        cursorIndex = (newRow * 2) + newCol;
+                        {
+                            const int nextIndex = (newRow * 2) + newCol;
+                            movedBattleCursor = (nextIndex != cursorIndex);
+                            cursorIndex = nextIndex;
+                        }
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
-
+                        const int oldIndex = cursorIndex;
                         if (wPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_UP);
                         if (aPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_LEFT);
                         if (sPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_DOWN);
                         if (dPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_RIGHT);
+                        movedBattleCursor = (cursorIndex != oldIndex);
                     } else {
                         cursorIndex = 0;
                     }
                 }
+            }
+
+            if (movedBattleCursor) {
+                play_sfx(plink_audio, plink_audio_len);
             }
 
             // Animations (battle only).
