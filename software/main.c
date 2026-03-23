@@ -115,8 +115,9 @@
  //x1 is 62 right 
  //y2 24 below
  //x2 is 48+ 62
-#define myHP_WIDTH 48
-#define myHP_HEIGHT 4
+#define HP_WIDTH 48
+#define HP_HEIGHT 4
+
 #define myHP_X MY_HP_EMPTY_X + 20
 #define myHP_Y MY_HP_EMPTY_Y + 63
 
@@ -512,7 +513,7 @@ int main(void)
 
             // Battle base layer (always drawn in battle state).
             draw_map();
-            draw_rect(50, 50, 50, 10, GREEN);
+
             draw_sprite_any_bob(charizardBackSprite.pixels,
                                 charizardBackSprite.width, charizardBackSprite.height,
                                 charizardBackSprite.x, charizardBackSprite.y,
@@ -529,7 +530,7 @@ int main(void)
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
-
+            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 21, HP_WIDTH, HP_HEIGHT, GREEN);
             draw_rect(myHP_X, myHP_Y, myHP_WIDTH, myHP_HEIGHT, GREEN);
 
             // Battle UI States
