@@ -78,7 +78,6 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
         if (dir !=MC_DIR_NONE && dir !=MC_DIR_INVALID){
             if (stepCounter % 10 == 0) play_step_sound();
         }
-        audio_update_steps();
         switch (dir) {
             case MC_DIR_N:
                 goUp();

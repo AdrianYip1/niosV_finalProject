@@ -303,14 +303,14 @@ int main(void)
 
     while (!title_done) { // waiting for the space key
         update_keyboard();
-        audio_update_bgm();
+        audio_update();
         
         if (is_key_space_pressed()) { 
             title_done = true;
         }
 
         drawTitleScreen();
-        audio_update_bgm();
+        audio_update();
 
         spacebarTimer++;
         if (spacebarTimer >= SPACEBAR_SPEED_FRAMES) {
@@ -323,10 +323,10 @@ int main(void)
                         SPACEBAR_X,
                         SPACEBAR_TITLE_Y,
                         TRANSPARENT_COLOUR);
-        audio_update_bgm();
+        audio_update();
 
         draw_string(TITLE_TEXT_X_CENTERED, TITLE_TEXT_Y_ABOVE_BAR, textboxMsg, WHITE);
-        audio_update_bgm();
+        audio_update();
 
         wait_for_vsync();
     }
@@ -370,6 +370,7 @@ int main(void)
         prevSpaceDown = spaceDown;
 
         if (textboxDone && spacePressed) break;
+        audio_update();
         wait_for_vsync();
     }
 
@@ -385,6 +386,7 @@ int main(void)
         prevSpaceDown = spaceDown;
 
         if (textboxDone && spacePressed) break;
+        audio_update();
         wait_for_vsync();
     }
 
@@ -398,6 +400,7 @@ int main(void)
 
     while (1) {
         update_keyboard();
+        audio_update();
 
         // Toggle states with typed characters ('1' = battle, '2' = map).
         {
@@ -570,6 +573,7 @@ int main(void)
             break;
         }
 
+        audio_update();
         wait_for_vsync();
     }
 
