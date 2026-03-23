@@ -175,6 +175,7 @@
 typedef enum {
     GAME_STATE_MAP = 0,
     GAME_STATE_BATTLE = 1,
+    GAME_STATE_BATTLE_TRANSITION = 2,
 } GameState;
 
 
@@ -241,10 +242,10 @@ static int navBattleMenu9(int index, NavDir dir) {
 static int navBattleAttack4(int index, NavDir dir) {
     static const signed char nav[4][4] = {
         /* up left down right */
-        /*move 1*/ {0, 0, 3, 1},
-        /*move 2*/ {1, 0, 1, 3},
-        /*move 3*/ {2, 0, 3, 2},
-        /*move 4*/ {2, 1, 3, 3},
+        /*0 bug     */ {0, 0, 2, 1},
+        /*1 dragon  */ {1, 0, 3, 1},
+        /*2 dark    */ {0, 2, 2, 3},
+        /*3 electric*/ {1, 2, 3, 3},
     };
     if (index < 0) index = 0;
     if (index > 3) index = 3;
@@ -258,6 +259,12 @@ static int navBattleAttack4(int index, NavDir dir) {
 
 int main(void)
 {
+
+    //transition into battle
+    int transitionFrame = 0;
+    int transitionTimer = 0;
+    const int transitionSpeedFrames = 2; 
+
 
     int textboxMsgIndex = 0;
     const char *textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
@@ -447,6 +454,9 @@ int main(void)
                 load_map_preset(MAP_PRESET_BACKDROP1);
                 battleUiState = BATTLE_UI_MENU;
                 cursorIndex = 0;
+                gameState = GAME_STATE_BATTLE_TRANSITION;
+                transitionFrame = 0;
+                transitionTimer = 0;
             }
             prevGameState = gameState;
         }
@@ -650,33 +660,72 @@ int main(void)
             if (battleUiState == BATTLE_UI_ATTACK_MENU) {
                 draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
             
-                const unsigned short* moveSprites[4] = { bugTypeSprite, darkTypeSprite, dragonTypeSprite, electricTypeSprite };
+                const unsigned short* moveSprites[4] = { bugTypeSprite, dragonTypeSprite, darkTypeSprite, electricTypeSprite };
                 //location of moves
                 const int mxs[4] = { 18, 18, 160 + 18 , 160 + 18};
                 const int mys[4] = { 240 - 91 + 1, 240 - 45, 240 - 91 + 1, 240 - 45 };
             
                 if (cursorIndex == 0) {
-                    draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0], mys[0], TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0] , mys[0], TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 1) {
-                    draw_sprite_any_shade_pulse(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, mxs[1] , mys[1], TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, mxs[1] , mys[1], TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 2) {
-                    draw_sprite_any_shade_pulse(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, mxs[2], mys[2], TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, mxs[2], mys[2], TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 3) {
-                    draw_sprite_any_shade_pulse(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, mxs[3], mys[3], TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, mxs[3], mys[3], TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
                 }
             }
     
+            break;
+        }
+
+        case GAME_STATE_BATTLE_TRANSITION: {
+            // Draw the battle scene underneath first
+            draw_map();
+        
+            const int GRID_SPACING = 40;
+            const int maxRadius = (GRID_SPACING) - transitionFrame;
+        
+            for (int cy = 0; cy <= SCREEN_HEIGHT + GRID_SPACING; cy += GRID_SPACING) {
+                for (int cx = 0; cx <= SCREEN_WIDTH + GRID_SPACING; cx += GRID_SPACING) {
+                    for (int dy = -maxRadius; dy <= maxRadius; dy++) {
+                        int rowWidth = maxRadius - (dy < 0 ? -dy : dy);
+                        if (rowWidth < 0) rowWidth = 0;
+                        int px = cx - rowWidth;
+                        int py = cy + dy;
+                        if (py < 0 || py >= SCREEN_HEIGHT) continue;
+                        if (px < 0) px = 0;
+                        int endx = cx + rowWidth;
+                        if (endx > SCREEN_WIDTH) endx = SCREEN_WIDTH;
+                        if (endx > px)
+                            draw_rect(px, py, endx - px, 1, BLACK);
+                    }
+                }
+            }
+        
+            transitionTimer++;
+            if (transitionTimer >= transitionSpeedFrames) {
+                transitionTimer = 0;
+                transitionFrame++;
+            }
+        
+            if (transitionFrame >= GRID_SPACING) {
+                gameState = GAME_STATE_BATTLE;
+                prevGameState = GAME_STATE_BATTLE;
+                transitionFrame = 0;
+            }
+        
             break;
         }
 
