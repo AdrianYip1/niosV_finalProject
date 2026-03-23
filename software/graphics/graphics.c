@@ -4,6 +4,7 @@
 #include "textbox/textBoxSprite.h"
 #include "map.h"
 #include "tiles.h"
+#include "graphics.h"
 #include <string.h>
 
 #define TILE_SIZE 16
@@ -13,12 +14,6 @@
 
 #define FRAMEBUFFER_0 0x02000000
 #define FRAMEBUFFER_1 0x02040000
-
-//fonts
-typedef enum {
-    FONT_8X8 = 0,  // font8x8_basic
-    FONT_5X9 = 1,  // font5x9_pokemon
-} FontId;
 
 static FontId current_font = FONT_8X8;
 
@@ -457,7 +452,7 @@ void draw_char_f(int x, int y, char c, short int colour, FontId font) {
     if (ch >= 128) return;
 
     if (font == FONT_5X9) {
-        const uint8_t *glyph = font5x9_basic[ch];
+        const uint8_t *glyph = font5x9_pokemon[ch];
         for (int row = 0; row < 9; row++) {
             uint8_t bits = glyph[row];
             for (int col = 0; col < 5; col++) {
