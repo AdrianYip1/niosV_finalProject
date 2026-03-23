@@ -328,6 +328,7 @@ int main(void)
     int arrowAnimTimer = 0;
     const int arrowAnimSpeedFrames = 8;
     bool prevW = false, prevA = false, prevS = false, prevD = false;
+    bool prevEsc = false;
 
     StaticSprite charizardBackSprite;
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
@@ -491,6 +492,16 @@ int main(void)
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = spaceDown && !prevSpaceDown;
         prevSpaceDown = spaceDown;
+
+        const bool escDown = is_key_escape_pressed();
+        const bool escPressed = escDown && !prevEsc;
+        prevEsc = escDown;
+
+        if (escPressed && battleUiState == BATTLE_UI_ATTACK_MENU) {
+            battleUiState = BATTLE_UI_MENU;
+            cursorIndex = 0;
+        }
+
         const bool wDown = is_key_w_pressed();
         const bool aDown = is_key_a_pressed();
         const bool sDown = is_key_s_pressed();
