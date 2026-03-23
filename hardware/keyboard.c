@@ -149,6 +149,7 @@ void update_keyboard(void) {
                         case 0x29: 
                             if (state) space_pressed = true; // Latch Make Code only
                             break;
+                        case 0x76: esc_pressed = state; break;
                         default: break;
                     }
 
