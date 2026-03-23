@@ -207,63 +207,6 @@ static int arrowCursorCount(ArrowContext ctx) {
     }
 }
 
-static void arrowGetPos(ArrowContext ctx, int index, int* out_x, int* out_y) {
-    if (!out_x || !out_y) return;
-
-    if (ctx == ARROW_CTX_BATTLE_BAG) {
-        *out_x = BATTLE_ICON_BAG_X + (BATTLE_ICON_SMALL_WIDTH / 2) - (ARROWGIF_WIDTH / 2);
-        *out_y = BATTLE_ICON_BAG_Y - ARROWGIF_HEIGHT - 2;
-        return;
-    }
-
-    if (ctx == ARROW_CTX_BATTLE_ATTACK) {
-
-        const int baseX = 30;
-        const int baseY = TEXTBOX_Y + 10;
-        const int stepX = 120;
-        const int stepY = 18;
-        if (index < 0) index = 0;
-        if (index > 3) index = 3;
-        const int row = index / 2;
-        const int col = index % 2;
-        *out_x = baseX + (col * stepX);
-        *out_y = baseY + (row * stepY);
-        return;
-    }
-
-    if (ctx == ARROW_CTX_BATTLE_MENU) {
-        const int xs[9] = {
-            BATTLE_ICON_FIGHT_X + (BATTLE_ICON_FIGHT_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            BATTLE_ICON_BAG_X + (BATTLE_ICON_SMALL_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            BATTLE_ICON_RUN_X + (BATTLE_ICON_SMALL_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            PARTY_1_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            PARTY_2_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            PARTY_3_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            PARTY_4_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            PARTY_5_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-            PARTY_6_X + (CHARIZARD_BOX_WIDTH / 2) - (ARROWGIF_WIDTH / 2),
-        };
-        const int ys[9] = {
-            BATTLE_ICON_FIGHT_Y - ARROWGIF_HEIGHT - 2,
-            BATTLE_ICON_BAG_Y - ARROWGIF_HEIGHT - 2,
-            BATTLE_ICON_RUN_Y - ARROWGIF_HEIGHT - 2,
-            PARTY_1_Y - ARROWGIF_HEIGHT - 2,
-            PARTY_2_Y - ARROWGIF_HEIGHT - 2,
-            PARTY_3_Y - ARROWGIF_HEIGHT - 2,
-            PARTY_4_Y - ARROWGIF_HEIGHT - 2,
-            PARTY_5_Y - ARROWGIF_HEIGHT - 2,
-            PARTY_6_Y - ARROWGIF_HEIGHT - 2,
-        };
-        if (index < 0) index = 0;
-        if (index > 8) index = 8;
-        *out_x = xs[index];
-        *out_y = ys[index];
-        return;
-    }
-
-    *out_x = 0;
-    *out_y = 0;
-}
 
 // Navigation map for the 9 "battle menu" cursor targets (0..8).
 // Index meanings:
@@ -294,6 +237,23 @@ static int navBattleMenu9(int index, NavDir dir) {
     return next;
 }
 
+static int navBattleAttack4(int index, NavDir dir) {
+    static const signed char nav[4][4] = {
+        /* up left down right */
+        /*move 1*/ {0, 0, 2, 1},
+        /*move 2*/ {1, 0, 3, 1},
+        /*move 3*/ {0, 2, 2, 3},
+        /*move 4*/ {1, 2, 3, 3},
+    };
+    if (index < 0) index = 0;
+    if (index > 3) index = 3;
+    int d = (int)dir;
+    if (d < 0) d = 0;
+    if (d > 3) d = 3;
+    const int next = (int)nav[index][d];
+    if (next < 0 || next > 3) return index;
+    return next;
+}
 
 int main(void)
 {
@@ -525,22 +485,12 @@ int main(void)
                         cursorIndex = 0;
                     }
                     if (arrowCtx == ARROW_CTX_BATTLE_ATTACK) {
-                        // 2 rows x 2 columns
-                        const int row = cursorIndex / 2;
-                        const int col = cursorIndex % 2;
-                        int newRow = row;
-                        int newCol = col;
-
-                        if (aPressed) newCol = (col + 1) % 2;
-                        if (dPressed) newCol = (col + 1) % 2;
-                        if (wPressed) newRow = (row + 1) % 2;
-                        if (sPressed) newRow = (row + 1) % 2;
-
-                        {
-                            const int nextIndex = (newRow * 2) + newCol;
-                            movedBattleCursor = (nextIndex != cursorIndex);
-                            cursorIndex = nextIndex;
-                        }
+                        const int oldIndex = cursorIndex;
+                        if (wPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_UP);
+                        if (aPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_LEFT);
+                        if (sPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_DOWN);
+                        if (dPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_RIGHT);
+                        movedBattleCursor = (cursorIndex != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = cursorIndex;
                         if (wPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_UP);
