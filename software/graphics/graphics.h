@@ -9,6 +9,16 @@
 // Base address for the pixel buffer
 #define PIXEL_BASE 0xFF203020
 
+typedef enum {
+    FONT_8X8 = 0,
+    FONT_5X9 = 1,
+} FontId;
+
+void set_font(FontId font);
+FontId get_font(void);
+void draw_char_f(int x, int y, char c, short int colour, FontId font);
+void draw_string_f(int x, int y, const char *string, short colour, FontId font);
+
 void init_graphics(void);
 
 void draw_pixel(int x, int y, short int colour);
@@ -49,6 +59,14 @@ void draw_sprite_any_flash(const unsigned short *sprite,
                            int x, int y,
                            short transparent,
                            int flash_frame);
+
+#define SHADE_PULSE_FRAME_COUNT 16
+// Draws the sprite with a pulsing brightness (uses shade_565 on each non-transparent pixel).
+void draw_sprite_any_shade_pulse(const unsigned short *sprite,
+                                 int width, int height,
+                                 int x, int y,
+                                 short transparent,
+                                 int pulse_frame);
 
 #define BOB_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_bob(const unsigned short *sprite,

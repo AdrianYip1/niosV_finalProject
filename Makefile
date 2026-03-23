@@ -41,6 +41,7 @@ SRCS := software/main.c \
         software/graphics/sprites/boxSprites/charizardBoxSprite.c \
         software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
         software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
+        software/graphics/sprites/boxSprites/pokemonBoxSpriteInit.c \
         software/graphics/sprites/statEffects/statUp.c \
         software/graphics/sprites/statEffects/statDown.c \
         software/graphics/sprites/battleParty/battlePartySprite.c \
@@ -51,7 +52,9 @@ SRCS := software/main.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
-        software/se/opening_audio.c
+        software/se/opening_audio.c \
+	software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
+        software/gameplayLogic/map_movement/mcMoving.c
 
 SHELL	:= cmd.exe
 
