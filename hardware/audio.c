@@ -17,6 +17,7 @@ static int bgm_len = 0;
 static int bgm_pos = 0;
 static volatile int *const audio_ptr = (int *)AUDIO_BASE;
 
+// audio interrupt
 static inline unsigned int read_mcause(void) {
     unsigned int value;
     __asm__ volatile ("csrr %0, mcause" : "=r"(value));
@@ -51,6 +52,8 @@ static inline int audio_sources_active(void) {
     return ((bgm_ptr != NULL && bgm_len > 0) || (noise_remaining > 0));
 }
 
+
+// audio interrupt controller
 static void audio_enable_write_interrupt(void) {
     audio_write_control(audio_read_writable_control() | AUDIO_CTRL_WE);
 }
@@ -119,6 +122,7 @@ void __attribute__((interrupt("machine"))) audio_interrupt_handler(void) {
     }
 }
 
+// tap vector, IRQ
 void audio_init_interrupts(void) {
     audio_write_control(AUDIO_CTRL_CW);
     audio_write_control(0);
@@ -145,6 +149,7 @@ void play_step_sound(void){
     audio_kick_output();
 }
 
+// Mix bgm and other SE
 void audio_update(void){
     const int fifospace = *(audio_ptr + 1);
     const int wsrc = (fifospace >> 16) & 0xff;

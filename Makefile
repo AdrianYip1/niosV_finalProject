@@ -53,8 +53,9 @@ SRCS := software/main.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
         software/se/opening_audio.c \
-	software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
-        software/gameplayLogic/map_movement/mcMoving.c
+        software/se/introduction_audio.c \
+        software/se/battle_audio.c \
+        software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c
 
 SHELL	:= cmd.exe
 

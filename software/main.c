@@ -15,6 +15,8 @@
 #include "../hardware/keyboard.h"
 #include "../hardware/audio.h"
 #include "../software/se/opening_audio.h"
+#include "../software/se/introduction_audio.h"
+#include "../software/se/battle_audio.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
 #include "graphics/sprites/battleicons/battle_icons.h"
@@ -341,8 +343,7 @@ int main(void)
     wait_for_vsync();
     draw_map();
     wait_for_vsync();
-
-
+    play_bgm(introduction_audio, introduction_audio_len);
     getTextFromUserIntoTextbox(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, BLACK, textboxMsg);
     
 
@@ -384,10 +385,14 @@ int main(void)
         if (textboxDone && spacePressed) break;
         wait_for_vsync();
     }
+    stop_bgm();
 
     // Initial state setup (press '1' for battle, '2' for map).
     init_map();
     load_map_preset(MAP_PRESET_BACKDROP1);
+    if (gameState == GAME_STATE_BATTLE) {
+        play_bgm(battle_audio, battle_audio_len);
+    }
     wait_for_vsync();
 
     textboxDone = 0;
@@ -411,10 +416,12 @@ int main(void)
         // Re-init on state change.
         if (gameState != prevGameState) {
             if (gameState == GAME_STATE_MAP) {
+                stop_bgm();
                 init_map();
                 load_map_preset(MAP_PRESET_ROUTE);
                 mcMovingInit(80, 112, MC_FACING_S);
             } else {
+                play_bgm(battle_audio, battle_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_BACKDROP1);
                 battleUiState = BATTLE_UI_MENU;
