@@ -10,6 +10,8 @@
 
 #define NIOSV_AUDIO_IRQ_CAUSE 21u
 #define MSTATUS_MIE (1u << 3)
+#define BGM_GAIN_SHIFT 8
+#define SFX_GAIN_SHIFT 12
 
 static int noise_remaining = 0;
 static const int16_t *bgm_ptr = NULL;
@@ -88,7 +90,7 @@ static int32_t next_bgm_sample(void) {
     }
 
     {
-        const int32_t sample = ((int32_t)bgm_ptr[bgm_pos]) << 12;
+        const int32_t sample = ((int32_t)bgm_ptr[bgm_pos]) << BGM_GAIN_SHIFT;
         bgm_pos++;
         if (bgm_pos >= bgm_len) {
             bgm_pos = 0;
@@ -117,7 +119,7 @@ static int32_t next_sfx_sample(void) {
     }
 
     {
-        const int32_t sample = ((int32_t)sfx_ptr[sfx_pos]) << 10;
+        const int32_t sample = ((int32_t)sfx_ptr[sfx_pos]) << SFX_GAIN_SHIFT;
         sfx_pos++;
         if (sfx_pos >= sfx_len) {
             sfx_ptr = NULL;
