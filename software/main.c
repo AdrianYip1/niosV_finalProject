@@ -530,7 +530,7 @@ int main(void)
 
                 const unsigned short* partyBg = battlePartySlot1Sprite;
                 if (cursorIndex >= 3 && cursorIndex <= 8) {
-                    partyBg = battlePartySlotSprites[cursorIndex - 3];
+                    partyBg = battlePartySlotSprites[cursorIndex - 2];
                 }
                 draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
                 //box sprites
