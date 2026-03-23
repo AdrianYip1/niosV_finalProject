@@ -512,6 +512,7 @@ int main(void)
 
             // Battle base layer (always drawn in battle state).
             draw_map();
+            draw_rect(50, 50, 50, 10, GREEN);
             draw_sprite_any_bob(charizardBackSprite.pixels,
                                 charizardBackSprite.width, charizardBackSprite.height,
                                 charizardBackSprite.x, charizardBackSprite.y,
@@ -529,8 +530,8 @@ int main(void)
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
-            int bobOffsetY = bobFrame;
-            draw_rect(myHP_X, myHP_Y , myHP_WIDTH, myHP_HEIGHT, GREEN);
+            int bobOffsetY = bobOffsets[bobFrame];
+            draw_rect(myHP_X, myHP_Y + bobOffsetY, myHP_WIDTH, myHP_HEIGHT, GREEN);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
