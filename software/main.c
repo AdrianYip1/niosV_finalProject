@@ -179,6 +179,12 @@ typedef enum {
     ARROW_CTX_BATTLE_BAG = 3,
 } ArrowContext;
 
+typedef enum {
+    BATTLE_UI_MENU = 0,
+    BATTLE_UI_ATTACK_MENU = 1,
+    BATTLE_UI_BAG_MENU = 2,
+} BattleUiState;
+
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
     if (state != GAME_STATE_BATTLE) return ARROW_CTX_NONE;
     if (battleUi == BATTLE_UI_ATTACK_MENU) return ARROW_CTX_BATTLE_ATTACK;
