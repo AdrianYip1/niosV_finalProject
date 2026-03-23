@@ -143,7 +143,7 @@
 #define STATUS_X CAUGHT_X + 9
 #define STATUS_Y CAUGHT_Y
 
-#define MYSTATUS_X myHP_X - 25
+#define MYSTATUS_X myHP_X - 30
 #define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
@@ -241,10 +241,10 @@ static int navBattleMenu9(int index, NavDir dir) {
 static int navBattleAttack4(int index, NavDir dir) {
     static const signed char nav[4][4] = {
         /* up left down right */
-        /*move 1*/ {0, 0, 2, 1},
-        /*move 2*/ {1, 0, 3, 1},
-        /*move 3*/ {0, 2, 2, 3},
-        /*move 4*/ {1, 2, 3, 3},
+        /*move 1*/ {0, 0, 3, 1},
+        /*move 2*/ {1, 0, 1, 3},
+        /*move 3*/ {2, 0, 3, 2},
+        /*move 4*/ {2, 1, 3, 3},
     };
     if (index < 0) index = 0;
     if (index > 3) index = 3;
@@ -656,24 +656,24 @@ int main(void)
                 const int mys[4] = { 240 - 91 + 1, 240 - 45, 240 - 91 + 1, 240 - 45 };
             
                 if (cursorIndex == 0) {
-                    draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0], mys[0], TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0] , mys[0], TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 1) {
-                    draw_sprite_any_shade_pulse(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, mxs[1] , mys[1], TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, mxs[1] , mys[1], TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 2) {
-                    draw_sprite_any_shade_pulse(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, mxs[2], mys[2], TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, 150, 150, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, mxs[2], mys[2], TRANSPARENT_COLOUR);
                 }
                 if (cursorIndex == 3) {
-                    draw_sprite_any_shade_pulse(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, mxs[3], mys[3], TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
-                    draw_sprite_any(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, 200, 200, TRANSPARENT_COLOUR);
+                    draw_sprite_any(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, mxs[3], mys[3], TRANSPARENT_COLOUR);
                 }
             }
     
