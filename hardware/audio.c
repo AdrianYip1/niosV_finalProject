@@ -83,7 +83,7 @@ static int32_t next_bgm_sample(void) {
     }
 
     {
-        const int32_t sample = ((int32_t)bgm_ptr[bgm_pos]) << 12;
+        const int32_t sample = ((int32_t)bgm_ptr[bgm_pos]) << 10;
         bgm_pos++;
         if (bgm_pos >= bgm_len) {
             bgm_pos = 0;
@@ -98,7 +98,7 @@ static int32_t next_step_sample(void) {
     }
 
     {
-        const int32_t max_amp = 0x03FFFFFF;
+        const int32_t max_amp = 0x0FFFFFFF;
         const int32_t noise = (rand() % max_amp) - (max_amp / 2);
         const int32_t sample = (int32_t)(((int64_t)noise * noise_remaining) / 3000);
         noise_remaining--;
