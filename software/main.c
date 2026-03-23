@@ -28,6 +28,7 @@
 #include "graphics/sprites/boxSprites/charizardBoxSprite.h"
 #include "graphics/sprites/boxSprites/charmeleonBoxSprite.h"
 #include "graphics/sprites/boxSprites/charmanderBoxSprite.h"
+#include "graphics/sprites/boxSprites/pokemonBoxSpriteInit.h"
 #include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
 #include <stdbool.h>
 
@@ -260,6 +261,23 @@ int main(void)
     initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
     StaticSprite charmanderFrontSprite;
     initPokemonFrontBattleSpriteDefault(&charmanderFrontSprite, POKEMON_ID_CHARMANDER);
+
+    // Temporary team 
+    const int playerTeamIds[6] = {
+        POKEMON_ID_CHARIZARD,
+        POKEMON_ID_CHARMANDER,
+        POKEMON_ID_CHARMELEON,
+        POKEMON_ID_CHARIZARD,
+        POKEMON_ID_CHARMANDER,
+        POKEMON_ID_CHARMELEON,
+    };
+    StaticSprite partyBoxSprites[6];
+    initPokemonBoxSprite(&partyBoxSprites[0], playerTeamIds[0], PARTY_1_X, PARTY_1_Y);
+    initPokemonBoxSprite(&partyBoxSprites[1], playerTeamIds[1], PARTY_2_X, PARTY_2_Y);
+    initPokemonBoxSprite(&partyBoxSprites[2], playerTeamIds[2], PARTY_3_X, PARTY_3_Y);
+    initPokemonBoxSprite(&partyBoxSprites[3], playerTeamIds[3], PARTY_4_X, PARTY_4_Y);
+    initPokemonBoxSprite(&partyBoxSprites[4], playerTeamIds[4], PARTY_5_X, PARTY_5_Y);
+    initPokemonBoxSprite(&partyBoxSprites[5], playerTeamIds[5], PARTY_6_X, PARTY_6_Y);
 
     // Init VGA and tiles
     init_graphics();
@@ -499,13 +517,15 @@ int main(void)
                                     BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
                 }
 
-                draw_sprite_any(battlePartySprite, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
-                draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_1_X, PARTY_1_Y, TRANSPARENT_COLOUR);
-                draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_2_X, PARTY_2_Y, TRANSPARENT_COLOUR);
-                draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_3_X, PARTY_3_Y, TRANSPARENT_COLOUR);
-                draw_sprite_any(charizardBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_4_X, PARTY_4_Y, TRANSPARENT_COLOUR);
-                draw_sprite_any(charmanderBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_5_X, PARTY_5_Y, TRANSPARENT_COLOUR);
-                draw_sprite_any(charmeleonBox, CHARIZARD_BOX_WIDTH, CHARIZARD_BOX_HEIGHT, PARTY_6_X, PARTY_6_Y, TRANSPARENT_COLOUR);
+                const unsigned short* partyBg = battlePartySlot1Sprite;
+                if (cursorIndex >= 3 && cursorIndex <= 8) {
+                    partyBg = battlePartySlotSprites[cursorIndex - 3];
+                }
+                draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
+                //box sprites
+                for (int i = 0; i < 6; i++) {
+                    drawStaticSprite(&partyBoxSprites[i]);
+                }
             }
 
             {
