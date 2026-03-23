@@ -530,8 +530,11 @@ int main(void)
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
-            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 21, HP_WIDTH, HP_HEIGHT, GREEN);
-            draw_rect(myHP_X, myHP_Y, myHP_WIDTH, myHP_HEIGHT, GREEN);
+            //opponent hp bar
+            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, HP_WIDTH, HP_HEIGHT, GREEN);
+
+            //my hp bar
+            draw_rect(myHP_X, myHP_Y, HP_WIDTH, HP_HEIGHT, GREEN);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
