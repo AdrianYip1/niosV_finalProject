@@ -103,7 +103,7 @@ int main(void)
 
     initTitleScreen();
     bool title_done = false;
-    play_bgm(opening_audio, opening_audio_length);
+    // play_bgm(opening_audio, opening_audio_length);
 
     while (!title_done) { // waiting for the space key
         update_keyboard();
@@ -128,7 +128,6 @@ int main(void)
 
         draw_string(TITLE_TEXT_X_CENTERED, TITLE_TEXT_Y_ABOVE_BAR, textboxMsg, WHITE);
 
-        audio_update();
         wait_for_vsync();
     }
 
@@ -164,7 +163,6 @@ int main(void)
 
         textboxDone = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg3Render, BLACK);
 
-        audio_update();
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = (spaceDown && !prevSpaceDown);
         prevSpaceDown = spaceDown;
@@ -180,7 +178,6 @@ int main(void)
 
         textboxDone = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg4Render, BLACK);
 
-        audio_update();
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = (spaceDown && !prevSpaceDown);
         prevSpaceDown = spaceDown;
