@@ -51,8 +51,12 @@ SRCS := software/main.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
-		software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
-        software/gameplayLogic/map_movement/mcMoving.c
+        software/gameplayLogic/map_movement/mcMoving.c \
+        software/se/opening_audio.c \
+        software/se/introduction_audio.c \
+        software/se/battle_audio.c \
+        software/se/map_audio.c \
+        software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c
 
 SHELL	:= cmd.exe
 
@@ -194,4 +198,3 @@ GDB_CLIENT:
 # EXTRAS
 
 .SILENT: SYMBOLS OBJDUMP
-
