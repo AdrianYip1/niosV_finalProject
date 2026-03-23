@@ -136,7 +136,7 @@
 #define STATUS_X CAUGHT_X + 9
 #define STATUS_Y CAUGHT_Y
 
-#define MYSTATUS_X myHP_X - 33
+#define MYSTATUS_X myHP_X - 35
 #define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
@@ -234,20 +234,19 @@ static int navBattleMenu9(int index, NavDir dir) {
 static int navBattleAttack4(int index, NavDir dir) {
     static const signed char nav[4][4] = {
         /* up left down right */
-        /*0 bug*/ {0, 0, 1, 2},  // down -> dragon, right -> dark
-        /*1 dragon*/ {0, 1, 1, 3},  // up -> bug, right -> electric
-        /*2 dark*/ {2, 0, 3, 2},  // left -> bug, down -> electric
-        /*3 electric */ {2, 1, 3, 3},  // up -> dark, left -> dragon
+        /*0 bug     */ {0, 0, 2, 1},
+        /*1 dragon  */ {1, 0, 3, 1},
+        /*2 dark    */ {0, 2, 2, 3},
+        /*3 electric*/ {1, 2, 3, 3},
     };
     if (index < 0) index = 0;
     if (index > 3) index = 3;
-
     int d = (int)dir;
     if (d < 0) d = 0;
     if (d > 3) d = 3;
-
-    const int next = nav[index][d];
-    return (next >= 0 && next <= 3) ? next : index;
+    const int next = (int)nav[index][d];
+    if (next < 0 || next > 3) return index;
+    return next;
 }
 
 int main(void)
@@ -664,7 +663,7 @@ int main(void)
                 const unsigned short* moveSprites[4] = { bugTypeSprite, dragonTypeSprite, darkTypeSprite, electricTypeSprite };
                 //location of moves
                 const int mxs[4] = { 18, 18, 160 + 18 , 160 + 18};
-                const int mys[4] = { 240 - 91 + 1, 240 - 45, 240 - 91 + 1, 240 - 45 };
+                const int mys[4] = { 240 - 91, 240 - 45, 240 - 91, 240 - 45 };
             
                 if (cursorIndex == 0) {
                     draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0], mys[0], TRANSPARENT_COLOUR, shadePulseFrame);
