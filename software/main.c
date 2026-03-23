@@ -110,9 +110,15 @@
 
 #define oppName_X
 #define oppName_Y
-
-#define myHP_X
-#define myHP_Y
+ 
+ //y1 is 20 below 
+ //x1 is 62 right 
+ //y2 24 below
+ //x2 is 48+ 62
+#define myHP_X1 MY_HP_EMPTY_X + 20
+#define myHP_Y1 MY_HP_EMPTY_Y + 63
+#define myHP_X2 myHP_X1 + 47
+#define myHP_Y2 myHP_Y1 + 3
 
 #define myExp_X
 #define myExp_y
@@ -270,6 +276,8 @@ int main(void)
     int shadePulseFrame = 0;
     int shakeFrame = 0;
     int shakeTimer = 0;
+    int bobPartyFrame = 0;
+    int bobPartyTimer = 0;
     const int shakeSpeedFrames = 3;
 
     GameState gameState = GAME_STATE_BATTLE;
@@ -494,6 +502,14 @@ int main(void)
                 bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
             }
 
+            //for party members to show that they are being selected
+            bobPartyTimer++;
+            if (bobPartyTimer >= bobPartyFrame) {
+                bobPartyTimer = 0;
+                bobPartyFrame = (bobPartyFrame + 1) % BOB_SPRITE_FRAME_COUNT;
+            }
+
+
             // Battle base layer (always drawn in battle state).
             draw_map();
             draw_sprite_any_bob(charizardBackSprite.pixels,
@@ -512,6 +528,8 @@ int main(void)
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+
+            draw_rect(myHP_X1, myHP_Y1, myHP_X2 - myHP_X1, myHP_Y2 - myHP_Y1, GREEN);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
@@ -561,14 +579,14 @@ int main(void)
 
                 for (int i = 0; i < 6; i++) {
                     if (i == selectedPartyIndex) {
-                        draw_sprite_any_bob(
+                        draw_sprite_any_bob_party(
                             partyBoxSprites[i].pixels,
                             partyBoxSprites[i].width,
                             partyBoxSprites[i].height,
                             partyBoxSprites[i].x,
                             partyBoxSprites[i].y,
                             TRANSPARENT_COLOUR,
-                            bobFrame
+                            bobPartyFrame
                         );
                     } else {
                         drawStaticSprite(&partyBoxSprites[i]);
