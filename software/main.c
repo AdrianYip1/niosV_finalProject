@@ -111,6 +111,19 @@
 #define oppName_X
 #define oppName_Y
 
+#define myHP_X
+#define myHP_Y
+
+#define myExp_X
+#define myExp_y
+
+#define oppHp_X
+#define oppHp_Y
+
+//location for attacks and pp
+
+#define MOVE_
+
 // Game States
 typedef enum {
     GAME_STATE_MAP = 0,
