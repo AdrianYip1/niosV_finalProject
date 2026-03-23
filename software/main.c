@@ -529,7 +529,8 @@ int main(void)
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
-            draw_rect(myHP_X, myHP_Y, myHP_WIDTH, myHP_HEIGHT, GREEN);
+            int bobOffsetY = bobFrame;
+            draw_rect(myHP_X, myHP_Y , myHP_WIDTH, myHP_HEIGHT, GREEN);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
