@@ -115,10 +115,10 @@
  //x1 is 62 right 
  //y2 24 below
  //x2 is 48+ 62
-#define myHP_X1 MY_HP_EMPTY_X + 20
-#define myHP_Y1 MY_HP_EMPTY_Y + 63
-#define myHP_X2 myHP_X1 + 47
-#define myHP_Y2 myHP_Y1 + 3
+#define myHP_WIDTH 48
+#define myHP_HEIGHT 4
+#define myHP_X MY_HP_EMPTY_X + 20
+#define myHP_Y MY_HP_EMPTY_Y + 63
 
 #define myExp_X
 #define myExp_y
@@ -529,7 +529,7 @@ int main(void)
                                 bobFrame);
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
-            draw_rect(myHP_X1, myHP_Y1, myHP_X2 - myHP_X1, myHP_Y2 - myHP_Y1, GREEN);
+            draw_rect(myHP_X, myHP_Y, myHP_WIDTH, myHP_HEIGHT, GREEN);
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
