@@ -143,7 +143,7 @@
 #define STATUS_X CAUGHT_X + 9
 #define STATUS_Y CAUGHT_Y
 
-#define MYSTATUS_X myHP_X - 10
+#define MYSTATUS_X myHP_X - 25
 #define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
@@ -652,8 +652,8 @@ int main(void)
             
                 const unsigned short* moveSprites[4] = { bugTypeSprite, darkTypeSprite, dragonTypeSprite, electricTypeSprite };
                 //location of moves
-                const int mxs[4] = { 0, 100, 150, 200 };
-                const int mys[4] = { 0, 100, 150, 200 };
+                const int mxs[4] = { 18, 18, 160 + 18 , 160 + 18};
+                const int mys[4] = { 240 - 91 + 1, 240 - 45, 240 - 91 + 1, 240 - 45 };
             
                 if (cursorIndex == 0) {
                     draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, 0, 0, TRANSPARENT_COLOUR, shadePulseFrame);
