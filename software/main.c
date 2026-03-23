@@ -541,26 +541,29 @@ int main(void)
                                     BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
                 }
 
-                const unsigned short* partyBg = battlePartySlot1Sprite;
-                if (cursorIndex >= 3 && cursorIndex <= 8) {
+                const unsigned short* partyBg;
+                if (cursorIndex <= 2) {
+                    partyBg = battlePartySlotSprites[0];
+                }
+                else {
                     partyBg = battlePartySlotSprites[cursorIndex - 2];
                 }
                 draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
                 //box sprites
-                for (int i = 0; i < 6; i++) {
-                    drawStaticSprite(&partyBoxSprites[i]);
-                }
-            }
+                
 
-            {
-                int ax = 0, ay = 0;
-                ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
-                if (arrowCtx != ARROW_CTX_NONE) {
-                    arrowGetPos(arrowCtx, cursorIndex, &ax, &ay);
-                    draw_sprite_any(arrowGifFrames[arrowAnimFrame],
-                                    ARROWGIF_WIDTH, ARROWGIF_HEIGHT,
-                                    ax, ay,
-                                    TRANSPARENT_COLOUR);
+                for (int i = 0; i < 6; i++) {
+                    if (i == partyBg) {
+                        draw_sprite_any_bob(&partyBoxSprites[i],
+                                &partyBoxSprites[i].width, &partyBoxSprites[i].height,
+                                &partyBoxSprites[i].x, &partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobFrame);
+                    }
+                    else {
+                        drawStaticSprite(&partyBoxSprites[i]);
+                    }
+
                 }
             }
             break;
