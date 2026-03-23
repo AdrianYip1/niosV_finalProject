@@ -169,15 +169,8 @@ typedef enum {
     GAME_STATE_MAP = 0,
     GAME_STATE_BATTLE = 1,
     GAME_STATE_BATTLE_TRANSITION = 2,
+    GAME_STATE_BATTLE_INTRO_TEXT = 3,
 } GameState;
-
-
-//states for battle
-typedef enum {
-    BATTLE_UI_MENU = 0,
-    BATTLE_UI_ATTACK_MENU = 1,
-    BATTLE_UI_BAG_MENU = 2,
-} BattleUiState;
 
 typedef enum {
     ARROW_CTX_NONE = 0,
@@ -740,9 +733,24 @@ int main(void)
             }
         
             if (maxRadius >= (SCREEN_WIDTH / 2 + SCREEN_HEIGHT / 2)) {
+                gameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                prevGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                transitionFrame = 0;
+            }
+        
+            break;
+        }
+        
+        case GAME_STATE_BATTLE_INTRO_TEXT: {
+            draw_map();
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+        
+            int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "battle placeholder", BLACK);
+        
+            if (done && spacePressed) {
+                play_sfx(plink_audio, plink_audio_len);
                 gameState = GAME_STATE_BATTLE;
                 prevGameState = GAME_STATE_BATTLE;
-                transitionFrame = 0;
             }
         
             break;
