@@ -136,17 +136,17 @@
 #define oppLVL_X OPP_HP_EMPTY_X + 85
 #define oppLVL_Y OPP_HP_EMPTY_Y + 7
 
-#define myExp_X
-#define myExp_y
-
 #define CAUGHT_X OPP_HP_EMPTY_X + 5
 #define CAUGHT_Y OPP_HP_EMPTY_Y + 18
 
 #define STATUS_X CAUGHT_X + 9
-#define STATUS_Y CAUGHT_Y + 2
+#define STATUS_Y CAUGHT_Y
+
+#define MYSTATUS_X myHP_X - 10
+#define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
-#define MYNAME_Y myLVL_Y
+#define MYNAME_Y myLVL_Y 
 
 #define OPPNAME_X OPP_HP_EMPTY_X + 5
 #define OPPNAME_Y oppLVL_Y
@@ -156,6 +156,14 @@
 
 #define EXP_WIDTH 88
 #define EXP_HEIGHT 2
+
+#define TOTAL_HPNUM3_X MY_HP_EMPTY_X + 65
+#define TOTAL_HPNUM2_X MY_HP_EMPTY_X + 71
+#define TOTAL_HPNUM1_X MY_HP_EMPTY_X + 77
+
+#define REMAINING_HP_X MY_HP_EMPTY_X + 97
+
+#define HPNUM_Y MY_HP_EMPTY_Y + 27
 
 
 //location for attacks and pp
@@ -590,7 +598,7 @@ int main(void)
             draw_string_f(oppLVL_X, oppLVL_Y, "67", BLACK, 1);
             draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
             draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-
+            draw_string_f(OPPNAME_X, OPPNAME_Y, "CHARMANDER", BLACK, 1);
 
             //got the bobbing dy pattern array to move hp bar, name, level, etc from myHP bar 
             static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
@@ -601,6 +609,11 @@ int main(void)
             draw_rect(myHP_X, myHP_Y + offsetY, HP_WIDTH, HP_HEIGHT, GREEN);
             draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, BLUE);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, "1", BLACK, 1);
+            draw_string_f(MYNAME_X, MYNAME_Y + offsetY, "CHARIZARD", BLACK, 1);
+            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, "123", BLACK, 1);
+            draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, "456", BLACK, 1);
+            draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+           
 
             // Battle UI States
             if (battleUiState == BATTLE_UI_MENU) {
