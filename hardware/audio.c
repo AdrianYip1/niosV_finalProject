@@ -10,11 +10,16 @@
 
 #define NIOSV_AUDIO_IRQ_CAUSE 21u
 #define MSTATUS_MIE (1u << 3)
+#define BGM_GAIN_SHIFT 8
+#define SFX_GAIN_SHIFT 12
 
 static int noise_remaining = 0;
 static const int16_t *bgm_ptr = NULL;
 static int bgm_len = 0;
 static int bgm_pos = 0;
+static const int16_t *sfx_ptr = NULL;
+static int sfx_len = 0;
+static int sfx_pos = 0;
 static volatile int *const audio_ptr = (int *)AUDIO_BASE;
 
 // audio interrupt
@@ -49,7 +54,9 @@ static inline unsigned int audio_read_writable_control(void) {
 }
 
 static inline int audio_sources_active(void) {
-    return ((bgm_ptr != NULL && bgm_len > 0) || (noise_remaining > 0));
+    return ((bgm_ptr != NULL && bgm_len > 0) ||
+            (sfx_ptr != NULL && sfx_len > 0 && sfx_pos < sfx_len) ||
+            (noise_remaining > 0));
 }
 
 
@@ -83,7 +90,7 @@ static int32_t next_bgm_sample(void) {
     }
 
     {
-        const int32_t sample = ((int32_t)bgm_ptr[bgm_pos]) << 12;
+        const int32_t sample = ((int32_t)bgm_ptr[bgm_pos]) << 10;
         bgm_pos++;
         if (bgm_pos >= bgm_len) {
             bgm_pos = 0;
@@ -98,10 +105,27 @@ static int32_t next_step_sample(void) {
     }
 
     {
-        const int32_t max_amp = 0x03FFFFFF;
+        const int32_t max_amp = 0x0FFFFFFF;
         const int32_t noise = (rand() % max_amp) - (max_amp / 2);
         const int32_t sample = (int32_t)(((int64_t)noise * noise_remaining) / 3000);
         noise_remaining--;
+        return sample;
+    }
+}
+
+static int32_t next_sfx_sample(void) {
+    if (sfx_ptr == NULL || sfx_len <= 0 || sfx_pos >= sfx_len) {
+        return 0;
+    }
+
+    {
+        const int32_t sample = ((int32_t)sfx_ptr[sfx_pos]) << SFX_GAIN_SHIFT;
+        sfx_pos++;
+        if (sfx_pos >= sfx_len) {
+            sfx_ptr = NULL;
+            sfx_len = 0;
+            sfx_pos = 0;
+        }
         return sample;
     }
 }
@@ -140,6 +164,14 @@ void play_bgm(const int16_t *data, int length) {
     audio_kick_output();
 }
 
+void play_sfx(const int16_t *data, int length) {
+    if (!data || length <= 0) return;
+    sfx_ptr = data;
+    sfx_len = length;
+    sfx_pos = 0;
+    audio_kick_output();
+}
+
 void stop_bgm(void) {
     bgm_ptr = NULL;
 }
@@ -157,7 +189,9 @@ void audio_update(void){
     const int space = (wslc < wsrc) ? wslc : wsrc;
 
     for (int i = 0; i < space; i++) {
-        const int64_t mixed = (int64_t)next_bgm_sample() + (int64_t)next_step_sample();
+        const int64_t mixed = (int64_t)next_bgm_sample() +
+                              (int64_t)next_sfx_sample() +
+                              (int64_t)next_step_sample();
         const int32_t output = clamp_audio_sample(mixed);
         *(audio_ptr + 2) = output;
         *(audio_ptr + 3) = output;
