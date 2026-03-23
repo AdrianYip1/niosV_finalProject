@@ -1,6 +1,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include <stdint.h>
+
 #define TILE_SIZE 16
 #define TRANSPARENT_COLOUR 0xF81F //anyy pink pixels will be transparent
 #define SCREEN_WIDTH 320
@@ -10,14 +12,13 @@
 #define PIXEL_BASE 0xFF203020
 
 typedef enum {
-    FONT_8X8 = 0,
-    FONT_5X9 = 1,
+    FONT_8X8 = 0,  // font8x8_basic 
+    FONT_5X9 = 1,  // font5x9_pokemon
 } FontId;
 
-void set_font(FontId font);
-FontId get_font(void);
-void draw_char_f(int x, int y, char c, short int colour, FontId font);
-void draw_string_f(int x, int y, const char *string, short colour, FontId font);
+void    set_font(FontId font);
+FontId  get_font(void);
+
 
 void init_graphics(void);
 
@@ -34,16 +35,13 @@ void draw_rect(int x, int y, int width, int height, short int colour);
 void draw_rect_outline(int x, int y, int width, int height, short int colour);
 void draw_window(int x, int y, int w, int h, short int border_colour, short int fill_colour);
 
-
 void draw_tiles(const short *tile, int x, int y);
 void draw_sprite_transparent(const short *sprite, int x, int y, short transparent);
 
-// Generic sprite drawer
 void draw_sprite_any(const unsigned short *sprite,
                      int width, int height,
                      int x, int y,
                      short transparent);
-
 
 #define SHAKE_SPRITE_FRAME_COUNT 12
 void draw_sprite_any_shake(const unsigned short *sprite,
@@ -51,7 +49,6 @@ void draw_sprite_any_shake(const unsigned short *sprite,
                            int x, int y,
                            short transparent,
                            int shake_frame);
-
 
 #define FLASH_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_flash(const unsigned short *sprite,
@@ -61,7 +58,6 @@ void draw_sprite_any_flash(const unsigned short *sprite,
                            int flash_frame);
 
 #define SHADE_PULSE_FRAME_COUNT 16
-// Draws the sprite with a pulsing brightness (uses shade_565 on each non-transparent pixel).
 void draw_sprite_any_shade_pulse(const unsigned short *sprite,
                                  int width, int height,
                                  int x, int y,
@@ -83,7 +79,6 @@ void draw_sprite_any_silhouette(const unsigned short *sprite,
                                 short silhouette_colour,
                                 int silhouette_frame);
 
-// Draw a rectangular region from a larger sprite sheet.
 void draw_sprite_any_region(const unsigned short *sprite,
                             int sprite_width, int sprite_height,
                             int source_x, int source_y,
@@ -91,7 +86,6 @@ void draw_sprite_any_region(const unsigned short *sprite,
                             int dst_x, int dst_y,
                             short transparent);
 
-// Draw a region as a solid silhouette colour (for stat-up/down).
 void draw_sprite_any_region_silhouette(const unsigned short *sprite,
                                        int sprite_width, int sprite_height,
                                        int source_x, int source_y,
@@ -102,10 +96,18 @@ void draw_sprite_any_region_silhouette(const unsigned short *sprite,
 
 void draw_circle(int cx, int cy, int radius, short int colour);
 void draw_circle_filled(int cx, int cy, int radius, short int colour);
-void draw_triangle(int x0,int y0,int x1,int y1,int x2,int y2, short int colour);
+void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, short int colour);
+
 void draw_textbox_instant_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);
-int draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);
+int  draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);
 void hide_textbox(int x, int y);
+
+
 void draw_char(int x, int y, char c, short int colour);
 void draw_string(int x, int y, const char *string, short colour);
+
+
+void draw_char_f(int x, int y, char c, short int colour, FontId font);
+void draw_string_f(int x, int y, const char *string, short colour, FontId font);
+
 #endif
