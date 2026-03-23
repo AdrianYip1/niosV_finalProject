@@ -35,6 +35,7 @@
 #include "graphics/sprites/boxSprites/charmeleonBoxSprite.h"
 #include "graphics/sprites/boxSprites/charmanderBoxSprite.h"
 #include "graphics/sprites/boxSprites/pokemonBoxSpriteInit.h"
+#include "graphics/sprites/battleIcons/attackTypes/attackTypeSprites.h"
 #include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
 #include <stdbool.h>
 
