@@ -92,13 +92,13 @@
 #define PARTY_3_Y 240 - 91 - 18
 
 #define PARTY_4_X 173 - 2
-#define PARTY_4_Y 240 - 91 + 23
+#define PARTY_4_Y 240 - 91 + 24
 
 #define PARTY_5_X 213 + 1
-#define PARTY_5_Y 240 - 91 + 23
+#define PARTY_5_Y 240 - 91 + 24
 
 #define PARTY_6_X 253 + 3
-#define PARTY_6_Y 240 - 91 + 23
+#define PARTY_6_Y 240 - 91 + 24
 
 #define battleBackdropY 240 - 91
 
@@ -143,7 +143,7 @@
 #define STATUS_X CAUGHT_X + 9
 #define STATUS_Y CAUGHT_Y
 
-#define MYSTATUS_X myHP_X - 30
+#define MYSTATUS_X myHP_X - 35
 #define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
