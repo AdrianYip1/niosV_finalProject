@@ -15,6 +15,8 @@ SRCS := software/main.c \
         software/graphics/predefined_graphics.c \
         software/graphics/tiles.c \
         software/graphics/backdrops/backdrop1_tiles.c \
+        software/graphics/backdrops/ground_tiles.c \
+        software/graphics/backdrops/decor_tiles.c \
         software/graphics/sprites/battleIcons/battle_icons.c \
         software/graphics/sprites/battleIcons/battleHp/burned.c \
         software/graphics/sprites/battleIcons/battleHp/caught.c \
@@ -72,7 +74,7 @@ SRCS := software/main.c \
         software/gameplayLogic/bag.c \
         software/gameplayLogic/itemDatabase.c \
         software/gameplayLogic/entities/pokemonDataBase.c \
-        software/gameplayLogic/entities/learnset.c \
+        software/gameplayLogic/entities/learnSet.c \
         software/gameplayLogic/storage/pc.c \
         software/gameplayLogic/entities/pokemonObject.c
 

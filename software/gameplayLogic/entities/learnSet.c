@@ -1,4 +1,4 @@
-#include "learnset.h"
+#include "learnSet.h"
 
 const LearnsetEntry LEARNSET_CHARMANDER[] = {
     {1, &SCRATCH},

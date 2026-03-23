@@ -35,7 +35,7 @@ void drawSpriteAnimationWithMap(void) {
 
     for (int tile_y = topTile; tile_y <= bottomTile; tile_y++) {
         for (int tile_x = leftTile; tile_x <= rightTile; tile_x++) {
-            drawTile(tile_x, tile_y, map[tile_y][tile_x]);
+            draw_map_cell(tile_x, tile_y);
         }
     }
 

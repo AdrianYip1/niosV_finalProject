@@ -1,5 +1,5 @@
 #include "pokemonObject.h"
-#include "learnset.h"
+#include "learnSet.h"
 #include <stdio.h>
 
 void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, int level) {
