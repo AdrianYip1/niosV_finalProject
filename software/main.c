@@ -140,7 +140,7 @@
 #define STATUS_X CAUGHT_X + 9
 #define STATUS_Y CAUGHT_Y
 
-#define MYSTATUS_X myHP_X - 35
+#define MYSTATUS_X myHP_X - 37
 #define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
@@ -155,14 +155,17 @@
 #define EXP_WIDTH 88
 #define EXP_HEIGHT 2
 
-#define TOTAL_HPNUM3_X MY_HP_EMPTY_X + 65
-#define TOTAL_HPNUM2_X MY_HP_EMPTY_X + 71
-#define TOTAL_HPNUM1_X MY_HP_EMPTY_X + 77
+#define TOTAL_HPNUM_X MY_HP_EMPTY_Y + 27
 
 #define REMAINING_HP_X MY_HP_EMPTY_X + 97
 
-#define HPNUM_Y MY_HP_EMPTY_Y + 27
+#define HPNUM_Y MY_HP_EMPTY_X + 65
 
+#define CURRENT_PP_X_FROM_ATTACK_SPRITE 73 //73 right 
+#define CURRENT_PP_Y_FROM_ATTACK_SPRITE 23 //23 down
+
+#define TOTAL_PP_X_FROM_CURRENT_PP 22 //22 right
+#define TOTAL_PP_Y_FROM_CURRENT_PP 0 //same y
 
 //location for attacks and pp
 
@@ -796,8 +799,8 @@ int main(void)
             draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
-            // Display as current / max (left-to-right).
-            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+
+            draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
             draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
            
@@ -861,23 +864,21 @@ int main(void)
             }
 
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
-                // Move slot layout matches `navBattleAttack4` indexing:
-                // 0 = top-left, 1 = top-right, 2 = bottom-left, 3 = bottom-right
                 const int mxLeft = 18;
                 const int mxRight = 160 + 18;
-                const int myTop = 240 - 91;
+                const int myTop = 240 - 89;
                 const int myBottom = 240 - 45;
                 const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
                 const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
 
                 pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
 
-                // Text box inside each move sprite:
+                // Text box inside each move sprite
                 // 97x9px tall, positioned 10px left and 11px down from the move sprite's top-left.
                 const int nameBoxW = 97;
                 const int nameBoxH = 9;
-                const int nameBoxDx = -10;
-                const int nameBoxDy = 11;
+                const int nameBoxDx = -5;
+                const int nameBoxDy = 13;
 
                 for (int i = 0; i < 4; i++) {
                     const AttackData *move = (playerActive != NULL) ? playerActive->attacks[i] : NULL;
@@ -910,11 +911,6 @@ int main(void)
             }
 
             // Animations (battle only).
-            arrowAnimTimer++;
-            if (arrowAnimTimer >= arrowAnimSpeedFrames) {
-                arrowAnimTimer = 0;
-                arrowAnimFrame = (arrowAnimFrame + 1) % ARROWGIF_FRAME_COUNT;
-            }
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
             shakeTimer++;
             if (shakeTimer >= shakeSpeedFrames) {
@@ -987,7 +983,7 @@ int main(void)
             draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
-            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+            draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
             draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
 
@@ -1005,7 +1001,6 @@ int main(void)
 
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
                         currentGameState = GAME_STATE_MAP;
-                        // Let the normal state-change init run for MAP.
                     } else {
                         battleUi = BATTLE_UI_MENU;
                         battleCursor = 0;
@@ -1034,11 +1029,6 @@ int main(void)
                                 0, battleBackdropY,
                                 TRANSPARENT_COLOUR);
 
-                // Show both Pokémon underneath the transition (before the black borders animate).
-                // During the wild battle transition, only show the wild Pokémon (centered)
-                // so it’s visible immediately as the rectangle expands.
-
-
                 // Expanding rectangle
                 int halfW = transitionFrame * 12;  // speed (increase for faster)
                 int halfH = transitionFrame * 8;
@@ -1064,7 +1054,6 @@ int main(void)
                 if (right < SCREEN_WIDTH)
                     draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
 
-                // Keep the wild Pokémon visible (in its normal battle position) during the transition.
                 if (enemyFrontSprite.pixels != NULL) {
                     draw_sprite_any(enemyFrontSprite.pixels,
                                     enemyFrontSprite.width, enemyFrontSprite.height,
