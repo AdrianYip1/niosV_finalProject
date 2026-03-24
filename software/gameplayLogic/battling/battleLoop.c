@@ -18,13 +18,14 @@ static void battlePushMessage(BattleState *state, const char *msg) {
     state->messageCount++;
 }
 
-static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *attacker, const AttackData *move) {
+static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *attacker, const AttackData *move, bool opposing) {
     const char *attackerName = (attacker != NULL && attacker->id.data != NULL && attacker->id.data->name != NULL)
                                    ? attacker->id.data->name
                                    : "???";
     const char *moveName = (move != NULL && move->name != NULL) ? move->name : "???";
     char buf[96];
-    snprintf(buf, sizeof(buf), "%s used %s!", attackerName, moveName);
+    if (opposing) snprintf(buf, sizeof(buf), "Opposing %s used %s!", attackerName, moveName);
+    else snprintf(buf, sizeof(buf), "%s used %s!", attackerName, moveName);
     battlePushMessage(state, buf);
 }
 
@@ -80,12 +81,12 @@ static void handleFaint(BattleState *state, Party *party, bool isPlayer) {
     if (next >= 0) party->activeIndex = next;
 }
 
-static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex) {
+static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
     if (attacker == NULL || target == NULL) return;
     if (!canAct(attacker)) return;
 
     const AttackData *move = (moveIndex >= 0 && moveIndex < 4) ? attacker->attacks[moveIndex] : NULL;
-    if (move != NULL) battlePushUsedMessage(state, attacker, move);
+    if (move != NULL) battlePushUsedMessage(state, attacker, move, opposing);
     (void)useAttack(attacker, target, moveIndex);
 }
 
@@ -119,7 +120,7 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
 
     switch (action) {
         case ACTION_ATTACK:
-            resolveAttack(state, player, enemy, param);
+            resolveAttack(state, player, enemy, param, false);
             break;
         case ACTION_SWITCH:
             {
@@ -165,7 +166,7 @@ static void resolveEnemyTurn(BattleState *state) {
     }
 
     const int moveIndex = aiChooseMove(enemy);
-    resolveAttack(state, enemy, player, moveIndex);
+    resolveAttack(state, enemy, player, moveIndex, true);
 }
 
 static void resolveTurn(BattleState *state, BattleAction playerAction, int playerParam) {
@@ -199,23 +200,23 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         const int enemyMove = aiChooseMove(enemy);
         const int order = determineTurnOrder(player, enemy); // 1=player first, 2=enemy first
         if (order == 1) {
-            resolveAttack(state, player, enemy, playerParam);
+            resolveAttack(state, player, enemy, playerParam, false);
             if (!enemy->alive) {
                 handleFaint(state, state->enemyParty, false);
             }
             if (state->result == BATTLE_RESULT_ONGOING && enemy->alive) {
-                resolveAttack(state, enemy, player, enemyMove);
+                resolveAttack(state, enemy, player, enemyMove, true);
                 if (!player->alive) {
                     handleFaint(state, state->playerParty, true);
                 }
             }
         } else {
-            resolveAttack(state, enemy, player, enemyMove);
+            resolveAttack(state, enemy, player, enemyMove, true);
             if (!player->alive) {
                 handleFaint(state, state->playerParty, true);
             }
             if (state->result == BATTLE_RESULT_ONGOING && player->alive) {
-                resolveAttack(state, player, enemy, playerParam);
+                resolveAttack(state, player, enemy, playerParam, false);
                 if (!enemy->alive) {
                     handleFaint(state, state->enemyParty, false);
                 }

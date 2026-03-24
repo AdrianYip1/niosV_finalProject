@@ -396,6 +396,7 @@ int main(void)
     const int arrowAnimSpeedFrames = 8;
     bool prevUp = false, prevLeft = false, prevDown = false, prevRight = false;
     bool prevEsc = false;
+    bool actionTextAwaitSpaceRelease = false;
 
     // Battle logic (stub for now).
     BattleState battleState;
@@ -688,6 +689,7 @@ int main(void)
                 if (battleState.messageCount > 0) {
                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    actionTextAwaitSpaceRelease = true;
                 } else if (battleState.result != BATTLE_RESULT_ONGOING) {
                     currentGameState = GAME_STATE_MAP;
                 }
@@ -903,6 +905,10 @@ int main(void)
         case GAME_STATE_BATTLE_ACTION_TEXT: {
             // Hide the menus, keep the battle UI background, and show queued messages.
 
+            if (actionTextAwaitSpaceRelease) {
+                if (!spaceDown) actionTextAwaitSpaceRelease = false;
+            }
+
             // Animations (battle only).
             arrowAnimTimer++;
             if (arrowAnimTimer >= arrowAnimSpeedFrames) {
@@ -989,9 +995,9 @@ int main(void)
             const char *msg = (battleState.messageCount > 0 && battleState.messageReadIndex >= 0 && battleState.messageReadIndex < battleState.messageCount)
                                   ? battleState.messages[battleState.messageReadIndex]
                                   : "";
-            const int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
 
-            if (done && spacePressed) {
+            if (!actionTextAwaitSpaceRelease && spacePressed) {
                 battleState.messageReadIndex++;
                 if (battleState.messageReadIndex >= battleState.messageCount) {
                     battleState.messageReadIndex = 0;
