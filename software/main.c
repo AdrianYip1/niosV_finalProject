@@ -42,6 +42,7 @@
 #include "gameplayLogic/battling/battleLoop.h"
 #include "gameplayLogic/entities/pokemonDataBase.h"
 #include "gameplayLogic/storage/pc.h"
+#include "graphics/sprites/battleItemsUI/useLastItem.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -171,6 +172,8 @@
 #define TOTAL_PP_X_FROM_CURRENT_PP 22 //22 right
 #define TOTAL_PP_Y_FROM_CURRENT_PP 0 //same y
 
+#define USE_LAST_ICON_X 60
+#define USE_LAST_ICON_Y 240 - BATTLE_BAG_USE_LAST_ITEM_HEIGHT - 5
 //location for attacks and pp
 
 #define MOVE_
@@ -209,27 +212,30 @@ static int arrowCursorCount(ArrowContext ctx) {
     switch (ctx) {
         case ARROW_CTX_BATTLE_MENU: return 9;   // Fight/Bag/Run/party members
         case ARROW_CTX_BATTLE_ATTACK: return 4; 
-        case ARROW_CTX_BATTLE_BAG: return 2;   
+        case ARROW_CTX_BATTLE_BAG: return 3;   
         default: return 0;
     }
 }
 
 // 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
 typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
-static int navBattleBag2(int index, NavDir dir) {
-    if (index < 0) index = 0;
-    if (index > 1) index = 1;
+static int navBattleBag3(int index, NavDir dir) {
+    static const signed char nav[3][4] = {
+        /*0 HP*/ {0, 0, 2, 1},
+        /*1 Pokeballs */ {1, 0, 2, 1},
+        /*2 Last Item */ {0, 2, 2, 2},
+    };
 
-    switch (dir) {
-        case DIR_LEFT:
-        case DIR_UP:
-            return 0;
-        case DIR_RIGHT:
-        case DIR_DOWN:
-            return 1;
-        default:
-            return index;
-    }
+    if (index < 0) index = 0;
+    if (index > 2) index = 2;
+
+    int d = (int)dir;
+    if (d < 0) d = 0;
+    if (d > 2) d = 2;
+
+    const int next = (int)nav[index][d];
+    if (next < 0 || next > 2) return index;
+    return next;
 }
 
 static int navBattleMenu9(int index, NavDir dir) {
@@ -697,10 +703,10 @@ int main(void)
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_BAG) {
                         const int oldIndex = battleCursor;
-                        if (upPressed) battleCursor = navBattleBag2(battleCursor, DIR_UP);
-                        if (leftPressed) battleCursor = navBattleBag2(battleCursor, DIR_LEFT);
-                        if (downPressed) battleCursor = navBattleBag2(battleCursor, DIR_DOWN);
-                        if (rightPressed) battleCursor = navBattleBag2(battleCursor, DIR_RIGHT);
+                        if (upPressed) battleCursor = navBattleBag3(battleCursor, DIR_UP);
+                        if (leftPressed) battleCursor = navBattleBag3(battleCursor, DIR_LEFT);
+                        if (downPressed) battleCursor = navBattleBag3(battleCursor, DIR_DOWN);
+                        if (rightPressed) battleCursor = navBattleBag3(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = battleCursor;
@@ -791,8 +797,11 @@ int main(void)
                     // Show a message and return to the bag menu.
                     if (battleCursor == 0) {
                         battleUiSetSingleMessage(&battleState, "No HP items yet!");
-                    } else {
+                    } 
+                    if (battleCursor == 1) {
                         battleUiSetSingleMessage(&battleState, "No Pokeballs yet!");
+                    } else {
+                        battleUiSetSingleMessage(&battleState, "No items used yet!");
                     }
                     actionTextReturnUi = battleUi;
                     actionTextReturnCursor = battleCursor;
@@ -944,13 +953,6 @@ int main(void)
                     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
                                     BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
                 }
-                if (battleCursor == 2) {
-                    draw_sprite_any_shade_pulse(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
-                                                BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR, shadePulseFrame);
-                } else {
-                    draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
-                                    BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
-                }
 
                 const unsigned short* partyBg;
                 if (battleCursor <= 2) {
@@ -1084,6 +1086,13 @@ int main(void)
                     draw_sprite_any_shade_pulse(pokeballs, POKEBALLS_WIDTH, POKEBALLS_HEIGHT, itemXRight, itemY, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
                     draw_sprite_any(pokeballs, POKEBALLS_WIDTH, POKEBALLS_HEIGHT, itemXRight, itemY, TRANSPARENT_COLOUR);
+                }
+                if (battleCursor == 2) {
+                    draw_sprite_any_shade_pulse(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
+                                                USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
+                                            USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR);
                 }
             }
      
