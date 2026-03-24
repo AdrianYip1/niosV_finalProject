@@ -1080,7 +1080,7 @@ int main(void)
             }
 
             if (battleUi == BATTLE_UI_BAG_MENU) {
-                const int itemY = battleBackdropY + 10;
+                const int itemY = battleBackdropY + 2;
                 const int itemXLeft = 12;
                 const int itemXRight = SCREEN_WIDTH - POKEBALLS_WIDTH - 12;
 
