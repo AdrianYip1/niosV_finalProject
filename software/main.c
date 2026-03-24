@@ -212,27 +212,32 @@ static int arrowCursorCount(ArrowContext ctx) {
     switch (ctx) {
         case ARROW_CTX_BATTLE_MENU: return 9;   // Fight/Bag/Run/party members
         case ARROW_CTX_BATTLE_ATTACK: return 4; 
-        case ARROW_CTX_BATTLE_BAG: return 2;   
+        case ARROW_CTX_BATTLE_BAG: return 3;   
         default: return 0;
     }
 }
 
 // 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
 typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
-static int navBattleBag2(int index, NavDir dir) {
+static int navBattleBag3(int index, NavDir dir) {
     if (index < 0) index = 0;
-    if (index > 1) index = 1;
+    if (index > 2) index = 2;
 
-    switch (dir) {
-        case DIR_LEFT:
-        case DIR_UP:
-            return 0;
-        case DIR_RIGHT:
-        case DIR_DOWN:
-            return 1;
-        default:
-            return index;
+    if (index == 2) {
+        if (dir == DIR_UP) return 0;
+        return 2;
     }
+
+    if (dir == DIR_DOWN) return 2;
+
+    if (index == 0) {
+        if (dir == DIR_RIGHT) return 1;
+        return 0;
+    }
+
+    // index == 1
+    if (dir == DIR_LEFT) return 0;
+    return 1;
 }
 
 static int navBattleMenu9(int index, NavDir dir) {
@@ -700,10 +705,10 @@ int main(void)
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_BAG) {
                         const int oldIndex = battleCursor;
-                        if (upPressed) battleCursor = navBattleBag2(battleCursor, DIR_UP);
-                        if (leftPressed) battleCursor = navBattleBag2(battleCursor, DIR_LEFT);
-                        if (downPressed) battleCursor = navBattleBag2(battleCursor, DIR_DOWN);
-                        if (rightPressed) battleCursor = navBattleBag2(battleCursor, DIR_RIGHT);
+                        if (upPressed) battleCursor = navBattleBag3(battleCursor, DIR_UP);
+                        if (leftPressed) battleCursor = navBattleBag3(battleCursor, DIR_LEFT);
+                        if (downPressed) battleCursor = navBattleBag3(battleCursor, DIR_DOWN);
+                        if (rightPressed) battleCursor = navBattleBag3(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = battleCursor;
@@ -794,11 +799,10 @@ int main(void)
                     // Show a message and return to the bag menu.
                     if (battleCursor == 0) {
                         battleUiSetSingleMessage(&battleState, "No HP items yet!");
-                    } 
-                    if (battleCursor == 1) {
+                    } else if (battleCursor == 1) {
                         battleUiSetSingleMessage(&battleState, "No Pokeballs yet!");
                     } else {
-                        battleUiSetSingleMessage(&battleState, "No items used yet!");
+                        battleUiSetSingleMessage(&battleState, "No last item yet!");
                     }
                     actionTextReturnUi = battleUi;
                     actionTextReturnCursor = battleCursor;
