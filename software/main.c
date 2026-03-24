@@ -173,7 +173,7 @@
 #define TOTAL_PP_Y_FROM_CURRENT_PP 0 //same y
 
 #define USE_LAST_ICON_X 60
-#define USE_LAST_ICON_Y 240 - BATTLE_BAG_USE_LAST_ITEM_HEIGHT - 5
+#define USE_LAST_ICON_Y 240 - BATTLE_BAG_USE_LAST_ITEM_HEIGHT - 1
 //location for attacks and pp
 
 #define MOVE_
@@ -952,6 +952,13 @@ int main(void)
                 } else {
                     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
                                     BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
+                }
+                if (battleCursor == 2) {
+                    draw_sprite_any_shade_pulse(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                                                BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
+                                    BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR);
                 }
 
                 const unsigned short* partyBg;
