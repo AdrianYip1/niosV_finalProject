@@ -39,6 +39,7 @@
 #include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
 #include "gameplayLogic/battling/battleLoop.h"
 #include "gameplayLogic/entities/pokemonDataBase.h"
+#include "gameplayLogic/storage/pc.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -267,13 +268,17 @@ static void syncBattleSprites(const BattleState *state, StaticSprite *playerBack
     if (state->playerParty != NULL) {
         const int i = state->playerParty->activeIndex;
         if (i >= 0 && i < state->playerParty->count) {
-            setPokemonBackBattleSpriteId(playerBackSprite, state->playerParty->slots[i].id.backFrame_ID);
+            if (state->playerParty->slots[i] != NULL) {
+                setPokemonBackBattleSpriteId(playerBackSprite, state->playerParty->slots[i]->id.backFrame_ID);
+            }
         }
     }
     if (state->enemyParty != NULL) {
         const int i = state->enemyParty->activeIndex;
         if (i >= 0 && i < state->enemyParty->count) {
-            setPokemonFrontBattleSpriteId(enemyFrontSprite, state->enemyParty->slots[i].id.frontFrame_ID);
+            if (state->enemyParty->slots[i] != NULL) {
+                setPokemonFrontBattleSpriteId(enemyFrontSprite, state->enemyParty->slots[i]->id.frontFrame_ID);
+            }
         }
     }
 }
@@ -356,7 +361,6 @@ int main(void)
     int transitionTimer = 0;
     const int transitionSpeedFrames = 2; 
 
-
     int textboxMsgIndex = 0;
     const char *textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
     int textboxPreviousDone = 0;
@@ -393,6 +397,8 @@ int main(void)
     BattleState battleState;
     Party playerParty;
     Party enemyParty;
+    PC playerPc;
+    pokemonInBattle wildEnemy;
 
     StaticSprite playerBackSprite;
     StaticSprite enemyFrontSprite;
@@ -414,20 +420,24 @@ int main(void)
     initPokemonBoxSprite(&partyBoxSprites[4], playerTeamSpriteIds[4], PARTY_5_X, PARTY_5_Y);
     initPokemonBoxSprite(&partyBoxSprites[5], playerTeamSpriteIds[5], PARTY_6_X, PARTY_6_Y);
 
-    // Build parties from the same IDs used for sprites.
+    // init the roster and party (persistent).
+    pcInit(&playerPc);
     initParty(&playerParty);
-    initParty(&enemyParty);
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
-        if (species != NULL) {
-            addPokemonToParty(&playerParty, species, 20 + i);
+        int ownedIndex = -1;
+        if (species != NULL && pcAdd(&playerPc, species, 20 + i, &ownedIndex)) {
+            addPokemonToParty(&playerParty, pcGet(&playerPc, ownedIndex));
         }
     }
-    addPokemonToParty(&enemyParty, &CHARMANDER, 18);
+
+    initParty(&enemyParty);
+    initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
+    addPokemonToParty(&enemyParty, &wildEnemy);
     initBattleState(&battleState, &playerParty, &enemyParty, BATTLE_WILD);
 
-    initPokemonBackBattleSpriteDefault(&playerBackSprite, playerParty.slots[playerParty.activeIndex].id.backFrame_ID);
-    initPokemonFrontBattleSpriteDefault(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex].id.frontFrame_ID);
+    initPokemonBackBattleSpriteDefault(&playerBackSprite, playerParty.slots[playerParty.activeIndex]->id.backFrame_ID);
+    initPokemonFrontBattleSpriteDefault(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex]->id.frontFrame_ID);
 
     // Init VGA and tiles
     init_graphics();
@@ -565,19 +575,13 @@ int main(void)
                 battleCursor = 0;
 
                 // Reset battle state whenever battle starts.
-                initParty(&playerParty);
+                // Player party is persistent for this program run; only generate a new enemy party here.
                 initParty(&enemyParty);
-                for (int i = 0; i < 6; i++) {
-                    const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
-                    if (species != NULL) {
-                        addPokemonToParty(&playerParty, species, 20 + i);
-                    }
-                }
-                addPokemonToParty(&enemyParty, &CHARMANDER, 18);
+                initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
+                addPokemonToParty(&enemyParty, &wildEnemy);
                 initBattleState(&battleState, &playerParty, &enemyParty, BATTLE_WILD);
 
-                setPokemonBackBattleSpriteId(&playerBackSprite, playerParty.slots[playerParty.activeIndex].id.backFrame_ID);
-                setPokemonFrontBattleSpriteId(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex].id.frontFrame_ID);
+                syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
                 currentGameState = GAME_STATE_BATTLE_TRANSITION;
                 transitionFrame = 0;

@@ -63,6 +63,7 @@ SRCS := software/main.c \
         software/gameplayLogic/battling/battleLoop.c \
         software/gameplayLogic/entities/pokemonDataBase.c \
         software/gameplayLogic/entities/learnset.c \
+        software/gameplayLogic/storage/pc.c \
         software/gameplayLogic/entities/pokemonObject.c
 
 SHELL	:= cmd.exe
