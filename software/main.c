@@ -864,7 +864,7 @@ int main(void)
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
                 const int mxLeft = 18;
                 const int mxRight = 160 + 18;
-                const int myTop = 240 - 91;
+                const int myTop = 240 - 89;
                 const int myBottom = 240 - 45;
                 const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
                 const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
@@ -875,8 +875,8 @@ int main(void)
                 // 97x9px tall, positioned 10px left and 11px down from the move sprite's top-left.
                 const int nameBoxW = 97;
                 const int nameBoxH = 9;
-                const int nameBoxDx = -10;
-                const int nameBoxDy = 11;
+                const int nameBoxDx = -5;
+                const int nameBoxDy = 13;
 
                 for (int i = 0; i < 4; i++) {
                     const AttackData *move = (playerActive != NULL) ? playerActive->attacks[i] : NULL;
@@ -902,14 +902,7 @@ int main(void)
         }
 
         case GAME_STATE_BATTLE_ACTION_TEXT: {
-            // Hide the menus, keep the battle UI background, and show queued messages.
-
             // Animations (battle only).
-            arrowAnimTimer++;
-            if (arrowAnimTimer >= arrowAnimSpeedFrames) {
-                arrowAnimTimer = 0;
-                arrowAnimFrame = (arrowAnimFrame + 1) % ARROWGIF_FRAME_COUNT;
-            }
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
             shakeTimer++;
             if (shakeTimer >= shakeSpeedFrames) {
@@ -1000,7 +993,6 @@ int main(void)
 
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
                         currentGameState = GAME_STATE_MAP;
-                        // Let the normal state-change init run for MAP.
                     } else {
                         battleUi = BATTLE_UI_MENU;
                         battleCursor = 0;
