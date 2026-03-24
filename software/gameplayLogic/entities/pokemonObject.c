@@ -22,8 +22,11 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
 void scaleStatsWithLevel(pokemonInBattle *pokemon) {
     const PokemonData *d = pokemon->id.data;
     int base[6] = {d->baseHp, d->baseAttack, d->baseSpAttack, d->baseDefense, d->baseSpDefense, d->baseSpeed};
-    for (int i = 0; i < 6; i++) {
-        pokemon->scaledStatsWithLevel[i] = (((int)base[i] * 2) / 100 * pokemon->level);
+    // HP: floor((2*base*level)/100) + level + 10
+    // Other stats: floor((2*base*level)/100) + 5
+    pokemon->scaledStatsWithLevel[0] = ((2 * base[0] * pokemon->level) / 100) + pokemon->level + 10;
+    for (int i = 1; i < 6; i++) {
+        pokemon->scaledStatsWithLevel[i] = ((2 * base[i] * pokemon->level) / 100) + 5;
     }
 }
 
@@ -113,7 +116,7 @@ int determineTurnOrder(pokemonInBattle *pokemon1, pokemonInBattle *pokemon2) {
     int spd2 = pokemon2->scaledStatsWithLevel[5];
     if (spd1 > spd2) return 1;
     if (spd2 > spd1) return 2;
-    return (rand() % 2 == 0) ? 1 : 2;
+    return 1;
 }
 
 bool attemptFlee(pokemonInBattle *fleeing, pokemonInBattle *opponent) {

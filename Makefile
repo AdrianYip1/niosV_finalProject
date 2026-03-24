@@ -58,7 +58,12 @@ SRCS := software/main.c \
         software/se/map_audio.c \
         software/se/plink_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
-        software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c
+        software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
+        software/gameplayLogic/battling/party.c \
+        software/gameplayLogic/battling/battleLoop.c \
+        software/gameplayLogic/entities/pokemonDataBase.c \
+        software/gameplayLogic/entities/learnset.c \
+        software/gameplayLogic/entities/pokemonObject.c
 
 SHELL	:= cmd.exe
 

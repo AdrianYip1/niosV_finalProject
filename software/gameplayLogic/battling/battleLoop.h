@@ -35,4 +35,12 @@ typedef struct {
 
 BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type);
 
+
+void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, BattleType type);
+void battleApplyPlayerAction(BattleState *state, BattleAction action, int param);
+
+static inline void battleStubApplyPlayerAction(BattleState *state, BattleAction action, int param) {
+    battleApplyPlayerAction(state, action, param);
+}
+
 #endif /* BATTLE_LOOP_H */

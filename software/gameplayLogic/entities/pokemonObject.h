@@ -8,7 +8,9 @@
 
 #define BASE_EXP_GAINED 50
 #define EXP_MULTIPLIER 1
-#define NUM_TYPES 18
+#ifndef NUM_TYPES
+#define NUM_TYPES 19
+#endif
 
 typedef enum {
     STATUS_NONE = 0,

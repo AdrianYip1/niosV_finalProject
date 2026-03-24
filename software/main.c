@@ -37,7 +37,10 @@
 #include "graphics/sprites/boxSprites/pokemonBoxSpriteInit.h"
 #include "graphics/sprites/battleIcons/attackTypes/attackTypeSprites.h"
 #include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
+#include "gameplayLogic/battling/battleLoop.h"
+#include "gameplayLogic/entities/pokemonDataBase.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
@@ -249,9 +252,105 @@ static int navBattleAttack4(int index, NavDir dir) {
     return next;
 }
 
+//returns the address of the global pokemon structs for the pokemon
+static const PokemonData *speciesFromPokemonSpriteId(int pokemonId) {
+    switch (pokemonId) {
+        case POKEMON_ID_CHARMANDER: return &CHARMANDER;
+        case POKEMON_ID_CHARMELEON: return &CHARMELEON;
+        case POKEMON_ID_CHARIZARD:  return &CHARIZARD;
+        default: return NULL;
+    }
+}
+
+static void syncBattleSprites(const BattleState *state, StaticSprite *playerBackSprite, StaticSprite *enemyFrontSprite) {
+    if (state == NULL || playerBackSprite == NULL || enemyFrontSprite == NULL) return;
+    if (state->playerParty != NULL) {
+        const int i = state->playerParty->activeIndex;
+        if (i >= 0 && i < state->playerParty->count) {
+            setPokemonBackBattleSpriteId(playerBackSprite, state->playerParty->slots[i].id.backFrame_ID);
+        }
+    }
+    if (state->enemyParty != NULL) {
+        const int i = state->enemyParty->activeIndex;
+        if (i >= 0 && i < state->enemyParty->count) {
+            setPokemonFrontBattleSpriteId(enemyFrontSprite, state->enemyParty->slots[i].id.frontFrame_ID);
+        }
+    }
+}
+
+static int stringPixelWidth(FontId font, const char *s, int maxChars) {
+    if (s == NULL) return 0;
+    if (maxChars < 0) maxChars = 0;
+
+    const int advance = (font == FONT_5X9) ? 6 : 8; //5x9 is 5 pixels + 1 gap
+    const int glyphW = (font == FONT_5X9) ? 5 : 8; //5x9 is 5 pixels
+
+    int len = 0;
+    while (s[len] && (maxChars == 0 || len < maxChars)) len++;
+    if (len == 0) return 0;
+    return (len - 1) * advance + glyphW;
+}
+
+static void drawCenteredStringInBox(int boxX, int boxY, int boxW, int boxH,
+                                    const char *s, short colour, FontId font) {
+    if (s == NULL) return;
+    const int advance = (font == FONT_5X9) ? 6 : 8;
+
+    // Clip long strings to fit the box 
+    int maxChars = 0;
+    if (boxW > 0) {
+        const int glyphW = (font == FONT_5X9) ? 5 : 8;
+        maxChars = (boxW - glyphW) / advance + 1;
+        if (maxChars < 0) maxChars = 0;
+    }
+
+    const int textW = stringPixelWidth(font, s, maxChars);
+    const int fontH = (font == FONT_5X9) ? 9 : 8;
+    const int x = boxX + (boxW - textW) / 2;
+    const int y = boxY + (boxH - fontH) / 2;
+
+    // Draw at most maxChars by copying into a small buffer.
+    if (maxChars > 0) {
+        char buf[32];
+        int i = 0;
+        for (; i < (int)sizeof(buf) - 1 && i < maxChars && s[i]; i++) buf[i] = s[i];
+        buf[i] = '\0';
+        draw_string_f(x, y, buf, colour, font);
+    }
+}
+
+typedef struct {
+    const unsigned short *pixels;
+    int width;
+    int height;
+} AttackTypeSpriteRef;
+
+static AttackTypeSpriteRef attackTypeSpriteFor(PokemonType type) {
+    switch (type) {
+        case TYPE_BUG: return (AttackTypeSpriteRef){bugTypeSprite, BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT };
+        case TYPE_DARK: return (AttackTypeSpriteRef){darkTypeSprite, DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT };
+        case TYPE_DRAGON: return (AttackTypeSpriteRef){dragonTypeSprite, DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT };
+        case TYPE_ELECTRIC: return (AttackTypeSpriteRef){electricTypeSprite, ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT };
+        case TYPE_FAIRY: return (AttackTypeSpriteRef){fairyTypeSprite, FAIRY_TYPE_WIDTH, FAIRY_TYPE_HEIGHT };
+        case TYPE_FIGHTING: return (AttackTypeSpriteRef){fightingTypeSprite, FIGHTING_TYPE_WIDTH, FIGHTING_TYPE_HEIGHT };
+        case TYPE_FIRE: return (AttackTypeSpriteRef){fireTypeSprite, FIRE_TYPE_WIDTH, FIRE_TYPE_HEIGHT };
+        case TYPE_FLYING: return (AttackTypeSpriteRef){flyingTypeSprite, FLYING_TYPE_WIDTH, FLYING_TYPE_HEIGHT };
+        case TYPE_GHOST: return (AttackTypeSpriteRef){ghostTypeSprite, GHOST_TYPE_WIDTH, GHOST_TYPE_HEIGHT };
+        case TYPE_GRASS: return (AttackTypeSpriteRef){grassTypeSprite, GRASS_TYPE_WIDTH, GRASS_TYPE_HEIGHT };
+        case TYPE_GROUND: return (AttackTypeSpriteRef){groundTypeSprite, GROUND_TYPE_WIDTH, GROUND_TYPE_HEIGHT };
+        case TYPE_ICE: return (AttackTypeSpriteRef){iceTypeSprite, ICE_TYPE_WIDTH, ICE_TYPE_HEIGHT };
+        case TYPE_NORMAL: return (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
+        case TYPE_POISON: return (AttackTypeSpriteRef){poisonTypeSprite, POISON_TYPE_WIDTH, POISON_TYPE_HEIGHT };
+        case TYPE_PSYCHIC: return (AttackTypeSpriteRef){psyTypeSprite, PSY_TYPE_WIDTH, PSY_TYPE_HEIGHT };
+        case TYPE_ROCK: return (AttackTypeSpriteRef){rockTypeSprite, ROCK_TYPE_WIDTH, ROCK_TYPE_HEIGHT };
+        case TYPE_STEEL: return (AttackTypeSpriteRef){steelTypeSprite, STEEL_TYPE_WIDTH, STEEL_TYPE_HEIGHT };
+        case TYPE_WATER: return (AttackTypeSpriteRef){waterTypeSprite, WATER_TYPE_WIDTH, WATER_TYPE_HEIGHT };
+        default: return (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
+    }
+}
+
 int main(void)
 {
-
     //transition into battle
     int transitionFrame = 0;
     int transitionTimer = 0;
@@ -280,23 +379,26 @@ int main(void)
     int bobPartyTimer = 0;
     const int shakeSpeedFrames = 3;
 
-    GameState gameState = GAME_STATE_BATTLE;
-    BattleUiState battleUiState = BATTLE_UI_MENU;
-    GameState prevGameState = gameState;
-    int cursorIndex = 0;
+    GameState currentGameState = GAME_STATE_BATTLE;
+    BattleUiState battleUi = BATTLE_UI_MENU;
+    GameState previousGameState = currentGameState;
+    int battleCursor = 0;
     int arrowAnimFrame = 0;
     int arrowAnimTimer = 0;
     const int arrowAnimSpeedFrames = 8;
     bool prevW = false, prevA = false, prevS = false, prevD = false;
     bool prevEsc = false;
 
-    StaticSprite charizardBackSprite;
-    initPokemonBackBattleSpriteDefault(&charizardBackSprite, POKEMON_ID_CHARIZARD);
-    StaticSprite charmanderFrontSprite;
-    initPokemonFrontBattleSpriteDefault(&charmanderFrontSprite, POKEMON_ID_CHARMANDER);
+    // Battle logic (stub for now).
+    BattleState battleState;
+    Party playerParty;
+    Party enemyParty;
+
+    StaticSprite playerBackSprite;
+    StaticSprite enemyFrontSprite;
 
     // Temporary team 
-    const int playerTeamIds[6] = {
+    const int playerTeamSpriteIds[6] = {
         POKEMON_ID_CHARIZARD,
         POKEMON_ID_CHARMANDER,
         POKEMON_ID_CHARMELEON,
@@ -305,12 +407,27 @@ int main(void)
         POKEMON_ID_CHARMELEON,
     };
     StaticSprite partyBoxSprites[6];
-    initPokemonBoxSprite(&partyBoxSprites[0], playerTeamIds[0], PARTY_1_X, PARTY_1_Y);
-    initPokemonBoxSprite(&partyBoxSprites[1], playerTeamIds[1], PARTY_2_X, PARTY_2_Y);
-    initPokemonBoxSprite(&partyBoxSprites[2], playerTeamIds[2], PARTY_3_X, PARTY_3_Y);
-    initPokemonBoxSprite(&partyBoxSprites[3], playerTeamIds[3], PARTY_4_X, PARTY_4_Y);
-    initPokemonBoxSprite(&partyBoxSprites[4], playerTeamIds[4], PARTY_5_X, PARTY_5_Y);
-    initPokemonBoxSprite(&partyBoxSprites[5], playerTeamIds[5], PARTY_6_X, PARTY_6_Y);
+    initPokemonBoxSprite(&partyBoxSprites[0], playerTeamSpriteIds[0], PARTY_1_X, PARTY_1_Y);
+    initPokemonBoxSprite(&partyBoxSprites[1], playerTeamSpriteIds[1], PARTY_2_X, PARTY_2_Y);
+    initPokemonBoxSprite(&partyBoxSprites[2], playerTeamSpriteIds[2], PARTY_3_X, PARTY_3_Y);
+    initPokemonBoxSprite(&partyBoxSprites[3], playerTeamSpriteIds[3], PARTY_4_X, PARTY_4_Y);
+    initPokemonBoxSprite(&partyBoxSprites[4], playerTeamSpriteIds[4], PARTY_5_X, PARTY_5_Y);
+    initPokemonBoxSprite(&partyBoxSprites[5], playerTeamSpriteIds[5], PARTY_6_X, PARTY_6_Y);
+
+    // Build parties from the same IDs used for sprites.
+    initParty(&playerParty);
+    initParty(&enemyParty);
+    for (int i = 0; i < 6; i++) {
+        const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
+        if (species != NULL) {
+            addPokemonToParty(&playerParty, species, 20 + i);
+        }
+    }
+    addPokemonToParty(&enemyParty, &CHARMANDER, 18);
+    initBattleState(&battleState, &playerParty, &enemyParty, BATTLE_WILD);
+
+    initPokemonBackBattleSpriteDefault(&playerBackSprite, playerParty.slots[playerParty.activeIndex].id.backFrame_ID);
+    initPokemonFrontBattleSpriteDefault(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex].id.frontFrame_ID);
 
     // Init VGA and tiles
     init_graphics();
@@ -408,7 +525,7 @@ int main(void)
     // Initial state setup (press '1' for battle, '2' for map).
     init_map();
     load_map_preset(MAP_PRESET_BACKDROP1);
-    if (gameState == GAME_STATE_BATTLE) {
+    if (currentGameState == GAME_STATE_BATTLE) {
         play_bgm(battle_audio, battle_audio_len);
     } else {
         play_bgm(map_audio, map_audio_len);
@@ -426,16 +543,16 @@ int main(void)
             char ch = 0;
             while (keyboard_pop_char(&ch)) {
                 if (ch == '1') {
-                    gameState = GAME_STATE_BATTLE;
+                    currentGameState = GAME_STATE_BATTLE;
                 } else if (ch == '2') {
-                    gameState = GAME_STATE_MAP;
+                    currentGameState = GAME_STATE_MAP;
                 }
             }
         }
 
         // Re-init on state change.
-        if (gameState != prevGameState) {
-            if (gameState == GAME_STATE_MAP) {
+        if (currentGameState != previousGameState) {
+            if (currentGameState == GAME_STATE_MAP) {
                 play_bgm(map_audio, map_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_ROUTE);
@@ -444,13 +561,29 @@ int main(void)
                 play_bgm(battle_audio, battle_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_BACKDROP1);
-                battleUiState = BATTLE_UI_MENU;
-                cursorIndex = 0;
-                gameState = GAME_STATE_BATTLE_TRANSITION;
+                battleUi = BATTLE_UI_MENU;
+                battleCursor = 0;
+
+                // Reset battle state whenever battle starts.
+                initParty(&playerParty);
+                initParty(&enemyParty);
+                for (int i = 0; i < 6; i++) {
+                    const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
+                    if (species != NULL) {
+                        addPokemonToParty(&playerParty, species, 20 + i);
+                    }
+                }
+                addPokemonToParty(&enemyParty, &CHARMANDER, 18);
+                initBattleState(&battleState, &playerParty, &enemyParty, BATTLE_WILD);
+
+                setPokemonBackBattleSpriteId(&playerBackSprite, playerParty.slots[playerParty.activeIndex].id.backFrame_ID);
+                setPokemonFrontBattleSpriteId(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex].id.frontFrame_ID);
+
+                currentGameState = GAME_STATE_BATTLE_TRANSITION;
                 transitionFrame = 0;
                 transitionTimer = 0;
             }
-            prevGameState = gameState;
+            previousGameState = currentGameState;
         }
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = spaceDown && !prevSpaceDown;
@@ -460,9 +593,9 @@ int main(void)
         const bool escPressed = escDown && !prevEsc;
         prevEsc = escDown;
 
-        if (escPressed && battleUiState == BATTLE_UI_ATTACK_MENU) {
-            battleUiState = BATTLE_UI_MENU;
-            cursorIndex = 0;
+        if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
+            battleUi = BATTLE_UI_MENU;
+            battleCursor = 0;
         }
 
         const bool wDown = is_key_w_pressed();
@@ -475,52 +608,78 @@ int main(void)
         const bool dPressed = dDown && !prevD;
         prevW = wDown; prevA = aDown; prevS = sDown; prevD = dDown;
 
-        switch (gameState) {
+        switch (currentGameState) {
         case GAME_STATE_BATTLE: {
-            bool movedBattleCursor = false;
+            bool didMoveBattleCursor = false;
 
             {
-                const ArrowContext arrowCtx = getArrowContext(gameState, battleUiState);
+                const ArrowContext arrowCtx = getArrowContext(currentGameState, battleUi);
                 const int cursorCount = arrowCursorCount(arrowCtx);
 
                 if (cursorCount > 0) {
-                    if (cursorIndex < 0 || cursorIndex >= cursorCount) {
-                        cursorIndex = 0;
+                    if (battleCursor < 0 || battleCursor >= cursorCount) {
+                        battleCursor = 0;
                     }
                     if (arrowCtx == ARROW_CTX_BATTLE_ATTACK) {
-                        const int oldIndex = cursorIndex;
-                        if (wPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_UP);
-                        if (aPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_LEFT);
-                        if (sPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_DOWN);
-                        if (dPressed) cursorIndex = navBattleAttack4(cursorIndex, DIR_RIGHT);
-                        movedBattleCursor = (cursorIndex != oldIndex);
+                        const int oldIndex = battleCursor;
+                        if (wPressed) battleCursor = navBattleAttack4(battleCursor, DIR_UP);
+                        if (aPressed) battleCursor = navBattleAttack4(battleCursor, DIR_LEFT);
+                        if (sPressed) battleCursor = navBattleAttack4(battleCursor, DIR_DOWN);
+                        if (dPressed) battleCursor = navBattleAttack4(battleCursor, DIR_RIGHT);
+                        didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
-                        const int oldIndex = cursorIndex;
-                        if (wPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_UP);
-                        if (aPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_LEFT);
-                        if (sPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_DOWN);
-                        if (dPressed) cursorIndex = navBattleMenu9(cursorIndex, DIR_RIGHT);
-                        movedBattleCursor = (cursorIndex != oldIndex);
+                        const int oldIndex = battleCursor;
+                        if (wPressed) battleCursor = navBattleMenu9(battleCursor, DIR_UP);
+                        if (aPressed) battleCursor = navBattleMenu9(battleCursor, DIR_LEFT);
+                        if (sPressed) battleCursor = navBattleMenu9(battleCursor, DIR_DOWN);
+                        if (dPressed) battleCursor = navBattleMenu9(battleCursor, DIR_RIGHT);
+                        didMoveBattleCursor = (battleCursor != oldIndex);
                     } else {
-                        cursorIndex = 0;
+                        battleCursor = 0;
                     }
                 }
             }
 
-            if (spacePressed && battleUiState == BATTLE_UI_MENU && cursorIndex == 0) {
-                battleUiState = BATTLE_UI_ATTACK_MENU;
-                cursorIndex = 0;
+            if (spacePressed) {
+                if (battleUi == BATTLE_UI_MENU) {
+                    if (battleCursor == 0) {
+                        battleUi = BATTLE_UI_ATTACK_MENU;
+                        battleCursor = 0;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (battleCursor == 1) {
+                        battleApplyPlayerAction(&battleState, ACTION_ITEM, 0);
+                        play_sfx(plink_audio, plink_audio_len);
+                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                    } else if (battleCursor == 2) {
+                        battleApplyPlayerAction(&battleState, ACTION_RUN, 0);
+                        play_sfx(plink_audio, plink_audio_len);
+                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                        if (battleState.result == BATTLE_RESULT_FLED) {
+                            currentGameState = GAME_STATE_MAP;
+                        }
+                    } else if (battleCursor >= 3 && battleCursor <= 8) {
+                        battleApplyPlayerAction(&battleState, ACTION_SWITCH, battleCursor - 3);
+                        play_sfx(plink_audio, plink_audio_len);
+                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                    }
+                } else if (battleUi == BATTLE_UI_ATTACK_MENU) {
+                    battleApplyPlayerAction(&battleState, ACTION_ATTACK, battleCursor);
+                    play_sfx(plink_audio, plink_audio_len);
+                    syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                    battleUi = BATTLE_UI_MENU;
+                    battleCursor = 0;
+                }
+
+                if (battleState.result != BATTLE_RESULT_ONGOING) {
+                    currentGameState = GAME_STATE_MAP;
+                }
             }
 
-            if (movedBattleCursor) {
+            if (didMoveBattleCursor) {
                 play_sfx(plink_audio, plink_audio_len);
             }
-            
-            if (spacePressed && battleUiState == BATTLE_UI_MENU && cursorIndex == 0) {
-                play_sfx(plink_audio, plink_audio_len);
-            }
-            
-            if (escPressed && battleUiState == BATTLE_UI_ATTACK_MENU) {
+
+            if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
                 play_sfx(plink_audio, plink_audio_len);
             }
 
@@ -554,14 +713,14 @@ int main(void)
             // Battle base layer (always drawn in battle state).
             draw_map();
 
-            draw_sprite_any_bob(charizardBackSprite.pixels,
-                                charizardBackSprite.width, charizardBackSprite.height,
-                                charizardBackSprite.x, charizardBackSprite.y,
+            draw_sprite_any_bob(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
-            draw_sprite_any_shake(charmanderFrontSprite.pixels,
-                                  charmanderFrontSprite.width, charmanderFrontSprite.height,
-                                  charmanderFrontSprite.x, charmanderFrontSprite.y,
+            draw_sprite_any_shake(enemyFrontSprite.pixels,
+                                  enemyFrontSprite.width, enemyFrontSprite.height,
+                                  enemyFrontSprite.x, enemyFrontSprite.y,
                                   TRANSPARENT_COLOUR,
                                   shakeFrame);
             draw_sprite_any_bob(myHpEmpty,
@@ -572,12 +731,39 @@ int main(void)
             draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
             //todo: make the top and bottom lines of hp a darker shade to look better
             
+            pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+            pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+
+            const int enemyHp = (enemyActive != NULL) ? enemyActive->scaledStatsWithLevel[0] : 0;
+            const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
+            const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
+            const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
+
+            //hp bars with code that scales
+            const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
+            const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
+
+            const int enemyHpPct = (enemyMaxHp > 0) ? (enemyHp * 100) / enemyMaxHp : 0;
+            const int playerHpPct = (playerMaxHp > 0) ? (playerHp * 100) / playerMaxHp : 0;
+
+            const short enemyHpBarColour = (enemyHpPct < 15) ? RED : ((enemyHpPct < 50) ? ORANGE : GREEN);
+            const short playerHpBarColour = (playerHpPct < 15) ? RED : ((playerHpPct < 50) ? ORANGE : GREEN);
+
+            char oppLvlBuf[8];
+            char myLvlBuf[8];
+            char myHpCurBuf[8];
+            char myHpMaxBuf[8];
+            snprintf(oppLvlBuf, sizeof(oppLvlBuf), "%d", (enemyActive != NULL) ? enemyActive->level : 0);
+            snprintf(myLvlBuf, sizeof(myLvlBuf), "%d", (playerActive != NULL) ? playerActive->level : 0);
+            snprintf(myHpCurBuf, sizeof(myHpCurBuf), "%d", playerHp);
+            snprintf(myHpMaxBuf, sizeof(myHpMaxBuf), "%d", playerMaxHp);
+
             //opponent hp bar
-            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, HP_WIDTH, HP_HEIGHT, GREEN);
-            draw_string_f(oppLVL_X, oppLVL_Y, "67", BLACK, 1);
+            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
+            draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
             draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
             draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-            draw_string_f(OPPNAME_X, OPPNAME_Y, "CHARMANDER", BLACK, 1);
+            draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
             //got the bobbing dy pattern array to move hp bar, name, level, etc from myHP bar 
             static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
@@ -585,36 +771,35 @@ int main(void)
             0, -1, -1, 0, 0, 1, 1, 0 };
             int offsetY = dy_pattern[bobFrame];
             //my hp bar
-            draw_rect(myHP_X, myHP_Y + offsetY, HP_WIDTH, HP_HEIGHT, GREEN);
+            draw_rect(myHP_X, myHP_Y + offsetY, (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth), HP_HEIGHT, playerHpBarColour);
             draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, BLUE);
-            draw_string_f(myLVL_X, myLVL_Y + offsetY, "1", BLACK, 1);
-            draw_string_f(MYNAME_X, MYNAME_Y + offsetY, "CHARIZARD", BLACK, 1);
-            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, "123", BLACK, 1);
-            draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, "456", BLACK, 1);
+            draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
+            draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
+            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
+            draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
            
 
             // Battle UI States
-            if (battleUiState == BATTLE_UI_MENU) {
+            if (battleUi == BATTLE_UI_MENU) {
                 // Menu background
                 draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
-                // Fight / Bag / Run icons + party display (battle menu only)
-                if (cursorIndex == 0) {
+                if (battleCursor == 0) {
                     draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
                                                 BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
                     draw_sprite_any(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
                                     BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR);
                 }
-                if (cursorIndex == 1) {
+                if (battleCursor == 1) {
                     draw_sprite_any_shade_pulse(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
                                                 BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
                     draw_sprite_any(battleIconBag, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
                                     BATTLE_ICON_BAG_X, BATTLE_ICON_BAG_Y, TRANSPARENT_COLOUR);
                 }
-                if (cursorIndex == 2) {
+                if (battleCursor == 2) {
                     draw_sprite_any_shade_pulse(battleIconRun, BATTLE_ICON_SMALL_WIDTH, BATTLE_ICON_SMALL_HEIGHT,
                                                 BATTLE_ICON_RUN_X, BATTLE_ICON_RUN_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
@@ -623,22 +808,21 @@ int main(void)
                 }
 
                 const unsigned short* partyBg;
-                if (cursorIndex <= 2) {
+                if (battleCursor <= 2) {
                     partyBg = battlePartySlotSprites[0];
                 }
                 else {
-                    partyBg = battlePartySlotSprites[cursorIndex - 2];
+                    partyBg = battlePartySlotSprites[battleCursor - 2];
                 }
 
                 int selectedPartyIndex = -1;
 
-                if (cursorIndex >= 3 && cursorIndex <= 8) {
-                    selectedPartyIndex = cursorIndex - 3; 
+                if (battleCursor >= 3 && battleCursor <= 8) {
+                    selectedPartyIndex = battleCursor - 3; 
                 
                 }
                 draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
                 //box sprites
-                
 
                 for (int i = 0; i < 6; i++) {
                     if (i == selectedPartyIndex) {
@@ -657,33 +841,39 @@ int main(void)
                 }
             }
 
-            if (battleUiState == BATTLE_UI_ATTACK_MENU) {
+            if (battleUi == BATTLE_UI_ATTACK_MENU) {
                 draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
             
-                const unsigned short* moveSprites[4] = { bugTypeSprite, dragonTypeSprite, darkTypeSprite, electricTypeSprite };
                 //location of moves
                 const int mxs[4] = { 18, 18, 160 + 18 , 160 + 18};
                 const int mys[4] = { 240 - 91, 240 - 45, 240 - 91, 240 - 45 };
-            
-                if (cursorIndex == 0) {
-                    draw_sprite_any_shade_pulse(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0], mys[0], TRANSPARENT_COLOUR, shadePulseFrame);
-                } else {
-                    draw_sprite_any(moveSprites[0], BUG_TYPE_WIDTH, BUG_TYPE_HEIGHT, mxs[0], mys[0], TRANSPARENT_COLOUR);
-                }
-                if (cursorIndex == 1) {
-                    draw_sprite_any_shade_pulse(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, mxs[1], mys[1], TRANSPARENT_COLOUR, shadePulseFrame);
-                } else {
-                    draw_sprite_any(moveSprites[1], DARK_TYPE_WIDTH, DARK_TYPE_HEIGHT, mxs[1], mys[1], TRANSPARENT_COLOUR);
-                }
-                if (cursorIndex == 2) {
-                    draw_sprite_any_shade_pulse(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, mxs[2], mys[2], TRANSPARENT_COLOUR, shadePulseFrame);
-                } else {
-                    draw_sprite_any(moveSprites[2], DRAGON_TYPE_WIDTH, DRAGON_TYPE_HEIGHT, mxs[2], mys[2], TRANSPARENT_COLOUR);
-                }
-                if (cursorIndex == 3) {
-                    draw_sprite_any_shade_pulse(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, mxs[3], mys[3], TRANSPARENT_COLOUR, shadePulseFrame);
-                } else {
-                    draw_sprite_any(moveSprites[3], ELECTRIC_TYPE_WIDTH, ELECTRIC_TYPE_HEIGHT, mxs[3], mys[3], TRANSPARENT_COLOUR);
+
+                pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+
+                // Text box inside each move sprite:
+                // 97x9px tall, positioned 10px left and 11px down from the move sprite's top-left.
+                const int nameBoxW = 97;
+                const int nameBoxH = 9;
+                const int nameBoxDx = -10;
+                const int nameBoxDy = 11;
+
+                for (int i = 0; i < 4; i++) {
+                    const AttackData *move = (playerActive != NULL) ? playerActive->attacks[i] : NULL;
+                    const char *moveName = (move != NULL && move->name != NULL) ? move->name : "";
+
+                    AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
+                                                                       : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
+
+                    if (battleCursor == i) {
+                        draw_sprite_any_shade_pulse(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
+                                                    mxs[i], mys[i], TRANSPARENT_COLOUR, shadePulseFrame);
+                    } else {
+                        draw_sprite_any(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
+                                        mxs[i], mys[i], TRANSPARENT_COLOUR);
+                    }
+
+                    drawCenteredStringInBox(mxs[i] + nameBoxDx, mys[i] + nameBoxDy, nameBoxW, nameBoxH,
+                                            moveName, BLACK, FONT_5X9);
                 }
             }
     
@@ -741,8 +931,8 @@ int main(void)
             if (left == 0 && right == SCREEN_WIDTH &&
                 top == 0 && bottom == SCREEN_HEIGHT) {
         
-                gameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                prevGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                currentGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                previousGameState = GAME_STATE_BATTLE_INTRO_TEXT;
                 transitionFrame = 0;
             }
         
@@ -757,8 +947,8 @@ int main(void)
         
             if (done && spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
-                gameState = GAME_STATE_BATTLE;
-                prevGameState = GAME_STATE_BATTLE;
+                currentGameState = GAME_STATE_BATTLE;
+                previousGameState = GAME_STATE_BATTLE;
             }
         
             break;

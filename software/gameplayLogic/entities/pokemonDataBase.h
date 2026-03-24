@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define NUM_TYPES 18
+#define NUM_TYPES 19
 
 typedef enum {
     TYPE_NORMAL = 0,
