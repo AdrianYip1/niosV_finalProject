@@ -140,7 +140,7 @@
 #define STATUS_X CAUGHT_X + 9
 #define STATUS_Y CAUGHT_Y
 
-#define MYSTATUS_X myHP_X - 35
+#define MYSTATUS_X myHP_X - 37
 #define MYSTATUS_Y myHP_SHOWN_Y - 2
 
 #define MYNAME_X MY_HP_EMPTY_X + 15
