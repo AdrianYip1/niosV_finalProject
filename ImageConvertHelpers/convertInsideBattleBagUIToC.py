@@ -30,39 +30,49 @@ def load_rgba(path: Path, expected_w: int, expected_h: int) -> Image.Image:
     return rgba
 
 
-def image_to_565_vals(img: Image.Image) -> list[int]:
+def image_to_565_vals(img: Image.Image, *, transparent_border: bool) -> list[int]:
     w, h = img.size
     px = img.load()
 
-    # Treat the most common border colours as transparent background.
-    border: list[tuple[int, int, int, int]] = []
-    for x in range(w):
-        border.append(px[x, 0])
-        border.append(px[x, h - 1])
-    for y in range(h):
-        border.append(px[0, y])
-        border.append(px[w - 1, y])
+    bg_palette: set[tuple[int, int, int]] = set()
+    if transparent_border:
+        # Optionally treat the most common border colours as transparent background.
+        border: list[tuple[int, int, int, int]] = []
+        for x in range(w):
+            border.append(px[x, 0])
+            border.append(px[x, h - 1])
+        for y in range(h):
+            border.append(px[0, y])
+            border.append(px[w - 1, y])
 
-    bg_palette = {
-        (r, g, b)
-        for (r, g, b, a), _ in Counter(border).most_common(8)
-        if a != 0
-    }
+        bg_palette = {
+            (r, g, b)
+            for (r, g, b, a), _ in Counter(border).most_common(8)
+            if a != 0
+        }
 
     vals: list[int] = []
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
-            if a == 0 or (r, g, b) == TRANSPARENT_PINK_RGB or (r, g, b) in bg_palette:
+            if a == 0 or (r, g, b) == TRANSPARENT_PINK_RGB or (transparent_border and (r, g, b) in bg_palette):
                 vals.append(TRANSPARENT_565)
             else:
                 vals.append(rgb_to_565(r, g, b))
     return vals
 
 
-def write_sprite(name: str, macro_prefix: str, png_path: Path, expected_w: int, expected_h: int) -> None:
+def write_sprite(
+    name: str,
+    macro_prefix: str,
+    png_path: Path,
+    expected_w: int,
+    expected_h: int,
+    *,
+    transparent_border: bool,
+) -> None:
     img = load_rgba(png_path, expected_w, expected_h)
-    vals = image_to_565_vals(img)
+    vals = image_to_565_vals(img, transparent_border=transparent_border)
 
     h_path = OUT_DIR / f"{name}.h"
     c_path = OUT_DIR / f"{name}.c"
@@ -105,12 +115,12 @@ def main() -> None:
         SRC_DIR / "itemDescription.png",
         252,
         70,
+        transparent_border=False,
     )
-    write_sprite("itemSlot", "BATTLE_BAG_ITEM_SLOT", SRC_DIR / "itemSlot.png", 120, 45)
-    write_sprite("useButton", "BATTLE_BAG_USE_BUTTON", SRC_DIR / "useButton.png", 199, 32)
-    write_sprite("useLastItem", "BATTLE_BAG_USE_LAST_ITEM", SRC_DIR / "useLastItem.png", 199, 32)
+    write_sprite("itemSlot", "BATTLE_BAG_ITEM_SLOT", SRC_DIR / "itemSlot.png", 120, 45, transparent_border=False)
+    write_sprite("useButton", "BATTLE_BAG_USE_BUTTON", SRC_DIR / "useButton.png", 199, 32, transparent_border=False)
+    write_sprite("useLastItem", "BATTLE_BAG_USE_LAST_ITEM", SRC_DIR / "useLastItem.png", 199, 32, transparent_border=False)
 
 
 if __name__ == "__main__":
     main()
-
