@@ -5,10 +5,10 @@ from pathlib import Path
 from PIL import Image
 
 
-SRC_GIF = Path("ImageConvertHelpers/spacebar.gif")
+SRC_GIF = Path("ImageConvertHelpers/pokeballThrow16x23/pokeball.gif")
 # directly into the project's sprites folder 
-OUT_C = Path("software/graphics/sprites/spacebar/spacebar_frames.c")
-OUT_H = Path("software/graphics/sprites/spacebar/spacebar_frames.h")
+OUT_C = Path("software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c")
+OUT_H = Path("software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h")
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
@@ -17,8 +17,8 @@ TRANSPARENT_565 = 0xF81F
 def is_magentaish(r: int, g: int, b: int) -> bool:
     return r >= 200 and b >= 200 and g <= 100
 
-PREFIX = "spacebar_frame_"
-FRAMES_ARRAY_NAME = "spacebarFrames"
+PREFIX = "pokeballThrow_frame_"
+FRAMES_ARRAY_NAME = "pokeballThrowFrames"
 
 
 def rgb_to_565(r: int, g: int, b: int) -> int:
@@ -26,6 +26,9 @@ def rgb_to_565(r: int, g: int, b: int) -> int:
 
 
 def main() -> None:
+    OUT_C.parent.mkdir(parents=True, exist_ok=True)
+    OUT_H.parent.mkdir(parents=True, exist_ok=True)
+
     im = Image.open(SRC_GIF)
     w, h = im.size
 
@@ -47,16 +50,16 @@ def main() -> None:
             [
                 "#pragma once",
                 "",
-                f"#define SPACEBAR_WIDTH  {w}",
-                f"#define SPACEBAR_HEIGHT {h}",
-                f"#define SPACEBAR_FRAME_COUNT {frame_count}",
+                f"#define POKEBALLTHROW_WIDTH  {w}",
+                f"#define POKEBALLTHROW_HEIGHT {h}",
+                f"#define POKEBALLTHROW_FRAME_COUNT {frame_count}",
                 "",
                 *[
-                    f"extern const unsigned short {PREFIX}{i}[SPACEBAR_WIDTH * SPACEBAR_HEIGHT];"
+                    f"extern const unsigned short {PREFIX}{i}[POKEBALLTHROW_WIDTH * POKEBALLTHROW_HEIGHT];"
                     for i in range(frame_count)
                 ],
                 "",
-                f"extern const unsigned short* const {FRAMES_ARRAY_NAME}[SPACEBAR_FRAME_COUNT];",
+                f"extern const unsigned short* const {FRAMES_ARRAY_NAME}[POKEBALLTHROW_FRAME_COUNT];",
                 "",
             ]
         ),
@@ -83,7 +86,7 @@ def main() -> None:
                     v = rgb_to_565(r, g, b)
                 vals.append(f"0x{v:04X}")
 
-        lines.append(f"const unsigned short {PREFIX}{i}[SPACEBAR_WIDTH * SPACEBAR_HEIGHT] = {{")
+        lines.append(f"const unsigned short {PREFIX}{i}[POKEBALLTHROW_WIDTH * POKEBALLTHROW_HEIGHT] = {{")
         for k in range(0, len(vals), 16):
             chunk = vals[k : k + 16]
             end = "," if k + 16 < len(vals) else ""
@@ -91,7 +94,7 @@ def main() -> None:
         lines.append("};")
         lines.append("")
 
-    lines.append(f"const unsigned short* const {FRAMES_ARRAY_NAME}[SPACEBAR_FRAME_COUNT] = {{")
+    lines.append(f"const unsigned short* const {FRAMES_ARRAY_NAME}[POKEBALLTHROW_FRAME_COUNT] = {{")
     for i in range(frame_count):
         end = "," if i + 1 < frame_count else ""
         lines.append(f"    {PREFIX}{i}{end}")
