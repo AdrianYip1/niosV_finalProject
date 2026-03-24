@@ -101,5 +101,5 @@ extern const PokemonData CHARMANDER;
 extern const PokemonData CHARMELEON;
 extern const PokemonData CHARIZARD;
 
-// type chart — defined once in pokemonObject.c
+// type chart
 extern const float typeChart[NUM_TYPES][NUM_TYPES];

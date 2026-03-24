@@ -589,7 +589,7 @@ int main(void)
                 battleCursor = 0;
 
                 // Reset battle state whenever battle starts.
-                // Player party is persistent for this program run; only generate a new enemy party here.
+                // Player party is persistent for this program run
                 initParty(&enemyParty);
                 initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
                 addPokemonToParty(&enemyParty, &wildEnemy);
@@ -616,7 +616,7 @@ int main(void)
             battleCursor = 0;
         }
 
-        // Support both WASD and arrow keys for navigation.
+        //WASD and arrow keys
         const bool upDown = is_key_w_pressed() || is_key_up_pressed();
         const bool leftDown = is_key_a_pressed() || is_key_left_pressed();
         const bool downDown = is_key_s_pressed() || is_key_down_pressed();
@@ -682,7 +682,7 @@ int main(void)
                             currentGameState = GAME_STATE_MAP;
                         }
                     } else if (battleCursor >= 3 && battleCursor <= 8) {
-                        // Don't consume a turn for invalid switches (e.g., switching into yourself).
+                        // Don't consume a turn for invalid switches
                         Party *p = battleState.playerParty;
                         const int slot = battleCursor - 3;
                         bool canSwitch = false;
