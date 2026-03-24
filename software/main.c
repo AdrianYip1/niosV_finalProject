@@ -1329,7 +1329,14 @@ int main(void)
             }
 
             draw_map();
-            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+
+            // Draw sprites under the battle UI background 
+            if (pokeballThrown && playerBackSprite.pixels != NULL) {
+                draw_sprite_any(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
             if (enemyFrontSprite.pixels != NULL) {
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
@@ -1337,18 +1344,11 @@ int main(void)
                                 TRANSPARENT_COLOUR);
             }
 
-            if (pokeballThrown && playerBackSprite.pixels != NULL) {
-                draw_sprite_any_bob(playerBackSprite.pixels,
-                                    playerBackSprite.width, playerBackSprite.height,
-                                    playerBackSprite.x, playerBackSprite.y,
-                                    TRANSPARENT_COLOUR,
-                                    bobFrame);
-            }
-
             // Update/draw projectile.
             if (!pokeballThrown) {
                 // Advance the simulated time (frames).
-                pokeballThrowT++;
+                const int timeStep = 2; // increase to speed up the throw without changing the arc math
+                pokeballThrowT += timeStep;
 
                 const float t = (float)pokeballThrowT;
                 const float x = pokeballX0 + pokeballVx * t;
@@ -1364,7 +1364,7 @@ int main(void)
                 if (!pokeballLanding && pokeballThrowT >= pokeballTPeak) {
                     // Animate frames 0-7 while in flight (ball appears at peak).
                     const int inflightFrames = POKEBALL_UNOPENED_FRAME_COUNT;
-                    const int inflightSpeed = 3;
+                    const int inflightSpeed = 1;
                     pokeballThrownTimer++;
                     if (pokeballThrownTimer >= inflightSpeed) {
                         pokeballThrownTimer = 0;
@@ -1384,7 +1384,7 @@ int main(void)
                 }
 
                 if (pokeballLanding) {
-                    const int landSpeed = 6;
+                    const int landSpeed = 3;
                     pokeballLandingTimer++;
                     if (pokeballLandingTimer >= landSpeed) {
                         pokeballLandingTimer = 0;
@@ -1406,6 +1406,9 @@ int main(void)
                     }
                 }
             }
+
+            // UI background covers the sprites
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleThrowPokeballText, BLACK);
 
