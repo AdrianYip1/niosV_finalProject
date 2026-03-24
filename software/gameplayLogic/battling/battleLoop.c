@@ -32,22 +32,22 @@ static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *att
     if (opposing) {
         snprintf(buf, sizeof(buf), "Opposing %s used %s!", attackerName, moveName);
         if (getTypeEffectiveness(move->type, target->type1, target->type2) < 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective \nto your %s!", targetName);
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective\nto your %s!", targetName);
         }
         else if (getTypeEffectiveness(move->type, target->type1, target->type2) > 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective \nto your %s...", targetName);
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective\nto your %s...", targetName);
         }
-        else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Your %s \nwas affected.", targetName);
+        else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Your %s\nwas affected.", targetName);
     }
     else {
         snprintf(buf, sizeof(buf), "Your %s used %s!", attackerName, moveName);
         if (getTypeEffectiveness(move->type, target->type1, target->type2) < 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective \nto opposing %s...", targetName);
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective\nto opposing %s...", targetName);
         }
         else if (getTypeEffectiveness(move->type, target->type1, target->type2) > 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective \nto opposing %s!", targetName);
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective\nto opposing %s!", targetName);
         }
-        else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Opposing %s \nwas affected.", targetName);
+        else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Opposing %s\nwas affected.", targetName);
     }
 
     battlePushMessage(state, buf);
@@ -131,6 +131,7 @@ static void resolveFlee(BattleState *state) {
 
     state->fleeAttempts++;
     if (attemptFlee(player, enemy)) {
+        
         state->result = BATTLE_RESULT_FLED;
     }
 }

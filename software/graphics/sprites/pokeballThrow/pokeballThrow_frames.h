@@ -3,6 +3,7 @@
 #define POKEBALLTHROW_WIDTH  16
 #define POKEBALLTHROW_HEIGHT 23
 #define POKEBALLTHROW_FRAME_COUNT 11
+#define POKEBALL_UNOPENED_FRAME_COUNT 8
 
 extern const unsigned short pokeballThrow_frame_0[POKEBALLTHROW_WIDTH * POKEBALLTHROW_HEIGHT];
 extern const unsigned short pokeballThrow_frame_1[POKEBALLTHROW_WIDTH * POKEBALLTHROW_HEIGHT];

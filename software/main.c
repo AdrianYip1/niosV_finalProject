@@ -40,6 +40,7 @@
 #include "gameplayLogic/battling/battleLoop.h"
 #include "gameplayLogic/entities/pokemonDataBase.h"
 #include "gameplayLogic/storage/pc.h"
+#include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -178,6 +179,7 @@ typedef enum {
     GAME_STATE_BATTLE_TRANSITION = 2,
     GAME_STATE_BATTLE_INTRO_TEXT = 3,
     GAME_STATE_BATTLE_ACTION_TEXT = 4,
+    GAME_STATE_POKEBALL_THROW = 5,
 } GameState;
 
 typedef enum {
@@ -380,6 +382,9 @@ int main(void)
     int spacebarFrame = 0;
     int spacebarTimer = 0;
 
+    int pokeballThrownFrame = 0;
+    int pokeballThrownTimer = 0;
+
     unsigned int frame_count = 0;
     int current_phase = 0;    
     short colour = BLACK;    
@@ -395,6 +400,9 @@ int main(void)
 
     char battleIntroText[96];
     bool battleIntroTextReady = false;
+
+    char battleThrowPokeballText[96];
+    bool battleThrowPokeballTextReady = false;
 
     GameState currentGameState = GAME_STATE_BATTLE;
     BattleUiState battleUi = BATTLE_UI_MENU;
@@ -1193,13 +1201,50 @@ int main(void)
         
             if (done && spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
-                currentGameState = GAME_STATE_BATTLE;
-                previousGameState = GAME_STATE_BATTLE;
+                currentGameState = GAME_STATE_POKEBALL_THROW;
+                previousGameState = GAME_STATE_POKEBALL_THROW;
+                battleThrowPokeballTextReady = false;
             }
         
             break;
         }
 
+        case GAME_STATE_POKEBALL_THROW: {
+            bool pokeballThrown;
+
+            if (!battleThrowPokeballTextReady) {
+                const pokemonInBattle *myActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+                const char *myPokemonName = (myActive != NULL && myActive->id.data != NULL && myActive->id.data->name != NULL)
+                                            ? myActive->id.data->name
+                                            : "???";
+                snprintf(battleThrowPokeballText, sizeof(battleThrowPokeballText, "Come on out, %s!", myPokemonName));
+                battleThrowPokeballTextReady = true;
+            }
+
+            int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleThrowPokeballText, BLACK);
+            
+            
+            while (!pokeballThrown) {
+                pokeballThrownTimer++;
+                if (pokeballThrownTimer >= SPACEBAR_SPEED_FRAMES) {
+                pokeballThrownTimer = 0;
+                pokeballThrownFrame = (pokeballThrownFrame + 1) % POKEBALL_UNOPENED_FRAME_COUNT;
+                }
+                draw_sprite_any(pokeballThrowFrames[pokeballThrownFrame],
+                            POKEBALLTHROW_WIDTH,
+                            POKEBALLTHROW_HEIGHT,
+                            SPACEBAR_X,
+                            SPACEBAR_TITLE_Y,
+                            TRANSPARENT_COLOUR); //change location to have projectile motion
+            }
+
+            if (done && spacePressed && pokeballThrown) {
+                play_sfx(plink_audio, plink_audio_len);
+                currentGameState = GAME_STATE_BATTLE;
+                previousGameState = GAME_STATE_BATTLE;
+            }
+            break;
+        }
       
         case GAME_STATE_MAP:
         default:
