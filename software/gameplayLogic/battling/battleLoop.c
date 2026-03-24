@@ -1,5 +1,5 @@
 #include "battleLoop.h"
-#include "pokemonObject.h"
+#include "../entities/pokemonObject.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
