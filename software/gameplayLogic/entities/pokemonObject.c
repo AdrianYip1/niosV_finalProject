@@ -82,6 +82,8 @@ void dealDamage(pokemonInBattle *attacker, pokemonInBattle *target, int baseDama
     int dealtDamage = ((baseDamage * attacker->level + 10) / 250) * attacker->scaledStatsWithLevel[modifierID];
     float effectiveness = getTypeEffectiveness(moveType, target->type1, target->type2);
     dealtDamage = (int)(dealtDamage * effectiveness);
+
+    
     takeDamage(target, dealtDamage, damageType);
 }
 

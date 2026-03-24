@@ -155,13 +155,11 @@
 #define EXP_WIDTH 88
 #define EXP_HEIGHT 2
 
-#define TOTAL_HPNUM3_X MY_HP_EMPTY_X + 65
-#define TOTAL_HPNUM2_X MY_HP_EMPTY_X + 71
-#define TOTAL_HPNUM1_X MY_HP_EMPTY_X + 77
+#define TOTAL_HPNUM_X MY_HP_EMPTY_Y + 27
 
 #define REMAINING_HP_X MY_HP_EMPTY_X + 97
 
-#define HPNUM_Y MY_HP_EMPTY_Y + 27
+#define HPNUM_Y MY_HP_EMPTY_X + 65
 
 
 //location for attacks and pp
@@ -787,8 +785,8 @@ int main(void)
             draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
-            // Display as current / max (left-to-right).
-            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+
+            draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
             draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
            
