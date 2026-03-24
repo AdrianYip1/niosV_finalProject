@@ -163,6 +163,43 @@ void draw_sprite_any(const unsigned short *sprite,
     }
 }
 
+static unsigned short greyscale_565(unsigned short colour) {
+    const int r5 = (colour >> 11) & 31;
+    const int g6 = (colour >> 5) & 63;
+    const int b5 = colour & 31;
+
+    // Convert to 8-bit per-channel for luma, then back to 565.
+    const int r8 = (r5 * 255 + 15) / 31;
+    const int g8 = (g6 * 255 + 31) / 63;
+    const int b8 = (b5 * 255 + 15) / 31;
+
+    const int l8 = (r8 * 30 + g8 * 59 + b8 * 11 + 50) / 100;
+
+    const int lr5 = (l8 * 31 + 127) / 255;
+    const int lg6 = (l8 * 63 + 127) / 255;
+    const int lb5 = (l8 * 31 + 127) / 255;
+
+    return (unsigned short)((lr5 << 11) | (lg6 << 5) | lb5);
+}
+
+void draw_sprite_any_greyscale(const unsigned short *sprite,
+                               int width, int height,
+                               int x, int y,
+                               short transparent)
+{
+    if (!sprite || width <= 0 || height <= 0) return;
+
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            unsigned short colour = sprite[sy * width + sx];
+            if (colour == (unsigned short)transparent) {
+                continue;
+            }
+            draw_pixel(x + sx, y + sy, greyscale_565(colour));
+        }
+    }
+}
+
 void draw_sprite_any_shake(const unsigned short *sprite,
                            int width, int height,
                            int x, int y,
@@ -250,12 +287,32 @@ void draw_sprite_any_bob(const unsigned short *sprite,
     draw_sprite_any(sprite, width, height, x, y + dy, transparent);
 }
 
+void draw_sprite_any_bob_greyscale(const unsigned short *sprite,
+                                   int width, int height,
+                                   int x, int y,
+                                   short transparent,
+                                   int bob_frame)
+{
+
+    static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
+        0, -1, -1, 0, 0, 1, 1, 0,
+        0, -1, -1, 0, 0, 1, 1, 0
+    };
+
+    int dy = 0;
+    if (bob_frame >= 0 && bob_frame < BOB_SPRITE_FRAME_COUNT) {
+        dy = (int)dy_pattern[bob_frame];
+    }
+
+    draw_sprite_any_greyscale(sprite, width, height, x, y + dy, transparent);
+}
+
 //up and down motion
 void draw_sprite_any_bob_party(const unsigned short *sprite,
-                         int width, int height,
-                         int x, int y,
-                         short transparent,
-                         int bob_frame)
+                          int width, int height,
+                          int x, int y,
+                          short transparent,
+                          int bob_frame)
 {
 
     static const signed char dy_pattern[BOB_PARTY_SPRITE_FRAME_COUNT] = {
@@ -269,6 +326,26 @@ void draw_sprite_any_bob_party(const unsigned short *sprite,
     }
 
     draw_sprite_any(sprite, width, height, x, y + dy, transparent);
+}
+
+void draw_sprite_any_bob_party_greyscale(const unsigned short *sprite,
+                                         int width, int height,
+                                         int x, int y,
+                                         short transparent,
+                                         int bob_frame)
+{
+
+    static const signed char dy_pattern[BOB_PARTY_SPRITE_FRAME_COUNT] = {
+        1, -1, 1, -1, 1, -1, 1, -1,
+        1, -1, 1, -1, 1, -1, 1, -1
+    };
+
+    int dy = 0;
+    if (bob_frame >= 0 && bob_frame < BOB_PARTY_SPRITE_FRAME_COUNT) {
+        dy = (int)dy_pattern[bob_frame];
+    }
+
+    draw_sprite_any_greyscale(sprite, width, height, x, y + dy, transparent);
 }
 
 static unsigned short shade_565(unsigned short colour, int delta) {

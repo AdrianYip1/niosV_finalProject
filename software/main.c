@@ -395,8 +395,10 @@ int main(void)
     float pokeballVx = 0.0f, pokeballVy = 0.0f;
     const float pokeballG = 0.35f;
     const int pokeballTPeak = 18;
+    float pokeballPeakX = 0.0f;
+    float pokeballTLand = 0.0f;
     float pokeballLandX = 0.0f, pokeballLandY = 0.0f;
-    int pokeballLandingFrame = 8;
+    int pokeballLandingFrame = POKEBALL_UNOPENED_FRAME_COUNT;
 
     unsigned int frame_count = 0;
     int current_phase = 0;    
@@ -595,9 +597,10 @@ int main(void)
             }
         }
 
-        // Re-init on state change.
-        if (currentGameState != previousGameState) {
-            if (currentGameState == GAME_STATE_MAP) {
+        const bool wasMapMode = (previousGameState == GAME_STATE_MAP);
+        const bool isMapMode = (currentGameState == GAME_STATE_MAP);
+        if (wasMapMode != isMapMode) {
+            if (isMapMode) {
                 play_bgm(map_audio, map_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_ROUTE);
@@ -810,16 +813,10 @@ int main(void)
                             enemyFrontSprite.width, enemyFrontSprite.height,
                             enemyFrontSprite.x, enemyFrontSprite.y,
                             TRANSPARENT_COLOUR);
-            // Draw the battle UI background before HUD elements so it doesn't cover HP text/bars.
+
+            // Draw the battle UI background before do it wont cover HP .
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-            draw_sprite_any_bob(myHpEmpty,
-                                MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
-                                MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
-                                TRANSPARENT_COLOUR,
-                                bobFrame);
-            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
-            //todo: make the top and bottom lines of hp a darker shade to look better
-            
+
             pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
             pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
 
@@ -827,6 +824,24 @@ int main(void)
             const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
             const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
             const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
+            const bool playerFainted = (playerActive != NULL) && (!playerActive->alive || playerHp <= 0);
+
+            if (playerFainted) {
+                draw_sprite_any_bob_greyscale(myHpEmpty,
+                                              MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                              MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                              TRANSPARENT_COLOUR,
+                                              bobFrame);
+            } else {
+                draw_sprite_any_bob(myHpEmpty,
+                                    MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                    MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                    TRANSPARENT_COLOUR,
+                                    bobFrame);
+            }
+
+            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+            //todo: make the top and bottom lines of hp a darker shade to look better
 
             //hp bars with code that scales
             const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
@@ -912,18 +927,45 @@ int main(void)
                 //box sprites
 
                 for (int i = 0; i < 6; i++) {
+                    const pokemonInBattle *slotPokemon = (battleState.playerParty != NULL) ? battleState.playerParty->slots[i] : NULL;
+                    const int slotHp = (slotPokemon != NULL) ? slotPokemon->scaledStatsWithLevel[0] : 0;
+                    const bool slotFainted = (slotPokemon != NULL) && (!slotPokemon->alive || slotHp <= 0);
+
                     if (i == selectedPartyIndex) {
-                        draw_sprite_any_bob_party(
-                            partyBoxSprites[i].pixels,
-                            partyBoxSprites[i].width,
-                            partyBoxSprites[i].height,
-                            partyBoxSprites[i].x,
-                            partyBoxSprites[i].y,
-                            TRANSPARENT_COLOUR,
-                            bobPartyFrame
-                        );
+                        if (slotFainted) {
+                            draw_sprite_any_bob_party_greyscale(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobPartyFrame
+                            );
+                        } else {
+                            draw_sprite_any_bob_party(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobPartyFrame
+                            );
+                        }
                     } else {
-                        drawStaticSprite(&partyBoxSprites[i]);
+                        if (slotFainted) {
+                            draw_sprite_any_greyscale(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR
+                            );
+                        } else {
+                            drawStaticSprite(&partyBoxSprites[i]);
+                        }
                     }
                 }
             }
@@ -1020,12 +1062,6 @@ int main(void)
                             enemyFrontSprite.x, enemyFrontSprite.y,
                             TRANSPARENT_COLOUR);
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-            draw_sprite_any_bob(myHpEmpty,
-                                MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
-                                MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
-                                TRANSPARENT_COLOUR,
-                                bobFrame);
-            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
             pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
             pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
@@ -1034,6 +1070,23 @@ int main(void)
             const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
             const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
             const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
+            const bool playerFainted = (playerActive != NULL) && (!playerActive->alive || playerHp <= 0);
+
+            
+            if (playerFainted) {
+                draw_sprite_any_bob_greyscale(myHpEmpty,
+                                              MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                              MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                              TRANSPARENT_COLOUR,
+                                              bobFrame);
+            } else {
+                draw_sprite_any_bob(myHpEmpty,
+                                    MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                    MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                    TRANSPARENT_COLOUR,
+                                    bobFrame);
+            }
+            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
 
             const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
             const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
@@ -1210,15 +1263,16 @@ int main(void)
                 battleIntroTextReady = true;
             }
 
-            int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleIntroText, BLACK);
-        
-            if (done && spacePressed) {
+            // Instant intro text.
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleIntroText, BLACK);
+         
+            if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
                 currentGameState = GAME_STATE_POKEBALL_THROW;
                 previousGameState = GAME_STATE_POKEBALL_THROW;
                 battleThrowPokeballTextReady = false;
             }
-        
+         
             break;
         }
 
@@ -1232,9 +1286,9 @@ int main(void)
                 pokeballThrownFrame = 0;
                 pokeballThrownTimer = 0;
                 pokeballLandingTimer = 0;
-                pokeballLandingFrame = 8;
+                pokeballLandingFrame = POKEBALL_UNOPENED_FRAME_COUNT;
 
-                // Start off-screen (left + below). Only becomes visible at the peak.
+                // Start off-screen (left + below). We only draw it at/after the peak.
                 pokeballX0 = -(float)POKEBALLTHROW_WIDTH;
 
                 const float landX = (float)(playerBackSprite.x + playerBackSprite.width / 2 - POKEBALLTHROW_WIDTH / 2);
@@ -1246,13 +1300,23 @@ int main(void)
                 float yPeak = (float)(playerBackSprite.y - 30);
                 if (yPeak < 5.0f) yPeak = 5.0f;
 
+                // Ensure the ball is visible on-screen at the peak (we only draw it at/after the peak).
+                pokeballPeakX = pokeballLandX - 60.0f;
+                if (pokeballPeakX < 0.0f) pokeballPeakX = 0.0f;
+                if (pokeballPeakX > (float)(SCREEN_WIDTH - POKEBALLTHROW_WIDTH)) {
+                    pokeballPeakX = (float)(SCREEN_WIDTH - POKEBALLTHROW_WIDTH);
+                }
+
                 pokeballVy = -(pokeballG * (float)pokeballTPeak);
                 pokeballY0 = yPeak + 0.5f * pokeballG * (float)(pokeballTPeak * pokeballTPeak);
 
                 float dy = pokeballLandY - yPeak;
                 if (dy < 0.0f) dy = 0.0f;
-                const float tLand = (float)pokeballTPeak + sqrtf((2.0f * dy) / pokeballG);
-                pokeballVx = (pokeballLandX - pokeballX0) / ((tLand > 1.0f) ? tLand : 1.0f);
+                pokeballTLand = (float)pokeballTPeak + sqrtf((2.0f * dy) / pokeballG);
+
+                const float tHoriz = (pokeballTLand - (float)pokeballTPeak);
+                pokeballVx = (pokeballLandX - pokeballPeakX) / ((tHoriz > 1.0f) ? tHoriz : 1.0f);
+                pokeballX0 = pokeballPeakX - pokeballVx * (float)pokeballTPeak;
             }
 
             if (!battleThrowPokeballTextReady) {
@@ -1264,13 +1328,22 @@ int main(void)
                 battleThrowPokeballTextReady = true;
             }
 
-            // Draw battle background + sprites (hide your Pokémon until the throw finishes).
             draw_map();
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-            draw_sprite_any(enemyFrontSprite.pixels,
-                            enemyFrontSprite.width, enemyFrontSprite.height,
-                            enemyFrontSprite.x, enemyFrontSprite.y,
-                            TRANSPARENT_COLOUR);
+            if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
+
+            if (pokeballThrown && playerBackSprite.pixels != NULL) {
+                draw_sprite_any_bob(playerBackSprite.pixels,
+                                    playerBackSprite.width, playerBackSprite.height,
+                                    playerBackSprite.x, playerBackSprite.y,
+                                    TRANSPARENT_COLOUR,
+                                    bobFrame);
+            }
 
             // Update/draw projectile.
             if (!pokeballThrown) {
@@ -1281,9 +1354,16 @@ int main(void)
                 const float x = pokeballX0 + pokeballVx * t;
                 const float y = pokeballY0 + pokeballVy * t + 0.5f * pokeballG * t * t;
 
+                // Start the landing/open animation once the ball hits the target y.
+                if (!pokeballLanding && pokeballThrowT >= pokeballTPeak && y >= pokeballLandY) {
+                    pokeballLanding = true;
+                    pokeballLandingFrame = POKEBALL_UNOPENED_FRAME_COUNT;
+                    pokeballLandingTimer = 0;
+                }
+
                 if (!pokeballLanding && pokeballThrowT >= pokeballTPeak) {
-                    // Animate frames 0..7 only (pokeball circling around)
-                    const int inflightFrames = 8;
+                    // Animate frames 0-7 while in flight (ball appears at peak).
+                    const int inflightFrames = POKEBALL_UNOPENED_FRAME_COUNT;
                     const int inflightSpeed = 3;
                     pokeballThrownTimer++;
                     if (pokeballThrownTimer >= inflightSpeed) {
@@ -1303,20 +1383,13 @@ int main(void)
                     }
                 }
 
-                // frames 8-11  when pokeball lands
-                if (!pokeballLanding && pokeballThrowT >= pokeballTPeak && y >= pokeballLandY) {
-                    pokeballLanding = true;
-                    pokeballLandingFrame = 8;
-                    pokeballLandingTimer = 0;
-                }
-
                 if (pokeballLanding) {
                     const int landSpeed = 6;
                     pokeballLandingTimer++;
                     if (pokeballLandingTimer >= landSpeed) {
                         pokeballLandingTimer = 0;
                         pokeballLandingFrame++;
-                        if (pokeballLandingFrame > 10) {
+                        if (pokeballLandingFrame >= POKEBALLTHROW_FRAME_COUNT) {
                             pokeballThrown = true;
                         }
                     }
@@ -1334,14 +1407,6 @@ int main(void)
                 }
             }
 
-            if (pokeballThrown) {
-                            draw_sprite_any(playerBackSprite.pixels,
-                                playerBackSprite.width, playerBackSprite.height,
-                                playerBackSprite.x, playerBackSprite.y,
-                                TRANSPARENT_COLOUR);
-            }
-
-            // Textbox (instant) over the throw animation.
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleThrowPokeballText, BLACK);
 
             if (pokeballThrown && spacePressed) {

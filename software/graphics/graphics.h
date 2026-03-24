@@ -43,6 +43,11 @@ void draw_sprite_any(const unsigned short *sprite,
                      int x, int y,
                      short transparent);
 
+void draw_sprite_any_greyscale(const unsigned short *sprite,
+                               int width, int height,
+                               int x, int y,
+                               short transparent);
+
 #define SHAKE_SPRITE_FRAME_COUNT 12
 void draw_sprite_any_shake(const unsigned short *sprite,
                            int width, int height,
@@ -78,12 +83,24 @@ void draw_sprite_any_bob(const unsigned short *sprite,
                          short transparent,
                          int bob_frame);
 
+void draw_sprite_any_bob_greyscale(const unsigned short *sprite,
+                                   int width, int height,
+                                   int x, int y,
+                                   short transparent,
+                                   int bob_frame);
+
 #define BOB_PARTY_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_bob_party(const unsigned short *sprite,
-                         int width, int height,
-                         int x, int y,
-                         short transparent,
-                         int bob_frame);
+                          int width, int height,
+                          int x, int y,
+                          short transparent,
+                          int bob_frame);
+
+void draw_sprite_any_bob_party_greyscale(const unsigned short *sprite,
+                                         int width, int height,
+                                         int x, int y,
+                                         short transparent,
+                                         int bob_frame);
 
 #define SILHOUETTE_SPRITE_FRAME_COUNT 16
 void draw_sprite_any_silhouette(const unsigned short *sprite,
