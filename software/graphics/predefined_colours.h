@@ -5,6 +5,7 @@
 #define BLACK 0x0000
 #define WHITE 0xFFFF
 #define RED 0xF800
+#define TURQ 0x97FF
 #define ORANGE 0xFD20
 #define GREEN 0x07E0
 #define BLUE 0x001F

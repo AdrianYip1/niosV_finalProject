@@ -238,10 +238,10 @@ static int navBattleMenu9(int index, NavDir dir) {
 static int navBattleAttack4(int index, NavDir dir) {
     static const signed char nav[4][4] = {
         /* up left down right */
-        /*0 bug     */ {0, 0, 2, 1},
-        /*1 dragon  */ {1, 0, 3, 1},
-        /*2 dark    */ {0, 2, 2, 3},
-        /*3 electric*/ {1, 2, 3, 3},
+        /*0 top left*/ {0, 0, 2, 1},
+        /*1 top right*/ {1, 0, 3, 1},
+        /*2 bottom left*/ {0, 2, 2, 3},
+        /*3 bottom right*/ {1, 2, 3, 3},
     };
     if (index < 0) index = 0;
     if (index > 3) index = 3;
@@ -382,6 +382,9 @@ int main(void)
     int bobPartyFrame = 0;
     int bobPartyTimer = 0;
     const int shakeSpeedFrames = 3;
+
+    char battleIntroText[96];
+    bool battleIntroTextReady = false;
 
     GameState currentGameState = GAME_STATE_BATTLE;
     BattleUiState battleUi = BATTLE_UI_MENU;
@@ -722,11 +725,10 @@ int main(void)
                                 playerBackSprite.x, playerBackSprite.y,
                                 TRANSPARENT_COLOUR,
                                 bobFrame);
-            draw_sprite_any_shake(enemyFrontSprite.pixels,
-                                  enemyFrontSprite.width, enemyFrontSprite.height,
-                                  enemyFrontSprite.x, enemyFrontSprite.y,
-                                  TRANSPARENT_COLOUR,
-                                  shakeFrame);
+            draw_sprite_any(enemyFrontSprite.pixels,
+                            enemyFrontSprite.width, enemyFrontSprite.height,
+                            enemyFrontSprite.x, enemyFrontSprite.y,
+                            TRANSPARENT_COLOUR);
             draw_sprite_any_bob(myHpEmpty,
                                 MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
                                 MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
@@ -776,7 +778,7 @@ int main(void)
             int offsetY = dy_pattern[bobFrame];
             //my hp bar
             draw_rect(myHP_X, myHP_Y + offsetY, (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth), HP_HEIGHT, playerHpBarColour);
-            draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, BLUE);
+            draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
             draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
@@ -885,59 +887,94 @@ int main(void)
         }
 
         case GAME_STATE_BATTLE_TRANSITION: {
-            // Precompute center
-            const int centerX = SCREEN_WIDTH / 2;
-            const int centerY = SCREEN_HEIGHT / 2;
-        
-            // Draw battle scene underneath
-            draw_map();
-            draw_sprite_any(battleUIBackgroundSprite,
-                            BATTLE_UI_BACKGROUND_WIDTH,
-                            BATTLE_UI_BACKGROUND_HEIGHT,
-                            0, battleBackdropY,
-                            TRANSPARENT_COLOUR);
-        
-            // Expanding rectangle 
-            int halfW = transitionFrame * 12;  // speed (increase = faster)
-            int halfH = transitionFrame * 8;
-        
-            int left   = centerX - halfW;
-            int right  = centerX + halfW;
-            int top    = centerY - halfH;
-            int bottom = centerY + halfH;
-        
-            // Clamp to screen
-            if (left < 0) left = 0;
-            if (right > SCREEN_WIDTH) right = SCREEN_WIDTH;
-            if (top < 0) top = 0;
-            if (bottom > SCREEN_HEIGHT) bottom = SCREEN_HEIGHT;
-        
-            // Draw black borders 
-            if (top > 0)
-                draw_rect(0, 0, SCREEN_WIDTH, top, BLACK);
-        
-            if (bottom < SCREEN_HEIGHT)
-                draw_rect(0, bottom, SCREEN_WIDTH, SCREEN_HEIGHT - bottom, BLACK);
-        
-            if (left > 0)
-                draw_rect(0, top, left, bottom - top, BLACK);
-        
-            if (right < SCREEN_WIDTH)
-                draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
-        
-            // Advance animation
-            transitionTimer++;
-            if (transitionTimer >= transitionSpeedFrames) {
-                transitionTimer = 0;
-                transitionFrame++;
-            }
+            if (battleState.type == BATTLE_WILD) {
+                // Wild battle transition
 
-            if (left == 0 && right == SCREEN_WIDTH &&
-                top == 0 && bottom == SCREEN_HEIGHT) {
-        
-                currentGameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                previousGameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                transitionFrame = 0;
+                // Precompute center
+                const int centerX = SCREEN_WIDTH / 2;
+                const int centerY = SCREEN_HEIGHT / 2;
+
+                // Draw battle scene underneath
+                draw_map();
+                draw_sprite_any(battleUIBackgroundSprite,
+                                BATTLE_UI_BACKGROUND_WIDTH,
+                                BATTLE_UI_BACKGROUND_HEIGHT,
+                                0, battleBackdropY,
+                                TRANSPARENT_COLOUR);
+
+                // Show both Pokémon underneath the transition (before the black borders animate).
+                draw_sprite_any(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
+                                TRANSPARENT_COLOUR);
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                TRANSPARENT_COLOUR);
+
+                // Expanding rectangle
+                int halfW = transitionFrame * 12;  // speed (increase for faster)
+                int halfH = transitionFrame * 8;
+
+                int left = centerX - halfW;
+                int right = centerX + halfW;
+                int top = centerY - halfH;
+                int bottom = centerY + halfH;
+
+                // Clamp to screen
+                if (left < 0) left = 0;
+                if (right > SCREEN_WIDTH) right = SCREEN_WIDTH;
+                if (top < 0) top = 0;
+                if (bottom > SCREEN_HEIGHT) bottom = SCREEN_HEIGHT;
+
+                // Draw black borders
+                if (top > 0)
+                    draw_rect(0, 0, SCREEN_WIDTH, top, BLACK);
+                if (bottom < SCREEN_HEIGHT)
+                    draw_rect(0, bottom, SCREEN_WIDTH, SCREEN_HEIGHT - bottom, BLACK);
+                if (left > 0)
+                    draw_rect(0, top, left, bottom - top, BLACK);
+                if (right < SCREEN_WIDTH)
+                    draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
+
+                transitionTimer++;
+                if (transitionTimer >= transitionSpeedFrames) {
+                    transitionTimer = 0;
+                    transitionFrame++;
+                }
+
+                if (left == 0 && right == SCREEN_WIDTH &&
+                    top == 0 && bottom == SCREEN_HEIGHT) {
+
+                    currentGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                    battleIntroTextReady = false;
+                    transitionFrame = 0;
+                }
+            } else {
+                // Trainer battle transition (placeholder)
+                draw_map();
+                draw_sprite_any(battleUIBackgroundSprite,
+                                BATTLE_UI_BACKGROUND_WIDTH,
+                                BATTLE_UI_BACKGROUND_HEIGHT,
+                                0, battleBackdropY,
+                                TRANSPARENT_COLOUR);
+
+                draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+                draw_string_f(92, 112, "TRAINER BATTLE", WHITE, FONT_5X9);
+
+                transitionTimer++;
+                if (transitionTimer >= transitionSpeedFrames) {
+                    transitionTimer = 0;
+                    transitionFrame++;
+                }
+
+                if (transitionFrame >= 20) {
+                    currentGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_INTRO_TEXT;
+                    battleIntroTextReady = false;
+                    transitionFrame = 0;
+                }
             }
         
             break;
@@ -946,8 +983,18 @@ int main(void)
         case GAME_STATE_BATTLE_INTRO_TEXT: {
             draw_map();
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-        
-            int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "battle placeholder", BLACK);
+
+            if (!battleIntroTextReady) {
+                const pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+                const char *enemyName = (enemyActive != NULL && enemyActive->id.data != NULL && enemyActive->id.data->name != NULL)
+                                            ? enemyActive->id.data->name
+                                            : "???";
+                // Wild battle intro text 
+                snprintf(battleIntroText, sizeof(battleIntroText), "%s wants to fight!", enemyName);
+                battleIntroTextReady = true;
+            }
+
+            int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleIntroText, BLACK);
         
             if (done && spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
