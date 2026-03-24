@@ -43,6 +43,7 @@
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <math.h>
 
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
@@ -382,8 +383,20 @@ int main(void)
     int spacebarFrame = 0;
     int spacebarTimer = 0;
 
+    // Pokeball throw animation state.
+    bool pokeballThrown = false;
+    bool pokeballThrowInit = false;
+    bool pokeballLanding = false;
+    int pokeballThrowT = 0;
     int pokeballThrownFrame = 0;
     int pokeballThrownTimer = 0;
+    int pokeballLandingTimer = 0;
+    float pokeballX0 = 0.0f, pokeballY0 = 0.0f;
+    float pokeballVx = 0.0f, pokeballVy = 0.0f;
+    const float pokeballG = 0.35f;
+    const int pokeballTPeak = 18;
+    float pokeballLandX = 0.0f, pokeballLandY = 0.0f;
+    int pokeballLandingFrame = 8;
 
     unsigned int frame_count = 0;
     int current_phase = 0;    
@@ -1210,38 +1223,126 @@ int main(void)
         }
 
         case GAME_STATE_POKEBALL_THROW: {
-            bool pokeballThrown;
+            //  projectile motion variables (for arc throwing)
+            if (!pokeballThrowInit) {
+                pokeballThrowInit = true;
+                pokeballThrown = false;
+                pokeballLanding = false;
+                pokeballThrowT = 0;
+                pokeballThrownFrame = 0;
+                pokeballThrownTimer = 0;
+                pokeballLandingTimer = 0;
+                pokeballLandingFrame = 8;
+
+                // Start off-screen (left + below). Only becomes visible at the peak.
+                pokeballX0 = -(float)POKEBALLTHROW_WIDTH;
+
+                const float landX = (float)(playerBackSprite.x + playerBackSprite.width / 2 - POKEBALLTHROW_WIDTH / 2);
+                const float landY = (float)(playerBackSprite.y + playerBackSprite.height - (POKEBALLTHROW_HEIGHT / 2));
+                pokeballLandX = landX;
+                pokeballLandY = landY;
+
+                // Peak above the player's side.
+                float yPeak = (float)(playerBackSprite.y - 30);
+                if (yPeak < 5.0f) yPeak = 5.0f;
+
+                pokeballVy = -(pokeballG * (float)pokeballTPeak);
+                pokeballY0 = yPeak + 0.5f * pokeballG * (float)(pokeballTPeak * pokeballTPeak);
+
+                float dy = pokeballLandY - yPeak;
+                if (dy < 0.0f) dy = 0.0f;
+                const float tLand = (float)pokeballTPeak + sqrtf((2.0f * dy) / pokeballG);
+                pokeballVx = (pokeballLandX - pokeballX0) / ((tLand > 1.0f) ? tLand : 1.0f);
+            }
 
             if (!battleThrowPokeballTextReady) {
                 const pokemonInBattle *myActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
                 const char *myPokemonName = (myActive != NULL && myActive->id.data != NULL && myActive->id.data->name != NULL)
-                                            ? myActive->id.data->name
-                                            : "???";
-                snprintf(battleThrowPokeballText, sizeof(battleThrowPokeballText, "Come on out, %s!", myPokemonName));
+                                                ? myActive->id.data->name
+                                                : "???";
+                snprintf(battleThrowPokeballText, sizeof(battleThrowPokeballText), "Go! %s!", myPokemonName);
                 battleThrowPokeballTextReady = true;
             }
 
-            int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleThrowPokeballText, BLACK);
-            
-            
-            while (!pokeballThrown) {
-                pokeballThrownTimer++;
-                if (pokeballThrownTimer >= SPACEBAR_SPEED_FRAMES) {
-                pokeballThrownTimer = 0;
-                pokeballThrownFrame = (pokeballThrownFrame + 1) % POKEBALL_UNOPENED_FRAME_COUNT;
+            // Draw battle background + sprites (hide your Pokémon until the throw finishes).
+            draw_map();
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+            draw_sprite_any(enemyFrontSprite.pixels,
+                            enemyFrontSprite.width, enemyFrontSprite.height,
+                            enemyFrontSprite.x, enemyFrontSprite.y,
+                            TRANSPARENT_COLOUR);
+
+            // Update/draw projectile.
+            if (!pokeballThrown) {
+                // Advance the simulated time (frames).
+                pokeballThrowT++;
+
+                const float t = (float)pokeballThrowT;
+                const float x = pokeballX0 + pokeballVx * t;
+                const float y = pokeballY0 + pokeballVy * t + 0.5f * pokeballG * t * t;
+
+                if (!pokeballLanding && pokeballThrowT >= pokeballTPeak) {
+                    // Animate frames 0..7 only (pokeball circling around)
+                    const int inflightFrames = 8;
+                    const int inflightSpeed = 3;
+                    pokeballThrownTimer++;
+                    if (pokeballThrownTimer >= inflightSpeed) {
+                        pokeballThrownTimer = 0;
+                        pokeballThrownFrame = (pokeballThrownFrame + 1) % inflightFrames;
+                    }
+
+                    const int dx = (int)(x + 0.5f);
+                    const int dy = (int)(y + 0.5f);
+                    if (dy >= -POKEBALLTHROW_HEIGHT && dy < SCREEN_HEIGHT) {
+                        draw_sprite_any(pokeballThrowFrames[pokeballThrownFrame],
+                                        POKEBALLTHROW_WIDTH,
+                                        POKEBALLTHROW_HEIGHT,
+                                        dx,
+                                        dy,
+                                        TRANSPARENT_COLOUR);
+                    }
                 }
-                draw_sprite_any(pokeballThrowFrames[pokeballThrownFrame],
-                            POKEBALLTHROW_WIDTH,
-                            POKEBALLTHROW_HEIGHT,
-                            SPACEBAR_X,
-                            SPACEBAR_TITLE_Y,
-                            TRANSPARENT_COLOUR); //change location to have projectile motion
+
+                // frames 8-11  when pokeball lands
+                if (!pokeballLanding && pokeballThrowT >= pokeballTPeak && y >= pokeballLandY) {
+                    pokeballLanding = true;
+                    pokeballLandingFrame = 8;
+                    pokeballLandingTimer = 0;
+                }
+
+                if (pokeballLanding) {
+                    const int landSpeed = 6;
+                    pokeballLandingTimer++;
+                    if (pokeballLandingTimer >= landSpeed) {
+                        pokeballLandingTimer = 0;
+                        pokeballLandingFrame++;
+                        if (pokeballLandingFrame > 10) {
+                            pokeballThrown = true;
+                        }
+                    }
+
+                    if (!pokeballThrown) {
+                        const int dx = (int)(pokeballLandX + 0.5f);
+                        const int dy = (int)(pokeballLandY + 0.5f);
+                        draw_sprite_any(pokeballThrowFrames[pokeballLandingFrame],
+                                        POKEBALLTHROW_WIDTH,
+                                        POKEBALLTHROW_HEIGHT,
+                                        dx,
+                                        dy,
+                                        TRANSPARENT_COLOUR);
+                    }
+                }
             }
 
-            if (done && spacePressed && pokeballThrown) {
+            // Textbox (instant) over the throw animation.
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleThrowPokeballText, BLACK);
+
+            if (pokeballThrown && spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
                 currentGameState = GAME_STATE_BATTLE;
                 previousGameState = GAME_STATE_BATTLE;
+                battleThrowPokeballTextReady = false;
+                pokeballThrowInit = false;
             }
             break;
         }

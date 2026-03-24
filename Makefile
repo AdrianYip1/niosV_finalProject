@@ -48,6 +48,7 @@ SRCS := software/main.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/sprites/spacebar/spacebar_frames.c \
         software/graphics/sprites/arrowGif/arrowGif_frames.c \
+        software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
