@@ -212,30 +212,27 @@ static int arrowCursorCount(ArrowContext ctx) {
     switch (ctx) {
         case ARROW_CTX_BATTLE_MENU: return 9;   // Fight/Bag/Run/party members
         case ARROW_CTX_BATTLE_ATTACK: return 4; 
-        case ARROW_CTX_BATTLE_BAG: return 3;   
+        case ARROW_CTX_BATTLE_BAG: return 2;   
         default: return 0;
     }
 }
 
 // 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
 typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
-static int navBattleBag3(int index, NavDir dir) {
-    static const signed char nav[3][4] = {
-        /*0 HP*/ {0, 0, 2, 1},
-        /*1 Pokeballs */ {1, 0, 2, 1},
-        /*2 Last Item */ {0, 2, 2, 2},
-    };
-
+static int navBattleBag2(int index, NavDir dir) {
     if (index < 0) index = 0;
-    if (index > 2) index = 2;
+    if (index > 1) index = 1;
 
-    int d = (int)dir;
-    if (d < 0) d = 0;
-    if (d > 2) d = 2;
-
-    const int next = (int)nav[index][d];
-    if (next < 0 || next > 2) return index;
-    return next;
+    switch (dir) {
+        case DIR_LEFT:
+        case DIR_UP:
+            return 0;
+        case DIR_RIGHT:
+        case DIR_DOWN:
+            return 1;
+        default:
+            return index;
+    }
 }
 
 static int navBattleMenu9(int index, NavDir dir) {
@@ -703,10 +700,10 @@ int main(void)
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_BAG) {
                         const int oldIndex = battleCursor;
-                        if (upPressed) battleCursor = navBattleBag3(battleCursor, DIR_UP);
-                        if (leftPressed) battleCursor = navBattleBag3(battleCursor, DIR_LEFT);
-                        if (downPressed) battleCursor = navBattleBag3(battleCursor, DIR_DOWN);
-                        if (rightPressed) battleCursor = navBattleBag3(battleCursor, DIR_RIGHT);
+                        if (upPressed) battleCursor = navBattleBag2(battleCursor, DIR_UP);
+                        if (leftPressed) battleCursor = navBattleBag2(battleCursor, DIR_LEFT);
+                        if (downPressed) battleCursor = navBattleBag2(battleCursor, DIR_DOWN);
+                        if (rightPressed) battleCursor = navBattleBag2(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = battleCursor;
