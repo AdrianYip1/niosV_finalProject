@@ -31,6 +31,13 @@ typedef struct {
     BattleType type;
     BattleResult result;
     int fleeAttempts;
+
+#ifndef BATTLE_MSG_MAX
+#define BATTLE_MSG_MAX 4
+#endif
+    char messages[BATTLE_MSG_MAX][96];
+    int messageCount;
+    int messageReadIndex;
 } BattleState;
 
 BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type);
