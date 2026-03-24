@@ -788,7 +788,6 @@ int main(void)
                         battleCursor = 0;
                     }
                 } else if (battleUi == BATTLE_UI_BAG_MENU) {
-                    // Bag UI doesn't consume a turn yet (items not implemented in battleLoop.c).
                     // Show a message and return to the bag menu.
                     if (battleCursor == 0) {
                         battleUiSetSingleMessage(&battleState, "No HP items yet!");
@@ -1071,7 +1070,6 @@ int main(void)
             }
 
             if (battleUi == BATTLE_UI_BAG_MENU) {
-                // Two-item bag UI (HP + Pokeballs), similar selection logic to attack menu.
                 const int itemY = battleBackdropY + 10;
                 const int itemXLeft = 12;
                 const int itemXRight = SCREEN_WIDTH - POKEBALLS_WIDTH - 12;
