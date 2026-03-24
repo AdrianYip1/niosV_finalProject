@@ -5,14 +5,14 @@ from pathlib import Path
 from PIL import Image
 
 
-SRC_DIR = Path("ImageConvertHelpers/96x140")
-OUT_DIR = Path("software/graphics/sprites/statEffects")
+SRC_DIR = Path("ImageConvertHelpers/battleItems126x57")
+OUT_DIR = Path("software/graphics/sprites/battleItemsUI")
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
 
-EXPECTED_W = 96
-EXPECTED_H = 140
+EXPECTED_W = 126
+EXPECTED_H = 57
 
 
 def rgb_to_565(r: int, g: int, b: int) -> int:
@@ -106,8 +106,8 @@ def main() -> None:
     if not SRC_DIR.exists():
         raise RuntimeError(f"Missing source dir: {SRC_DIR}")
 
-    write_sprite("statUp", "STATUP", SRC_DIR / "statUp.png")
-    write_sprite("statDown", "STATDOWN", SRC_DIR / "statDown.png")
+    write_sprite("hp", "HP", SRC_DIR / "hp.png")
+    write_sprite("pokeballs", "POKEBALLS", SRC_DIR / "pokeballs.png")
 
 
 if __name__ == "__main__":
