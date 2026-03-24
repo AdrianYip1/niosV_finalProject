@@ -367,7 +367,7 @@ int main(void)
     int spacebarTimer = 0;
 
     unsigned int frame_count = 0;
-    int current_phase = 0;      // 0 = route, 1 = black
+    int current_phase = 0;    
     short colour = BLACK;    
     int bobFrame = 0;
     int bobTimer = 0;
