@@ -40,7 +40,7 @@ static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *att
         else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Your %s \nwas affected.", targetName);
     }
     else {
-        snprintf(buf, sizeof(buf), "Opposing %s used %s!", attackerName, moveName);
+        snprintf(buf, sizeof(buf), "Your %s used %s!", attackerName, moveName);
         if (getTypeEffectiveness(move->type, target->type1, target->type2) < 1) {
             snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective \nto opposing %s...", targetName);
         }
