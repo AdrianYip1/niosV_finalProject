@@ -155,11 +155,11 @@
 #define EXP_WIDTH 88
 #define EXP_HEIGHT 2
 
-#define TOTAL_HPNUM_X MY_HP_EMPTY_Y + 27
+#define TOTAL_HPNUM_X MY_HP_EMPTY_X + 65
 
 #define REMAINING_HP_X MY_HP_EMPTY_X + 97
 
-#define HPNUM_Y MY_HP_EMPTY_X + 65
+#define HPNUM_Y MY_HP_EMPTY_Y + 27
 
 #define CURRENT_PP_X_FROM_ATTACK_SPRITE 73 //73 right 
 #define CURRENT_PP_Y_FROM_ATTACK_SPRITE 23 //23 down
@@ -210,8 +210,6 @@ static int arrowCursorCount(ArrowContext ctx) {
 }
 
 
-// Navigation map for the 9 "battle menu" cursor targets (0..8).
-// Index meanings:
 // 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
 typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
 static int navBattleMenu9(int index, NavDir dir) {
@@ -897,6 +895,17 @@ int main(void)
 
                     drawCenteredStringInBox(mxs[i] + nameBoxDx, mys[i] + nameBoxDy, nameBoxW, nameBoxH,
                                             moveName, BLACK, FONT_5X9);
+
+                    // Draw PP (current/total) using offsets relative to the move sprite.
+                    if (playerActive != NULL && move != NULL) {
+                        const int ppX = mxs[i] + CURRENT_PP_X_FROM_ATTACK_SPRITE;
+                        const int ppY = mys[i] + CURRENT_PP_Y_FROM_ATTACK_SPRITE;
+                        const int ppCur = playerActive->currentPP[i];
+                        const int ppMax = move->maxPP;
+                        char ppBuf[16];
+                        snprintf(ppBuf, sizeof(ppBuf), "%d/%d", ppCur, ppMax);
+                        draw_string_f(ppX, ppY, ppBuf, BLACK, FONT_5X9);
+                    }
                 }
             }
     
@@ -1029,6 +1038,14 @@ int main(void)
                                 0, battleBackdropY,
                                 TRANSPARENT_COLOUR);
 
+                // Draw the opponent sprite underneath 
+                if (enemyFrontSprite.pixels != NULL) {
+                    draw_sprite_any(enemyFrontSprite.pixels,
+                                    enemyFrontSprite.width, enemyFrontSprite.height,
+                                    enemyFrontSprite.x, enemyFrontSprite.y,
+                                    TRANSPARENT_COLOUR);
+                }
+
                 // Expanding rectangle
                 int halfW = transitionFrame * 12;  // speed (increase for faster)
                 int halfH = transitionFrame * 8;
@@ -1053,13 +1070,6 @@ int main(void)
                     draw_rect(0, top, left, bottom - top, BLACK);
                 if (right < SCREEN_WIDTH)
                     draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
-
-                if (enemyFrontSprite.pixels != NULL) {
-                    draw_sprite_any(enemyFrontSprite.pixels,
-                                    enemyFrontSprite.width, enemyFrontSprite.height,
-                                    enemyFrontSprite.x, enemyFrontSprite.y,
-                                    TRANSPARENT_COLOUR);
-                }
 
                 transitionTimer++;
                 if (transitionTimer >= transitionSpeedFrames) {
