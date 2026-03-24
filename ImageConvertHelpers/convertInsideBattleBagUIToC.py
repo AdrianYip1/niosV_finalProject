@@ -1,25 +1,23 @@
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image
 
 
-SRC_DIR = Path("ImageConvertHelpers/battleItems126x57")
+SRC_DIR = Path("ImageConvertHelpers/insideBattleBagUI")
 OUT_DIR = Path("software/graphics/sprites/battleItemsUI")
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
-
-EXPECTED_W = 126
-EXPECTED_H = 57
 
 
 def rgb_to_565(r: int, g: int, b: int) -> int:
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
 
 
-def load_rgba(path: Path) -> Image.Image:
+def load_rgba(path: Path, expected_w: int, expected_h: int) -> Image.Image:
     im = Image.open(path)
     try:
         im.seek(0)
@@ -27,16 +25,16 @@ def load_rgba(path: Path) -> Image.Image:
         pass
     rgba = im.convert("RGBA")
     w, h = rgba.size
-    if (w, h) != (EXPECTED_W, EXPECTED_H):
-        raise ValueError(f"{path} must be {EXPECTED_W}x{EXPECTED_H}, got {w}x{h}")
+    if (w, h) != (expected_w, expected_h):
+        raise ValueError(f"{path} must be {expected_w}x{expected_h}, got {w}x{h}")
     return rgba
 
 
 def image_to_565_vals(img: Image.Image) -> list[int]:
     w, h = img.size
     px = img.load()
-    # These PNGs often come with a solid/gradient background instead of alpha.
-    # Treat the most common border colours as transparent "background".
+
+    # Treat the most common border colours as transparent background.
     border: list[tuple[int, int, int, int]] = []
     for x in range(w):
         border.append(px[x, 0])
@@ -44,10 +42,6 @@ def image_to_565_vals(img: Image.Image) -> list[int]:
     for y in range(h):
         border.append(px[0, y])
         border.append(px[w - 1, y])
-
-    # Take the top few border colours as background palette.
-    # Exact-match is intentional to avoid nuking real sprite colours.
-    from collections import Counter
 
     bg_palette = {
         (r, g, b)
@@ -66,8 +60,8 @@ def image_to_565_vals(img: Image.Image) -> list[int]:
     return vals
 
 
-def write_sprite(name: str, macro_prefix: str, png_path: Path) -> None:
-    img = load_rgba(png_path)
+def write_sprite(name: str, macro_prefix: str, png_path: Path, expected_w: int, expected_h: int) -> None:
+    img = load_rgba(png_path, expected_w, expected_h)
     vals = image_to_565_vals(img)
 
     h_path = OUT_DIR / f"{name}.h"
@@ -77,8 +71,8 @@ def write_sprite(name: str, macro_prefix: str, png_path: Path) -> None:
         [
             "#pragma once",
             "",
-            f"#define {macro_prefix}_WIDTH  {EXPECTED_W}",
-            f"#define {macro_prefix}_HEIGHT {EXPECTED_H}",
+            f"#define {macro_prefix}_WIDTH  {expected_w}",
+            f"#define {macro_prefix}_HEIGHT {expected_h}",
             "",
             f"extern const unsigned short {name}[{macro_prefix}_WIDTH * {macro_prefix}_HEIGHT];",
             "",
@@ -98,7 +92,6 @@ def write_sprite(name: str, macro_prefix: str, png_path: Path) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     h_path.write_text(h_text, encoding="utf-8")
     c_path.write_text("\n".join(c_lines), encoding="utf-8")
-
     print(f"Wrote {c_path} and {h_path}")
 
 
@@ -106,10 +99,18 @@ def main() -> None:
     if not SRC_DIR.exists():
         raise RuntimeError(f"Missing source dir: {SRC_DIR}")
 
-    # Avoid macro collisions with existing HP bar constants in the game code.
-    write_sprite("hp", "BATTLE_ITEM_HP", SRC_DIR / "hp.png")
-    write_sprite("pokeballs", "POKEBALLS", SRC_DIR / "pokeballs.png")
+    write_sprite(
+        "itemDescription",
+        "BATTLE_BAG_ITEM_DESCRIPTION",
+        SRC_DIR / "itemDescription.png",
+        252,
+        70,
+    )
+    write_sprite("itemSlot", "BATTLE_BAG_ITEM_SLOT", SRC_DIR / "itemSlot.png", 120, 45)
+    write_sprite("useButton", "BATTLE_BAG_USE_BUTTON", SRC_DIR / "useButton.png", 199, 32)
+    write_sprite("useLastItem", "BATTLE_BAG_USE_LAST_ITEM", SRC_DIR / "useLastItem.png", 199, 32)
 
 
 if __name__ == "__main__":
     main()
+

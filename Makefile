@@ -21,6 +21,12 @@ SRCS := software/main.c \
         software/graphics/sprites/battleIcons/battleHp/frozen.c \
         software/graphics/sprites/battleIcons/battleHp/myHpEmpty.c \
         software/graphics/sprites/battleIcons/battleHp/oppHpEmpty.c \
+        software/graphics/sprites/battleItemsUI/hp.c \
+        software/graphics/sprites/battleItemsUI/pokeballs.c \
+        software/graphics/sprites/battleItemsUI/itemDescription.c \
+        software/graphics/sprites/battleItemsUI/itemSlot.c \
+        software/graphics/sprites/battleItemsUI/useButton.c \
+        software/graphics/sprites/battleItemsUI/useLastItem.c \
         software/graphics/sprites/battleIcons/battleHp/para.c \
         software/graphics/sprites/battleIcons/battleHp/poison.c \
         software/graphics/sprites/battleIcons/battleHp/sleep.c \

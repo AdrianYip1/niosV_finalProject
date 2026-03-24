@@ -1,0 +1,6 @@
+#pragma once
+
+#define BATTLE_BAG_USE_LAST_ITEM_WIDTH  199
+#define BATTLE_BAG_USE_LAST_ITEM_HEIGHT 32
+
+extern const unsigned short useLastItem[BATTLE_BAG_USE_LAST_ITEM_WIDTH * BATTLE_BAG_USE_LAST_ITEM_HEIGHT];

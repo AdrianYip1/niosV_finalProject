@@ -1,0 +1,6 @@
+#pragma once
+
+#define BATTLE_BAG_ITEM_SLOT_WIDTH  120
+#define BATTLE_BAG_ITEM_SLOT_HEIGHT 45
+
+extern const unsigned short itemSlot[BATTLE_BAG_ITEM_SLOT_WIDTH * BATTLE_BAG_ITEM_SLOT_HEIGHT];

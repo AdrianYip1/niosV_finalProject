@@ -1,0 +1,6 @@
+#pragma once
+
+#define BATTLE_BAG_USE_BUTTON_WIDTH  199
+#define BATTLE_BAG_USE_BUTTON_HEIGHT 32
+
+extern const unsigned short useButton[BATTLE_BAG_USE_BUTTON_WIDTH * BATTLE_BAG_USE_BUTTON_HEIGHT];

@@ -24,6 +24,8 @@
 #include "graphics/sprites/battleicons/battle_icons.h"
 #include "graphics/sprites/battleIcons/battleHp/myHpEmpty.h"
 #include "graphics/sprites/battleIcons/battleHp/oppHpEmpty.h"
+#include "graphics/sprites/battleItemsUI/hp.h"
+#include "graphics/sprites/battleItemsUI/pokeballs.h"
 #include "graphics/sprites/battleIcons/battleHp/burned.h"
 #include "graphics/sprites/battleIcons/battleHp/caught.h"
 #include "graphics/sprites/battleIcons/battleHp/frozen.h"
@@ -207,14 +209,29 @@ static int arrowCursorCount(ArrowContext ctx) {
     switch (ctx) {
         case ARROW_CTX_BATTLE_MENU: return 9;   // Fight/Bag/Run/party members
         case ARROW_CTX_BATTLE_ATTACK: return 4; 
-        case ARROW_CTX_BATTLE_BAG: return 1;   
+        case ARROW_CTX_BATTLE_BAG: return 2;   
         default: return 0;
     }
 }
 
-
 // 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
 typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
+static int navBattleBag2(int index, NavDir dir) {
+    if (index < 0) index = 0;
+    if (index > 1) index = 1;
+
+    switch (dir) {
+        case DIR_LEFT:
+        case DIR_UP:
+            return 0;
+        case DIR_RIGHT:
+        case DIR_DOWN:
+            return 1;
+        default:
+            return index;
+    }
+}
+
 static int navBattleMenu9(int index, NavDir dir) {
     static const signed char nav[9][4] = {
         /*0 Fight*/ {0, 0, 0, 1},
@@ -638,6 +655,9 @@ int main(void)
         if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
             battleUi = BATTLE_UI_MENU;
             battleCursor = 0;
+        } else if (escPressed && battleUi == BATTLE_UI_BAG_MENU) {
+            battleUi = BATTLE_UI_MENU;
+            battleCursor = 1;
         }
 
         //WASD and arrow keys
@@ -675,6 +695,13 @@ int main(void)
                         if (downPressed) battleCursor = navBattleAttack4(battleCursor, DIR_DOWN);
                         if (rightPressed) battleCursor = navBattleAttack4(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
+                    } else if (arrowCtx == ARROW_CTX_BATTLE_BAG) {
+                        const int oldIndex = battleCursor;
+                        if (upPressed) battleCursor = navBattleBag2(battleCursor, DIR_UP);
+                        if (leftPressed) battleCursor = navBattleBag2(battleCursor, DIR_LEFT);
+                        if (downPressed) battleCursor = navBattleBag2(battleCursor, DIR_DOWN);
+                        if (rightPressed) battleCursor = navBattleBag2(battleCursor, DIR_RIGHT);
+                        didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = battleCursor;
                         if (upPressed) battleCursor = navBattleMenu9(battleCursor, DIR_UP);
@@ -695,9 +722,9 @@ int main(void)
                         battleCursor = 0;
                         play_sfx(plink_audio, plink_audio_len);
                     } else if (battleCursor == 1) {
-                        battleApplyPlayerAction(&battleState, ACTION_ITEM, 0);
+                        battleUi = BATTLE_UI_BAG_MENU;
+                        battleCursor = 0;
                         play_sfx(plink_audio, plink_audio_len);
-                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
                     } else if (battleCursor == 2) {
                         battleApplyPlayerAction(&battleState, ACTION_RUN, 0);
                         play_sfx(plink_audio, plink_audio_len);
@@ -760,6 +787,20 @@ int main(void)
                         battleUi = BATTLE_UI_MENU;
                         battleCursor = 0;
                     }
+                } else if (battleUi == BATTLE_UI_BAG_MENU) {
+                    // Bag UI doesn't consume a turn yet (items not implemented in battleLoop.c).
+                    // Show a message and return to the bag menu.
+                    if (battleCursor == 0) {
+                        battleUiSetSingleMessage(&battleState, "No HP items yet!");
+                    } else {
+                        battleUiSetSingleMessage(&battleState, "No Pokeballs yet!");
+                    }
+                    actionTextReturnUi = battleUi;
+                    actionTextReturnCursor = battleCursor;
+                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    actionTextAwaitSpaceRelease = true;
+                    play_sfx(plink_audio, plink_audio_len);
                 }
 
                 if (battleState.messageCount > 0) {
@@ -778,6 +819,9 @@ int main(void)
             }
 
             if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
+                play_sfx(plink_audio, plink_audio_len);
+            }
+            if (escPressed && battleUi == BATTLE_UI_BAG_MENU) {
                 play_sfx(plink_audio, plink_audio_len);
             }
 
@@ -1025,7 +1069,26 @@ int main(void)
                     }
                 }
             }
-    
+
+            if (battleUi == BATTLE_UI_BAG_MENU) {
+                // Two-item bag UI (HP + Pokeballs), similar selection logic to attack menu.
+                const int itemY = battleBackdropY + 10;
+                const int itemXLeft = 12;
+                const int itemXRight = SCREEN_WIDTH - POKEBALLS_WIDTH - 12;
+
+                if (battleCursor == 0) {
+                    draw_sprite_any_shade_pulse(hp, BATTLE_ITEM_HP_WIDTH, BATTLE_ITEM_HP_HEIGHT, itemXLeft, itemY, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(hp, BATTLE_ITEM_HP_WIDTH, BATTLE_ITEM_HP_HEIGHT, itemXLeft, itemY, TRANSPARENT_COLOUR);
+                }
+
+                if (battleCursor == 1) {
+                    draw_sprite_any_shade_pulse(pokeballs, POKEBALLS_WIDTH, POKEBALLS_HEIGHT, itemXRight, itemY, TRANSPARENT_COLOUR, shadePulseFrame);
+                } else {
+                    draw_sprite_any(pokeballs, POKEBALLS_WIDTH, POKEBALLS_HEIGHT, itemXRight, itemY, TRANSPARENT_COLOUR);
+                }
+            }
+     
             break;
         }
 
