@@ -519,8 +519,19 @@ void draw_char(int x, int y, char c, short int colour) {
 // Draw a string using an explicit font.
 void draw_string_f(int x, int y, const char *string, short colour, FontId font) {
     int advance = (font == FONT_5X9) ? 6 : 8;  // char width + 1px gap
+    int line_advance = (font == FONT_5X9) ? 10 : 9; // glyph height + 1px gap
     int cursor_x = x;
     while (*string) {
+        if (*string == '\r') {
+            string++;
+            continue;
+        }
+        if (*string == '\n') { //manually coding detection got \n since it didnt automatically happen
+            cursor_x = x;
+            y += line_advance;
+            string++;
+            continue;
+        }
         draw_char_f(cursor_x, y, *string, colour, font);
         cursor_x += advance;
         string++;
