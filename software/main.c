@@ -1238,7 +1238,7 @@ int main(void)
                 pokeballX0 = -(float)POKEBALLTHROW_WIDTH;
 
                 const float landX = (float)(playerBackSprite.x + playerBackSprite.width / 2 - POKEBALLTHROW_WIDTH / 2);
-                const float landY = (float)(playerBackSprite.y + playerBackSprite.height - (POKEBALLTHROW_HEIGHT / 2));
+                const float landY = (float)(playerBackSprite.y + playerBackSprite.height - (POKEBALLTHROW_HEIGHT / 2)) - 40;
                 pokeballLandX = landX;
                 pokeballLandY = landY;
 
@@ -1332,6 +1332,13 @@ int main(void)
                                         TRANSPARENT_COLOUR);
                     }
                 }
+            }
+
+            if (pokeballThrown) {
+                            draw_sprite_any(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
+                                TRANSPARENT_COLOUR);
             }
 
             // Textbox (instant) over the throw animation.
