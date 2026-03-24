@@ -22,8 +22,11 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
 void scaleStatsWithLevel(pokemonInBattle *pokemon) {
     const PokemonData *d = pokemon->id.data;
     int base[6] = {d->baseHp, d->baseAttack, d->baseSpAttack, d->baseDefense, d->baseSpDefense, d->baseSpeed};
-    for (int i = 0; i < 6; i++) {
-        pokemon->scaledStatsWithLevel[i] = (((int)base[i] * 2) / 100 * pokemon->level);
+    // HP: floor((2*base*level)/100) + level + 10
+    // Other stats: floor((2*base*level)/100) + 5
+    pokemon->scaledStatsWithLevel[0] = ((2 * base[0] * pokemon->level) / 100) + pokemon->level + 10;
+    for (int i = 1; i < 6; i++) {
+        pokemon->scaledStatsWithLevel[i] = ((2 * base[i] * pokemon->level) / 100) + 5;
     }
 }
 
@@ -79,6 +82,8 @@ void dealDamage(pokemonInBattle *attacker, pokemonInBattle *target, int baseDama
     int dealtDamage = ((baseDamage * attacker->level + 10) / 250) * attacker->scaledStatsWithLevel[modifierID];
     float effectiveness = getTypeEffectiveness(moveType, target->type1, target->type2);
     dealtDamage = (int)(dealtDamage * effectiveness);
+
+    
     takeDamage(target, dealtDamage, damageType);
 }
 
@@ -86,7 +91,9 @@ void takeDamage(pokemonInBattle *target, int incomingDamage, int damageType) {
     double scale = (double)rand() / (double)RAND_MAX;
     double random_num = 0.85 + scale * (1.0 - 0.85);
     int modifierID = (damageType == 0) ? 3 : 4;
-    int actualDamage = (int)((double)incomingDamage / target->scaledStatsWithLevel[modifierID] * random_num);
+    const int denom = (target->scaledStatsWithLevel[modifierID] > 0) ? target->scaledStatsWithLevel[modifierID] : 1;
+    int actualDamage = (int)((double)incomingDamage / denom * random_num);
+    if (incomingDamage > 0 && actualDamage < 1) actualDamage = 1;
     if (actualDamage >= target->scaledStatsWithLevel[0]) {
         target->alive = false;
         target->scaledStatsWithLevel[0] = 0;
@@ -113,7 +120,7 @@ int determineTurnOrder(pokemonInBattle *pokemon1, pokemonInBattle *pokemon2) {
     int spd2 = pokemon2->scaledStatsWithLevel[5];
     if (spd1 > spd2) return 1;
     if (spd2 > spd1) return 2;
-    return (rand() % 2 == 0) ? 1 : 2;
+    return 1;
 }
 
 bool attemptFlee(pokemonInBattle *fleeing, pokemonInBattle *opponent) {

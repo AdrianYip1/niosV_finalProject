@@ -48,6 +48,7 @@ SRCS := software/main.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/sprites/spacebar/spacebar_frames.c \
         software/graphics/sprites/arrowGif/arrowGif_frames.c \
+        software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
@@ -58,7 +59,13 @@ SRCS := software/main.c \
         software/se/map_audio.c \
         software/se/plink_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
-        software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c
+        software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
+        software/gameplayLogic/battling/party.c \
+        software/gameplayLogic/battling/battleLoop.c \
+        software/gameplayLogic/entities/pokemonDataBase.c \
+        software/gameplayLogic/entities/learnset.c \
+        software/gameplayLogic/storage/pc.c \
+        software/gameplayLogic/entities/pokemonObject.c
 
 SHELL	:= cmd.exe
 
@@ -95,7 +102,7 @@ RM	:= /usr/bin/rm -f
 
 # Flags
 USERCCFLAGS	:= -g -O1 -ffunction-sections -fverbose-asm -fno-inline -gdwarf-2 
-USERLDFLAGS	:= -Wl,--defsym=__stack_pointer$$=0x4000000 -Wl,--defsym  -Wl,JTAG_UART_BASE=0xff201000 -lm
+USERLDFLAGS	:= -Wl,--defsym=__stack_pointer$$=0x4000000 -Wl,--defsym  -Wl,JTAG_UART_BASE=0xff201000
 ARCHCCFLAGS	:= -march=rv32im_zicsr -mabi=ilp32
 ARCHLDFLAGS	:= -march=rv32im_zicsr -mabi=ilp32
 CCFLAGS		:= -Wall -c $(USERCCFLAGS) $(ARCHCCFLAGS)
@@ -144,9 +151,9 @@ $(basename $(MAIN)).elf: $(OBJS)
 	@echo Linking
 	@$(BASH) 'printf "$(LD) "'
 	$(DEF_TEXT)
-	@echo $(LDFLAGS) $(OBJS) -o $@
+	@echo $(LDFLAGS) $(OBJS) -lm -o $@
 	@$(BASH) 'printf "\n"'
-	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) $(OBJS) -o $@'
+	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) $(OBJS) -lm -o $@'
 
 %.c.o: %.c $(HDRS)
 	@$(BASH) 'cd "$(CURDIR)"; $(RM) $@'
