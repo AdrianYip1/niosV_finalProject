@@ -393,7 +393,7 @@ int main(void)
     int arrowAnimFrame = 0;
     int arrowAnimTimer = 0;
     const int arrowAnimSpeedFrames = 8;
-    bool prevW = false, prevA = false, prevS = false, prevD = false;
+    bool prevUp = false, prevLeft = false, prevDown = false, prevRight = false;
     bool prevEsc = false;
 
     // Battle logic (stub for now).
@@ -605,15 +605,21 @@ int main(void)
             battleCursor = 0;
         }
 
-        const bool wDown = is_key_w_pressed();
-        const bool aDown = is_key_a_pressed();
-        const bool sDown = is_key_s_pressed();
-        const bool dDown = is_key_d_pressed();
-        const bool wPressed = wDown && !prevW;
-        const bool aPressed = aDown && !prevA;
-        const bool sPressed = sDown && !prevS;
-        const bool dPressed = dDown && !prevD;
-        prevW = wDown; prevA = aDown; prevS = sDown; prevD = dDown;
+        // Support both WASD and arrow keys for navigation.
+        const bool upDown = is_key_w_pressed() || is_key_up_pressed();
+        const bool leftDown = is_key_a_pressed() || is_key_left_pressed();
+        const bool downDown = is_key_s_pressed() || is_key_down_pressed();
+        const bool rightDown = is_key_d_pressed() || is_key_right_pressed();
+
+        const bool upPressed = upDown && !prevUp;
+        const bool leftPressed = leftDown && !prevLeft;
+        const bool downPressed = downDown && !prevDown;
+        const bool rightPressed = rightDown && !prevRight;
+
+        prevUp = upDown;
+        prevLeft = leftDown;
+        prevDown = downDown;
+        prevRight = rightDown;
 
         switch (currentGameState) {
         case GAME_STATE_BATTLE: {
@@ -629,17 +635,17 @@ int main(void)
                     }
                     if (arrowCtx == ARROW_CTX_BATTLE_ATTACK) {
                         const int oldIndex = battleCursor;
-                        if (wPressed) battleCursor = navBattleAttack4(battleCursor, DIR_UP);
-                        if (aPressed) battleCursor = navBattleAttack4(battleCursor, DIR_LEFT);
-                        if (sPressed) battleCursor = navBattleAttack4(battleCursor, DIR_DOWN);
-                        if (dPressed) battleCursor = navBattleAttack4(battleCursor, DIR_RIGHT);
+                        if (upPressed) battleCursor = navBattleAttack4(battleCursor, DIR_UP);
+                        if (leftPressed) battleCursor = navBattleAttack4(battleCursor, DIR_LEFT);
+                        if (downPressed) battleCursor = navBattleAttack4(battleCursor, DIR_DOWN);
+                        if (rightPressed) battleCursor = navBattleAttack4(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = battleCursor;
-                        if (wPressed) battleCursor = navBattleMenu9(battleCursor, DIR_UP);
-                        if (aPressed) battleCursor = navBattleMenu9(battleCursor, DIR_LEFT);
-                        if (sPressed) battleCursor = navBattleMenu9(battleCursor, DIR_DOWN);
-                        if (dPressed) battleCursor = navBattleMenu9(battleCursor, DIR_RIGHT);
+                        if (upPressed) battleCursor = navBattleMenu9(battleCursor, DIR_UP);
+                        if (leftPressed) battleCursor = navBattleMenu9(battleCursor, DIR_LEFT);
+                        if (downPressed) battleCursor = navBattleMenu9(battleCursor, DIR_DOWN);
+                        if (rightPressed) battleCursor = navBattleMenu9(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
                     } else {
                         battleCursor = 0;
@@ -781,8 +787,9 @@ int main(void)
             draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
-            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
-            draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+            // Display as current / max (left-to-right).
+            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+            draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
             draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
            
 
@@ -850,9 +857,14 @@ int main(void)
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
                 draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
             
-                //location of moves
-                const int mxs[4] = { 18, 18, 160 + 18 , 160 + 18};
-                const int mys[4] = { 240 - 91, 240 - 45, 240 - 91, 240 - 45 };
+                // Move slot layout matches `navBattleAttack4` indexing:
+                // 0 = top-left, 1 = top-right, 2 = bottom-left, 3 = bottom-right
+                const int mxLeft = 18;
+                const int mxRight = 160 + 18;
+                const int myTop = 240 - 91;
+                const int myBottom = 240 - 45;
+                const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
+                const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
 
                 pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
 
@@ -903,14 +915,9 @@ int main(void)
                                 TRANSPARENT_COLOUR);
 
                 // Show both Pokémon underneath the transition (before the black borders animate).
-                draw_sprite_any(playerBackSprite.pixels,
-                                playerBackSprite.width, playerBackSprite.height,
-                                playerBackSprite.x, playerBackSprite.y,
-                                TRANSPARENT_COLOUR);
-                draw_sprite_any(enemyFrontSprite.pixels,
-                                enemyFrontSprite.width, enemyFrontSprite.height,
-                                enemyFrontSprite.x, enemyFrontSprite.y,
-                                TRANSPARENT_COLOUR);
+                // During the wild battle transition, only show the wild Pokémon (centered)
+                // so it’s visible immediately as the rectangle expands.
+
 
                 // Expanding rectangle
                 int halfW = transitionFrame * 12;  // speed (increase for faster)
@@ -936,6 +943,14 @@ int main(void)
                     draw_rect(0, top, left, bottom - top, BLACK);
                 if (right < SCREEN_WIDTH)
                     draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
+
+                // Keep the wild Pokémon visible (in its normal battle position) during the transition.
+                if (enemyFrontSprite.pixels != NULL) {
+                    draw_sprite_any(enemyFrontSprite.pixels,
+                                    enemyFrontSprite.width, enemyFrontSprite.height,
+                                    enemyFrontSprite.x, enemyFrontSprite.y,
+                                    TRANSPARENT_COLOUR);
+                }
 
                 transitionTimer++;
                 if (transitionTimer >= transitionSpeedFrames) {
@@ -984,6 +999,20 @@ int main(void)
             draw_map();
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
+            // Show sprites during the intro text too.
+            if (playerBackSprite.pixels != NULL) {
+                draw_sprite_any(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
+            if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
+
             if (!battleIntroTextReady) {
                 const pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
                 const char *enemyName = (enemyActive != NULL && enemyActive->id.data != NULL && enemyActive->id.data->name != NULL)
@@ -1010,7 +1039,7 @@ int main(void)
         default:
 
             draw_map();
-            mcMovingTick(wDown, sDown, aDown, dDown, is_key_shift_pressed());
+            mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
             break;
         }
 

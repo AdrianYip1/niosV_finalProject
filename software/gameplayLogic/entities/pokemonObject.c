@@ -89,7 +89,9 @@ void takeDamage(pokemonInBattle *target, int incomingDamage, int damageType) {
     double scale = (double)rand() / (double)RAND_MAX;
     double random_num = 0.85 + scale * (1.0 - 0.85);
     int modifierID = (damageType == 0) ? 3 : 4;
-    int actualDamage = (int)((double)incomingDamage / target->scaledStatsWithLevel[modifierID] * random_num);
+    const int denom = (target->scaledStatsWithLevel[modifierID] > 0) ? target->scaledStatsWithLevel[modifierID] : 1;
+    int actualDamage = (int)((double)incomingDamage / denom * random_num);
+    if (incomingDamage > 0 && actualDamage < 1) actualDamage = 1;
     if (actualDamage >= target->scaledStatsWithLevel[0]) {
         target->alive = false;
         target->scaledStatsWithLevel[0] = 0;

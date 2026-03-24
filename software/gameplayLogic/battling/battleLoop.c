@@ -5,12 +5,23 @@
 static int aiChooseMove(pokemonInBattle *pokemon) {
     if (pokemon == NULL) return 0;
 
+    // Prefer attacking moves so the enemy actually deals damage.
     int candidates[4];
     int count = 0;
     for (int i = 0; i < 4; i++) {
         if (pokemon->attacks[i] != NULL && pokemon->currentPP[i] > 0) {
-            candidates[count++] = i;
+            const AttackData *m = pokemon->attacks[i];
+            if (m->category != ATTACK_STATUS && m->power > 0) {
+                candidates[count++] = i;
+            }
         }
+    }
+    if (count > 0) return candidates[rand() % count];
+
+    // Fallback: any move with PP.
+    count = 0;
+    for (int i = 0; i < 4; i++) {
+        if (pokemon->attacks[i] != NULL && pokemon->currentPP[i] > 0) candidates[count++] = i;
     }
     if (count == 0) {
         for (int i = 0; i < 4; i++) {
