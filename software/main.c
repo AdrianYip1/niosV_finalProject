@@ -285,6 +285,14 @@ static void syncBattleSprites(const BattleState *state, StaticSprite *playerBack
     }
 }
 
+static void battleUiSetSingleMessage(BattleState *state, const char *msg) {
+    if (state == NULL || msg == NULL) return;
+    state->messageCount = 0;
+    state->messageReadIndex = 0;
+    snprintf(state->messages[0], sizeof(state->messages[0]), "%s", msg);
+    state->messageCount = 1;
+}
+
 static int stringPixelWidth(FontId font, const char *s, int maxChars) {
     if (s == NULL) return 0;
     if (maxChars < 0) maxChars = 0;
@@ -398,6 +406,8 @@ int main(void)
     bool prevUp = false, prevLeft = false, prevDown = false, prevRight = false;
     bool prevEsc = false;
     bool actionTextAwaitSpaceRelease = false;
+    BattleUiState actionTextReturnUi = BATTLE_UI_MENU;
+    int actionTextReturnCursor = 0;
 
     // Battle logic (stub for now).
     BattleState battleState;
@@ -672,19 +682,65 @@ int main(void)
                             currentGameState = GAME_STATE_MAP;
                         }
                     } else if (battleCursor >= 3 && battleCursor <= 8) {
-                        battleApplyPlayerAction(&battleState, ACTION_SWITCH, battleCursor - 3);
-                        play_sfx(plink_audio, plink_audio_len);
-                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                        // Don't consume a turn for invalid switches (e.g., switching into yourself).
+                        Party *p = battleState.playerParty;
+                        const int slot = battleCursor - 3;
+                        bool canSwitch = false;
+                        if (p != NULL && slot >= 0 && slot < p->count) {
+                            if (slot != p->activeIndex && p->slots[slot] != NULL && p->slots[slot]->alive) {
+                                canSwitch = true;
+                            }
+                        }
+
+                        if (!canSwitch) {
+                            battleUiSetSingleMessage(&battleState, "Can't switch to that Pokemon!");
+                            actionTextReturnUi = battleUi;
+                            actionTextReturnCursor = battleCursor;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
+                            play_sfx(plink_audio, plink_audio_len);
+                        } else {
+                            battleApplyPlayerAction(&battleState, ACTION_SWITCH, slot);
+                            play_sfx(plink_audio, plink_audio_len);
+                            syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                        }
                     }
                 } else if (battleUi == BATTLE_UI_ATTACK_MENU) {
-                    battleApplyPlayerAction(&battleState, ACTION_ATTACK, battleCursor);
-                    play_sfx(plink_audio, plink_audio_len);
-                    syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
-                    battleUi = BATTLE_UI_MENU;
-                    battleCursor = 0;
+                    // Don't consume a turn if the selected move has no PP.
+                    pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+                    const int moveIndex = battleCursor;
+                    const AttackData *move = (playerActive != NULL && moveIndex >= 0 && moveIndex < 4) ? playerActive->attacks[moveIndex] : NULL;
+                    const int pp = (playerActive != NULL && moveIndex >= 0 && moveIndex < 4) ? playerActive->currentPP[moveIndex] : 0;
+
+                    if (move == NULL) {
+                        battleUiSetSingleMessage(&battleState, "No move selected!");
+                        actionTextReturnUi = battleUi;
+                        actionTextReturnCursor = battleCursor;
+                        currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        actionTextAwaitSpaceRelease = true;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (pp <= 0) {
+                        battleUiSetSingleMessage(&battleState, "No PP left!");
+                        actionTextReturnUi = battleUi;
+                        actionTextReturnCursor = battleCursor;
+                        currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        actionTextAwaitSpaceRelease = true;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else {
+                        battleApplyPlayerAction(&battleState, ACTION_ATTACK, moveIndex);
+                        play_sfx(plink_audio, plink_audio_len);
+                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                        battleUi = BATTLE_UI_MENU;
+                        battleCursor = 0;
+                    }
                 }
 
                 if (battleState.messageCount > 0) {
+                    actionTextReturnUi = battleUi;
+                    actionTextReturnCursor = battleCursor;
                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     actionTextAwaitSpaceRelease = true;
@@ -1009,8 +1065,8 @@ int main(void)
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
                         currentGameState = GAME_STATE_MAP;
                     } else {
-                        battleUi = BATTLE_UI_MENU;
-                        battleCursor = 0;
+                        battleUi = actionTextReturnUi;
+                        battleCursor = actionTextReturnCursor;
                         currentGameState = GAME_STATE_BATTLE;
                         previousGameState = GAME_STATE_BATTLE;
                     }
