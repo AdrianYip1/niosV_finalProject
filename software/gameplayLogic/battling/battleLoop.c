@@ -196,7 +196,7 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         resolvePlayerTurn(state, playerAction, playerParam);
         if (state->result == BATTLE_RESULT_FLED) return;
         resolveEnemyTurn(state);
-    } else if (playerAction == ACTION_ATTACK) {
+    } else if (playerAction == ACTION_ATTACK) { //need to check pp conditions, print supereffective/not effective
         const int enemyMove = aiChooseMove(enemy);
         const int order = determineTurnOrder(player, enemy); // 1=player first, 2=enemy first
         if (order == 1) {

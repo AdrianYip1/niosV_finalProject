@@ -9,7 +9,7 @@
 
 
 #define POKEMON_BATTLE_BACK_X  32
-#define POKEMON_BATTLE_BACK_Y  70
+#define POKEMON_BATTLE_BACK_Y  77
 
 #define POKEMON_BATTLE_FRONT_X 190
 #define POKEMON_BATTLE_FRONT_Y 17
@@ -18,8 +18,6 @@
 bool initPokemonBackBattleSprite(StaticSprite* out, int pokemon_id, int x, int y);
 bool initPokemonFrontBattleSprite(StaticSprite* out, int pokemon_id, int x, int y);
 
-// Updates an existing sprite's pixels/size for a new pokemon id while preserving x/y.
-// Returns false if pokemon_id is unknown (sprite is set to empty in that case).
 bool setPokemonBattleSpriteId(StaticSprite* sprite, int pokemon_id, bool want_front);
 
 static inline bool setPokemonBackBattleSpriteId(StaticSprite* sprite, int pokemon_id) {

@@ -162,7 +162,7 @@
 #define HPNUM_Y MY_HP_EMPTY_Y + 27
 
 #define CURRENT_PP_X_FROM_ATTACK_SPRITE 73 //73 right 
-#define CURRENT_PP_Y_FROM_ATTACK_SPRITE 23 //23 down
+#define CURRENT_PP_Y_FROM_ATTACK_SPRITE 24 //24 down
 
 #define TOTAL_PP_X_FROM_CURRENT_PP 22 //22 right
 #define TOTAL_PP_Y_FROM_CURRENT_PP 0 //same y
@@ -538,7 +538,7 @@ int main(void)
     }
     stop_bgm();
 
-    // Initial state setup (press '1' for battle, '2' for map).
+    // Initial state setup 1 for battle, 2 for map
     init_map();
     load_map_preset(MAP_PRESET_BACKDROP1);
     if (currentGameState == GAME_STATE_BATTLE) {
@@ -553,8 +553,6 @@ int main(void)
 
     while (1) {
         update_keyboard();
-
-        // Toggle states with typed characters ('1' = battle, '2' = map).
         {
             char ch = 0;
             while (keyboard_pop_char(&ch)) {
@@ -686,7 +684,6 @@ int main(void)
                     battleCursor = 0;
                 }
 
-                // If an attack happened, show the "used move" text first (player + enemy).
                 if (battleState.messageCount > 0) {
                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
@@ -702,13 +699,6 @@ int main(void)
 
             if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
                 play_sfx(plink_audio, plink_audio_len);
-            }
-
-            // Animations (battle only).
-            arrowAnimTimer++;
-            if (arrowAnimTimer >= arrowAnimSpeedFrames) {
-                arrowAnimTimer = 0;
-                arrowAnimFrame = (arrowAnimFrame + 1) % ARROWGIF_FRAME_COUNT;
             }
 
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
@@ -896,15 +886,23 @@ int main(void)
                     drawCenteredStringInBox(mxs[i] + nameBoxDx, mys[i] + nameBoxDy, nameBoxW, nameBoxH,
                                             moveName, BLACK, FONT_5X9);
 
-                    // Draw PP (current/total) using offsets relative to the move sprite.
+                    //draws pp levels
                     if (playerActive != NULL && move != NULL) {
                         const int ppX = mxs[i] + CURRENT_PP_X_FROM_ATTACK_SPRITE;
                         const int ppY = mys[i] + CURRENT_PP_Y_FROM_ATTACK_SPRITE;
+
+                        const int ppTotalX = mxs[i] + CURRENT_PP_X_FROM_ATTACK_SPRITE + TOTAL_PP_X_FROM_CURRENT_PP;
+                        const int ppTotalY = mys[i] + CURRENT_PP_Y_FROM_ATTACK_SPRITE + TOTAL_PP_Y_FROM_CURRENT_PP;
+
                         const int ppCur = playerActive->currentPP[i];
                         const int ppMax = move->maxPP;
-                        char ppBuf[16];
-                        snprintf(ppBuf, sizeof(ppBuf), "%d/%d", ppCur, ppMax);
-                        draw_string_f(ppX, ppY, ppBuf, BLACK, FONT_5X9);
+                        char ppBufCurrent[16];
+                        char ppBufTotal[16];
+
+                        snprintf(ppBufCurrent, sizeof(ppBufCurrent), "%d", ppCur);
+                        snprintf(ppBufTotal, sizeof(ppBufTotal), "%d",ppMax);
+                        draw_string_f(ppX, ppY, ppBufCurrent, BLACK, FONT_5X9);
+                        draw_string_f(ppTotalX, ppTotalY, ppBufTotal, BLACK, FONT_5X9);
                     }
                 }
             }
