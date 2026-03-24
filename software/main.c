@@ -174,6 +174,7 @@ typedef enum {
     GAME_STATE_BATTLE = 1,
     GAME_STATE_BATTLE_TRANSITION = 2,
     GAME_STATE_BATTLE_INTRO_TEXT = 3,
+    GAME_STATE_BATTLE_ACTION_TEXT = 4,
 } GameState;
 
 typedef enum {
@@ -683,7 +684,11 @@ int main(void)
                     battleCursor = 0;
                 }
 
-                if (battleState.result != BATTLE_RESULT_ONGOING) {
+                // If an attack happened, show the "used move" text first (player + enemy).
+                if (battleState.messageCount > 0) {
+                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                } else if (battleState.result != BATTLE_RESULT_ONGOING) {
                     currentGameState = GAME_STATE_MAP;
                 }
             }
@@ -725,7 +730,7 @@ int main(void)
 
             // Battle base layer (always drawn in battle state).
             draw_map();
-
+ 
             draw_sprite_any_bob(playerBackSprite.pixels,
                                 playerBackSprite.width, playerBackSprite.height,
                                 playerBackSprite.x, playerBackSprite.y,
@@ -735,6 +740,8 @@ int main(void)
                             enemyFrontSprite.width, enemyFrontSprite.height,
                             enemyFrontSprite.x, enemyFrontSprite.y,
                             TRANSPARENT_COLOUR);
+            // Draw the battle UI background before HUD elements so it doesn't cover HP text/bars.
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
             draw_sprite_any_bob(myHpEmpty,
                                 MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
                                 MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
@@ -795,9 +802,6 @@ int main(void)
 
             // Battle UI States
             if (battleUi == BATTLE_UI_MENU) {
-                // Menu background
-                draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-
                 if (battleCursor == 0) {
                     draw_sprite_any_shade_pulse(battleIconFight, BATTLE_ICON_FIGHT_WIDTH, BATTLE_ICON_FIGHT_HEIGHT,
                                                 BATTLE_ICON_FIGHT_X, BATTLE_ICON_FIGHT_Y, TRANSPARENT_COLOUR, shadePulseFrame);
@@ -855,8 +859,6 @@ int main(void)
             }
 
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
-                draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-            
                 // Move slot layout matches `navBattleAttack4` indexing:
                 // 0 = top-left, 1 = top-right, 2 = bottom-left, 3 = bottom-right
                 const int mxLeft = 18;
@@ -895,6 +897,118 @@ int main(void)
                 }
             }
     
+            break;
+        }
+
+        case GAME_STATE_BATTLE_ACTION_TEXT: {
+            // Hide the menus, keep the battle UI background, and show queued messages.
+
+            // Animations (battle only).
+            arrowAnimTimer++;
+            if (arrowAnimTimer >= arrowAnimSpeedFrames) {
+                arrowAnimTimer = 0;
+                arrowAnimFrame = (arrowAnimFrame + 1) % ARROWGIF_FRAME_COUNT;
+            }
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            shakeTimer++;
+            if (shakeTimer >= shakeSpeedFrames) {
+                shakeTimer = 0;
+                shakeFrame = (shakeFrame + 1) % SHAKE_SPRITE_FRAME_COUNT;
+            }
+            bobTimer++;
+            if (bobTimer >= bobSpeedFrames) {
+                bobTimer = 0;
+                bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
+            }
+
+            // Draw the normal battle base.
+            draw_map();
+
+            draw_sprite_any_bob(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
+                                TRANSPARENT_COLOUR,
+                                bobFrame);
+            draw_sprite_any(enemyFrontSprite.pixels,
+                            enemyFrontSprite.width, enemyFrontSprite.height,
+                            enemyFrontSprite.x, enemyFrontSprite.y,
+                            TRANSPARENT_COLOUR);
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+            draw_sprite_any_bob(myHpEmpty,
+                                MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                TRANSPARENT_COLOUR,
+                                bobFrame);
+            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+
+            pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+            pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+
+            const int enemyHp = (enemyActive != NULL) ? enemyActive->scaledStatsWithLevel[0] : 0;
+            const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
+            const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
+            const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
+
+            const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
+            const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
+
+            const int enemyHpPct = (enemyMaxHp > 0) ? (enemyHp * 100) / enemyMaxHp : 0;
+            const int playerHpPct = (playerMaxHp > 0) ? (playerHp * 100) / playerMaxHp : 0;
+
+            const short enemyHpBarColour = (enemyHpPct < 15) ? RED : ((enemyHpPct < 50) ? ORANGE : GREEN);
+            const short playerHpBarColour = (playerHpPct < 15) ? RED : ((playerHpPct < 50) ? ORANGE : GREEN);
+
+            char oppLvlBuf[8];
+            char myLvlBuf[8];
+            char myHpCurBuf[8];
+            char myHpMaxBuf[8];
+            snprintf(oppLvlBuf, sizeof(oppLvlBuf), "%d", (enemyActive != NULL) ? enemyActive->level : 0);
+            snprintf(myLvlBuf, sizeof(myLvlBuf), "%d", (playerActive != NULL) ? playerActive->level : 0);
+            snprintf(myHpCurBuf, sizeof(myHpCurBuf), "%d", playerHp);
+            snprintf(myHpMaxBuf, sizeof(myHpMaxBuf), "%d", playerMaxHp);
+
+            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
+            draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
+            draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+            draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+            draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
+
+            static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
+            0, -1, -1, 0, 0, 1, 1, 0,
+            0, -1, -1, 0, 0, 1, 1, 0 };
+            int offsetY = dy_pattern[bobFrame];
+            draw_rect(myHP_X, myHP_Y + offsetY, (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth), HP_HEIGHT, playerHpBarColour);
+            draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
+            draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
+            draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
+            draw_string_f(TOTAL_HPNUM3_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+            draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
+            draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+
+            // Textbox message.
+            const char *msg = (battleState.messageCount > 0 && battleState.messageReadIndex >= 0 && battleState.messageReadIndex < battleState.messageCount)
+                                  ? battleState.messages[battleState.messageReadIndex]
+                                  : "";
+            const int done = draw_textbox_animated_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
+
+            if (done && spacePressed) {
+                battleState.messageReadIndex++;
+                if (battleState.messageReadIndex >= battleState.messageCount) {
+                    battleState.messageReadIndex = 0;
+                    battleState.messageCount = 0;
+
+                    if (battleState.result != BATTLE_RESULT_ONGOING) {
+                        currentGameState = GAME_STATE_MAP;
+                        // Let the normal state-change init run for MAP.
+                    } else {
+                        battleUi = BATTLE_UI_MENU;
+                        battleCursor = 0;
+                        currentGameState = GAME_STATE_BATTLE;
+                        previousGameState = GAME_STATE_BATTLE;
+                    }
+                }
+            }
+
             break;
         }
 
@@ -999,13 +1113,6 @@ int main(void)
             draw_map();
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
-            // Show sprites during the intro text too.
-            if (playerBackSprite.pixels != NULL) {
-                draw_sprite_any(playerBackSprite.pixels,
-                                playerBackSprite.width, playerBackSprite.height,
-                                playerBackSprite.x, playerBackSprite.y,
-                                TRANSPARENT_COLOUR);
-            }
             if (enemyFrontSprite.pixels != NULL) {
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,

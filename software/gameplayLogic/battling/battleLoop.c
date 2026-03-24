@@ -1,6 +1,32 @@
 #include "battleLoop.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+
+static void battleClearMessages(BattleState *state) {
+    if (state == NULL) return;
+    state->messageCount = 0;
+    state->messageReadIndex = 0;
+    for (int i = 0; i < BATTLE_MSG_MAX; i++) state->messages[i][0] = '\0';
+}
+
+static void battlePushMessage(BattleState *state, const char *msg) {
+    if (state == NULL || msg == NULL) return;
+    if (state->messageCount < 0) state->messageCount = 0;
+    if (state->messageCount >= BATTLE_MSG_MAX) return;
+    snprintf(state->messages[state->messageCount], sizeof(state->messages[state->messageCount]), "%s", msg);
+    state->messageCount++;
+}
+
+static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *attacker, const AttackData *move) {
+    const char *attackerName = (attacker != NULL && attacker->id.data != NULL && attacker->id.data->name != NULL)
+                                   ? attacker->id.data->name
+                                   : "???";
+    const char *moveName = (move != NULL && move->name != NULL) ? move->name : "???";
+    char buf[96];
+    snprintf(buf, sizeof(buf), "%s used %s!", attackerName, moveName);
+    battlePushMessage(state, buf);
+}
 
 static int aiChooseMove(pokemonInBattle *pokemon) {
     if (pokemon == NULL) return 0;
@@ -54,9 +80,12 @@ static void handleFaint(BattleState *state, Party *party, bool isPlayer) {
     if (next >= 0) party->activeIndex = next;
 }
 
-static void resolveAttack(pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex) {
+static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex) {
     if (attacker == NULL || target == NULL) return;
     if (!canAct(attacker)) return;
+
+    const AttackData *move = (moveIndex >= 0 && moveIndex < 4) ? attacker->attacks[moveIndex] : NULL;
+    if (move != NULL) battlePushUsedMessage(state, attacker, move);
     (void)useAttack(attacker, target, moveIndex);
 }
 
@@ -90,10 +119,23 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
 
     switch (action) {
         case ACTION_ATTACK:
-            resolveAttack(player, enemy, param);
+            resolveAttack(state, player, enemy, param);
             break;
         case ACTION_SWITCH:
-            resolveSwitch(state->playerParty, param);
+            {
+                const int before = state->playerParty->activeIndex;
+                resolveSwitch(state->playerParty, param);
+                const int after = state->playerParty->activeIndex;
+                if (after != before) {
+                    pokemonInBattle *nowActive = getActivePokemon(state->playerParty);
+                    const char *name = (nowActive != NULL && nowActive->id.data != NULL && nowActive->id.data->name != NULL)
+                                           ? nowActive->id.data->name
+                                           : "???";
+                    char buf[96];
+                    snprintf(buf, sizeof(buf), "Go! %s!", name);
+                    battlePushMessage(state, buf);
+                }
+            }
             break;
         case ACTION_ITEM:
             // todo: implement bag/items; for now it consumes the player's decision.
@@ -123,7 +165,7 @@ static void resolveEnemyTurn(BattleState *state) {
     }
 
     const int moveIndex = aiChooseMove(enemy);
-    resolveAttack(enemy, player, moveIndex);
+    resolveAttack(state, enemy, player, moveIndex);
 }
 
 static void resolveTurn(BattleState *state, BattleAction playerAction, int playerParam) {
@@ -157,23 +199,23 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         const int enemyMove = aiChooseMove(enemy);
         const int order = determineTurnOrder(player, enemy); // 1=player first, 2=enemy first
         if (order == 1) {
-            resolveAttack(player, enemy, playerParam);
+            resolveAttack(state, player, enemy, playerParam);
             if (!enemy->alive) {
                 handleFaint(state, state->enemyParty, false);
             }
             if (state->result == BATTLE_RESULT_ONGOING && enemy->alive) {
-                resolveAttack(enemy, player, enemyMove);
+                resolveAttack(state, enemy, player, enemyMove);
                 if (!player->alive) {
                     handleFaint(state, state->playerParty, true);
                 }
             }
         } else {
-            resolveAttack(enemy, player, enemyMove);
+            resolveAttack(state, enemy, player, enemyMove);
             if (!player->alive) {
                 handleFaint(state, state->playerParty, true);
             }
             if (state->result == BATTLE_RESULT_ONGOING && player->alive) {
-                resolveAttack(player, enemy, playerParam);
+                resolveAttack(state, player, enemy, playerParam);
                 if (!enemy->alive) {
                     handleFaint(state, state->enemyParty, false);
                 }
@@ -205,11 +247,13 @@ void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, 
     state->type = type;
     state->result = BATTLE_RESULT_ONGOING;
     state->fleeAttempts = 0;
+    battleClearMessages(state);
 }
 
 void battleApplyPlayerAction(BattleState *state, BattleAction action, int param) {
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
+    battleClearMessages(state);
     resolveTurn(state, action, param);
     checkBattleOver(state);
 }
