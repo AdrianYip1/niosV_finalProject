@@ -2126,7 +2126,7 @@ int main(void)
                 } else {
                     int seqSpeed = (pokeballCatchSeqFrame >= POKEBALLTHROW_SHAKE_FRAME_START && 
                                     pokeballCatchSeqFrame < POKEBALLTHROW_SHAKE_FRAME_START + POKEBALLTHROW_SHAKE_FRAME_COUNT) 
-                                    ? 45 : 3;
+                                    ? 14 : 3;
                     const int dx = (int)(pokeballCatchEndX + 0.5f);
                     const int dy = (int)(pokeballCatchEndY + 0.5f);
 
