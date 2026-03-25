@@ -622,6 +622,7 @@ int main(void)
     bagAdd(&playerBag, ITEM_GREAT_BALL, 2);
     bagAdd(&playerBag, ITEM_ULTRA_BALL, 1);
     bagAdd(&playerBag, ITEM_PREMIER_BALL, 1);
+    bagAdd(&playerBag, ITEM_MASTER_BALL, 99);
 
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
