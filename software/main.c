@@ -613,7 +613,11 @@ int main(void)
 
     bagInit(&playerBag);
     // Starter bag 
-    bagAdd(&playerBag, ITEM_POTION, 3);
+    bagAdd(&playerBag, ITEM_POTION, 99);
+    bagAdd(&playerBag, ITEM_SUPER_POTION, 3);
+    bagAdd(&playerBag, ITEM_HYPER_POTION, 3);
+    bagAdd(&playerBag, ITEM_FULL_RESTORE, 3);
+
     bagAdd(&playerBag, ITEM_POKEBALL, 5);
     bagAdd(&playerBag, ITEM_GREAT_BALL, 2);
     bagAdd(&playerBag, ITEM_ULTRA_BALL, 1);
