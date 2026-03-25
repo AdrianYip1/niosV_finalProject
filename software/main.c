@@ -565,7 +565,7 @@ int main(void)
     initParty(&playerParty);
 
     bagInit(&playerBag);
-    // Starter bag (tweak as desired).
+    // Starter bag 
     bagAdd(&playerBag, ITEM_POTION, 3);
     bagAdd(&playerBag, ITEM_POKEBALL, 5);
 
@@ -899,8 +899,6 @@ int main(void)
                             battleApplyPlayerAction(&battleState, ACTION_SWITCH, slot);
                             play_sfx(plink_audio, plink_audio_len);
 
-                            // Play the send-out Pokeball animation on the player's side when switching.
-                            // Show "Go! ..." during the throw, then skip the queued "Go! ..." message afterward.
                             if (battleState.messageCount <= 1) {
                                 battleState.messageCount = 0;
                                 battleState.messageReadIndex = 0;
@@ -1310,7 +1308,6 @@ int main(void)
                     AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
                                                                        : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
 
-                    // The type sprites have transparent regions; paint a solid base so we don't see unrelated UI/text underneath.
                     draw_rect(mxs[i], mys[i], moveTypeSprite.width, moveTypeSprite.height, WHITE);
 
                     if (battleCursor == i) {
