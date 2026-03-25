@@ -69,7 +69,7 @@ const PokemonData CHARIZARD = {
     .type1 = TYPE_FIRE, .type2 = TYPE_FLYING,
     .evolution = {EVO_NONE, 0, NULL}
 };
-const PokemonData RAYQIAZA = {
+const PokemonData RAYQUAZA = {
     .id = 4, .name = "Rayquaza",
     .baseHp = 105, .baseAttack = 150, .baseSpAttack = 150,
     .baseDefense = 90, .baseSpDefense = 90, .baseSpeed = 95,
