@@ -49,6 +49,7 @@
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #define TITLE_TEXT_X 10
@@ -229,7 +230,7 @@ static int arrowCursorCount(ArrowContext ctx) {
 
 static bool isManualBattleMessage(const char *msg) {
     if (msg == NULL) return false;
-    // Type effectiveness messages should require a button press.
+    // Type effectiveness messages get a longer on-screen delay.
     return (strstr(msg, "super effective") != NULL) ||
            (strstr(msg, "not very effective") != NULL) ||
            (strstr(msg, "no effect") != NULL);
@@ -1351,7 +1352,7 @@ int main(void)
                                   : "";
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
 
-            // when attacks happen, normal attack messages are auto, supereffective or noneffective message swill have space
+            // Attack messages auto-advance; Space can also advance early.
             if (battleState.messageCount <= 0) {
                 actionTextAutoTimer = 0;
                 actionTextLastMsgIndex = -1;
@@ -1363,15 +1364,12 @@ int main(void)
             const bool manual = isManualBattleMessage(msg);
             bool shouldAdvance = false;
 
-            if (!actionTextAwaitSpaceRelease) {
-                if (manual) {
-                    shouldAdvance = spacePressed;
-                } else {
-                    const int delayFrames = 15; 
-                    actionTextAutoTimer++;
-                    if (actionTextAutoTimer >= delayFrames) {
-                        shouldAdvance = true;
-                    }
+        
+            if (battleState.messageCount > 0) {
+                const int delayFrames = manual ? 30 : 15;
+                actionTextAutoTimer++;
+                if (!actionTextAwaitSpaceRelease && (spacePressed || actionTextAutoTimer >= delayFrames)) {
+                    shouldAdvance = true;
                 }
             }
 
