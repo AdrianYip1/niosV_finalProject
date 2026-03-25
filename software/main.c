@@ -1407,15 +1407,36 @@ int main(void)
                     draw_sprite_any(pokeballs, POKEBALLS_WIDTH, POKEBALLS_HEIGHT, itemXRight, itemY, TRANSPARENT_COLOUR);
                 }
                 if (battleCursor == 2) {
-                    draw_sprite_any_shade_pulse(playerBag.lastUsedItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
-                                                USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                     draw_sprite_any_shade_pulse(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
-                                                LAST_USED_ITEM_X, LAST_USED_ITEM_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+                                                USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
                     draw_sprite_any(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
                                             USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR);
-                    draw_sprite_any_shade_pulse(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
-                                                LAST_USED_ITEM_X, LAST_USED_ITEM_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+                }
+
+                if (playerBag.lastUsedItem != ITEM_NONE) {
+                    const ItemId item = playerBag.lastUsedItem;
+                    const unsigned short *icon = NULL;
+                    int iconW = 0;
+                    int iconH = 0;
+
+                    if (item == ITEM_POKEBALL) { icon = pokeballIcon_poke; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                    else if (item == ITEM_GREAT_BALL) { icon = pokeballIcon_great; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                    else if (item == ITEM_ULTRA_BALL) { icon = pokeballIcon_ultra; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                    else if (item == ITEM_PREMIER_BALL) { icon = pokeballIcon_premier; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                    else if (item == ITEM_POTION) { icon = healingItemIcon_potion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+
+                    if (icon != NULL) {
+                        draw_sprite_any(icon,
+                                        iconW,
+                                        iconH,
+                                        USE_LAST_ICON_X + LAST_USED_ITEM_X,
+                                        USE_LAST_ICON_Y + LAST_USED_ITEM_Y,
+                                        TRANSPARENT_COLOUR);
+                    }
                 }
             }
 
