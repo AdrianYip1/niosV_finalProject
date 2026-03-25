@@ -4,6 +4,7 @@
 #include "charizardBoxSprite.h"
 #include "charmanderBoxSprite.h"
 #include "charmeleonBoxSprite.h"
+#include "rayquazaBoxSprite.h"
 
 static void setEmpty(StaticSprite* out) {
     if (!out) return;
@@ -38,9 +39,13 @@ bool setPokemonBoxSpriteId(StaticSprite* sprite, int pokemon_id) {
             sprite->width = CHARIZARD_BOX_WIDTH;
             sprite->height = CHARIZARD_BOX_HEIGHT;
             return true;
+        case POKEMON_ID_RAYQUAZA:
+            sprite->pixels = rayquazaBox;
+            sprite->width = RAYQUAZA_BOX_WIDTH;
+            sprite->height = RAYQUAZA_BOX_HEIGHT;
+            return true;
         default:
             setEmpty(sprite);
             return false;
     }
 }
-

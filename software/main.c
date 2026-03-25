@@ -49,6 +49,7 @@
 #include "graphics/sprites/battleItemsUI/itemSlot.h"
 #include "graphics/sprites/battleItemsUI/itemDescription.h"
 #include "graphics/sprites/battleItemsUI/pokeballIcons.h"
+#include "graphics/sprites/battleItemsUI/healingItemIcons.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -1459,6 +1460,21 @@ int main(void)
                                                     mys[i] + ITEM_Y,
                                                     TRANSPARENT_COLOUR);
                                 }
+                            } else if (battleUi == BATTLE_UI_BAG_HP_LIST) {
+                                const unsigned short *icon = NULL;
+                                if (item == ITEM_POTION) icon = healingItemIcon_potion;
+                                else if (item == ITEM_SUPER_POTION) icon = healingItemIcon_superPotion;
+                                else if (item == ITEM_HYPER_POTION) icon = healingItemIcon_hyperPotion;
+                                else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
+
+                                if (icon != NULL) {
+                                    draw_sprite_any(icon,
+                                                    HEALING_ITEM_ICON_WIDTH,
+                                                    HEALING_ITEM_ICON_HEIGHT,
+                                                    mxs[i] + ITEM_X,
+                                                    mys[i] + ITEM_Y,
+                                                    TRANSPARENT_COLOUR);
+                                }
                             }
                         }
                     }
@@ -1477,15 +1493,30 @@ int main(void)
 
                 if (bagDescItem != ITEM_NONE) {
                     const unsigned short *itemIcon = NULL;
+                    int itemIconW = 0;
+                    int itemIconH = 0;
                     if (bagDescItem == ITEM_POKEBALL) itemIcon = pokeballIcon_poke;
                     else if (bagDescItem == ITEM_GREAT_BALL) itemIcon = pokeballIcon_great;
                     else if (bagDescItem == ITEM_ULTRA_BALL) itemIcon = pokeballIcon_ultra;
                     else if (bagDescItem == ITEM_PREMIER_BALL) itemIcon = pokeballIcon_premier;
+                    if (itemIcon != NULL) {
+                        itemIconW = POKEBALL_ICON_WIDTH;
+                        itemIconH = POKEBALL_ICON_HEIGHT;
+                    } else {
+                        if (bagDescItem == ITEM_POTION) itemIcon = healingItemIcon_potion;
+                        else if (bagDescItem == ITEM_SUPER_POTION) itemIcon = healingItemIcon_superPotion;
+                        else if (bagDescItem == ITEM_HYPER_POTION) itemIcon = healingItemIcon_hyperPotion;
+                        else if (bagDescItem == ITEM_FULL_RESTORE) itemIcon = healingItemIcon_fullRestore;
+                        if (itemIcon != NULL) {
+                            itemIconW = HEALING_ITEM_ICON_WIDTH;
+                            itemIconH = HEALING_ITEM_ICON_HEIGHT;
+                        }
+                    }
 
                     if (itemIcon != NULL) {
                         draw_sprite_any(itemIcon,
-                                        POKEBALL_ICON_WIDTH,
-                                        POKEBALL_ICON_HEIGHT,
+                                        itemIconW,
+                                        itemIconH,
                                         descX + DEFINITION_X,
                                         descY + DEFINITION_Y,
                                         TRANSPARENT_COLOUR);

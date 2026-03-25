@@ -26,6 +26,7 @@ SRCS := software/main.c \
         software/graphics/sprites/battleItemsUI/itemDescription.c \
         software/graphics/sprites/battleItemsUI/itemSlot.c \
         software/graphics/sprites/battleItemsUI/pokeballIcons.c \
+        software/graphics/sprites/battleItemsUI/healingItemIcons.c \
         software/graphics/sprites/battleItemsUI/useButton.c \
         software/graphics/sprites/battleItemsUI/useLastItem.c \
         software/graphics/sprites/battleIcons/battleHp/para.c \
@@ -44,10 +45,12 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemon/charizardSprite.c \
         software/graphics/sprites/pokemon/charmanderSprite.c \
         software/graphics/sprites/pokemon/charmeleonSprite.c \
+        software/graphics/sprites/pokemon/rayquazaSprite.c \
         software/graphics/sprites/pokemon/pokemonSpriteInit.c \
         software/graphics/sprites/boxSprites/charizardBoxSprite.c \
         software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
         software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
+        software/graphics/sprites/boxSprites/rayquazaBoxSprite.c \
         software/graphics/sprites/boxSprites/pokemonBoxSpriteInit.c \
         software/graphics/sprites/statEffects/statUp.c \
         software/graphics/sprites/statEffects/statDown.c \

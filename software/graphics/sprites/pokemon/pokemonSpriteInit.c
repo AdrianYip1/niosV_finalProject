@@ -3,6 +3,7 @@
 #include "charizardSprite.h"
 #include "charmanderSprite.h"
 #include "charmeleonSprite.h"
+#include "rayquazaSprite.h"
 
 static void initFromPixels(StaticSprite* out, const unsigned short* pixels, int w, int h, int x, int y) {
     if (!out) return;
@@ -36,6 +37,10 @@ static bool getPixelsById(int pokemon_id, bool want_front,
         case POKEMON_ID_CHARIZARD:
             if (want_front) { pixels = charizardFront;  w = CHARIZARD_FRONT_WIDTH;  h = CHARIZARD_FRONT_HEIGHT;  }
             else            { pixels = charizardBack;   w = CHARIZARD_BACK_WIDTH;   h = CHARIZARD_BACK_HEIGHT;   }
+            break;
+        case POKEMON_ID_RAYQUAZA:
+            if (want_front) { pixels = rayquazaFront;   w = RAYQUAZA_FRONT_WIDTH;   h = RAYQUAZA_FRONT_HEIGHT;   }
+            else            { pixels = rayquazaBack;    w = RAYQUAZA_BACK_WIDTH;    h = RAYQUAZA_BACK_HEIGHT;    }
             break;
         default:
             return false;
