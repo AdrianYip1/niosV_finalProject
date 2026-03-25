@@ -56,6 +56,7 @@ def main() -> None:
         ("pokeballIcon_great", SRC_DIR / "greatball.png"),
         ("pokeballIcon_ultra", SRC_DIR / "ultraball.png"),
         ("pokeballIcon_premier", SRC_DIR / "premierball.png"),
+        ("pokeballIcon_master", SRC_DIR / "masterball.png"),
     ]
 
     for _, p in sprites:
@@ -67,26 +68,26 @@ def main() -> None:
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    OUT_H.write_text(
-        "\n".join(
-            [
-                "#pragma once",
-                "",
-                f"#define POKEBALL_ICON_WIDTH  {w}",
-                f"#define POKEBALL_ICON_HEIGHT {h}",
-                "#define POKEBALL_ICON_COUNT  4",
-                "",
-                "extern const unsigned short pokeballIcon_poke[POKEBALL_ICON_WIDTH * POKEBALL_ICON_HEIGHT];",
-                "extern const unsigned short pokeballIcon_great[POKEBALL_ICON_WIDTH * POKEBALL_ICON_HEIGHT];",
-                "extern const unsigned short pokeballIcon_ultra[POKEBALL_ICON_WIDTH * POKEBALL_ICON_HEIGHT];",
-                "extern const unsigned short pokeballIcon_premier[POKEBALL_ICON_WIDTH * POKEBALL_ICON_HEIGHT];",
-                "",
-                "extern const unsigned short* const pokeballIcons[POKEBALL_ICON_COUNT];",
-                "",
-            ]
-        ),
-        encoding="utf-8",
+    h_lines: list[str] = [
+        "#pragma once",
+        "",
+        f"#define POKEBALL_ICON_WIDTH  {w}",
+        f"#define POKEBALL_ICON_HEIGHT {h}",
+        f"#define POKEBALL_ICON_COUNT  {len(sprites)}",
+        "",
+    ]
+    for name, _ in sprites:
+        h_lines.append(
+            f"extern const unsigned short {name}[POKEBALL_ICON_WIDTH * POKEBALL_ICON_HEIGHT];"
+        )
+    h_lines.extend(
+        [
+            "",
+            "extern const unsigned short* const pokeballIcons[POKEBALL_ICON_COUNT];",
+            "",
+        ]
     )
+    OUT_H.write_text("\n".join(h_lines), encoding="utf-8")
 
     lines: list[str] = []
     lines.append(f'#include "{OUT_H.name}"')
@@ -110,4 +111,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

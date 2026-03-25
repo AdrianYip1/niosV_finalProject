@@ -1436,6 +1436,7 @@ int main(void)
                     else if (item == ITEM_GREAT_BALL) { icon = pokeballIcon_great; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
                     else if (item == ITEM_ULTRA_BALL) { icon = pokeballIcon_ultra; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
                     else if (item == ITEM_PREMIER_BALL) { icon = pokeballIcon_premier; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                    else if (item == ITEM_MASTER_BALL) { icon = pokeballIcon_master; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
                     else if (item == ITEM_POTION) { icon = healingItemIcon_potion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
@@ -1494,6 +1495,7 @@ int main(void)
                                 else if (item == ITEM_GREAT_BALL) icon = pokeballIcon_great;
                                 else if (item == ITEM_ULTRA_BALL) icon = pokeballIcon_ultra;
                                 else if (item == ITEM_PREMIER_BALL) icon = pokeballIcon_premier;
+                                else if (item == ITEM_MASTER_BALL) icon = pokeballIcon_master;
 
                                 if (icon != NULL) {
                                     draw_sprite_any(icon,
@@ -1542,6 +1544,7 @@ int main(void)
                     else if (bagDescItem == ITEM_GREAT_BALL) itemIcon = pokeballIcon_great;
                     else if (bagDescItem == ITEM_ULTRA_BALL) itemIcon = pokeballIcon_ultra;
                     else if (bagDescItem == ITEM_PREMIER_BALL) itemIcon = pokeballIcon_premier;
+                    else if (bagDescItem == ITEM_MASTER_BALL) itemIcon = pokeballIcon_master;
                     if (itemIcon != NULL) {
                         itemIconW = POKEBALL_ICON_WIDTH;
                         itemIconH = POKEBALL_ICON_HEIGHT;
