@@ -218,6 +218,8 @@ typedef enum {
     GAME_STATE_BATTLE_ACTION_TEXT = 4,
     GAME_STATE_POKEBALL_THROW = 5,
     GAME_STATE_POKEBALL_CATCH = 6,
+    GAME_STATE_BATTLE_WIN = 7,
+    GAME_STATE_BATTLE_LOSE = 8,
 } GameState;
 
 typedef enum {
@@ -553,7 +555,7 @@ int main(void)
     bool pokeballThrowAutoAdvance = false;
     GameState pokeballThrowReturnState = GAME_STATE_BATTLE;
 
-    GameState currentGameState = GAME_STATE_BATTLE;
+    GameState currentGameState = GAME_STATE_MAP;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
     int battleCursor = 0;
@@ -996,6 +998,12 @@ int main(void)
                     } else {
                         battleApplyPlayerAction(&battleState, ACTION_ATTACK, moveIndex);
                         play_sfx(plink_audio, plink_audio_len);
+                        if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
+                            currentGameState = GAME_STATE_BATTLE_WIN;
+                        }
+                        if (battleState.result == BATTLE_RESULT_PLAYER_LOSE) {
+                            currentGameState = GAME_STATE_BATTLE_LOSE;
+                        }
                         syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
                         battleUi = BATTLE_UI_MENU;
                         battleCursor = 0;
@@ -2169,7 +2177,20 @@ int main(void)
 
             break;
         }
-      
+        case GAME_STATE_BATTLE_WIN:
+        //check win/lose
+        //get money from trainer battle, exp from wild battle if win
+        //exp calculations, levelup, evolution, learn moves
+            draw_map();
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
+            break;
+
+        case GAME_STATE_BATTLE_LOSE:
+
+            draw_map();
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "LOSE", BLACK);
+            break;
+
         case GAME_STATE_MAP:
         default:
 
