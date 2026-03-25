@@ -1308,7 +1308,7 @@ int main(void)
                     AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
                                                                        : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
 
-                    draw_rect(mxs[i], mys[i], moveTypeSprite.width, moveTypeSprite.height, WHITE);
+                    //draw_rect(mxs[i], mys[i], moveTypeSprite.width, moveTypeSprite.height, WHITE);
 
                     if (battleCursor == i) {
                         draw_sprite_any_shade_pulse(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
