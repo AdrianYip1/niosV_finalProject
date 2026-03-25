@@ -44,3 +44,9 @@ int bagHpItemCount(void);
 int bagBallItemCount(void);
 ItemId bagHpItemAt(int index);
 ItemId bagBallItemAt(int index);
+
+// Visible items: filters out items with 0 count.
+int bagHpVisibleCount(const Bag *bag);
+int bagBallVisibleCount(const Bag *bag);
+ItemId bagHpVisibleAt(const Bag *bag, int visibleIndex);
+ItemId bagBallVisibleAt(const Bag *bag, int visibleIndex);
