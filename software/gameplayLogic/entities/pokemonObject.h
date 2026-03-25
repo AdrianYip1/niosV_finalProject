@@ -21,6 +21,14 @@ typedef enum {
     STATUS_FREEZE
 } StatusCondition;
 
+typedef enum {
+    POKEBALL_NONE = 0,
+    POKEBALL_POKE,
+    POKEBALL_GREAT,
+    POKEBALL_ULTRA,
+    POKEBALL_MASTER
+} PokeballType;
+
 typedef struct {
     const PokemonData *data;
     int frontFrame_ID;
@@ -32,6 +40,7 @@ typedef struct {
     int level;
     int exp;
     bool alive;
+    PokeballType caughtIn;
     int maxHp;
     int scaledStatsWithLevel[6]; // {hp, attack, sp attack, def, sp def, speed}
     int currentPP[4];
@@ -76,6 +85,7 @@ void fullHeal(pokemonInBattle *pokemon);
 
 // catch
 bool attemptCatch(pokemonInBattle *wildPokemon, float ballModifier);
+bool attemptCatchWithBall(pokemonInBattle *wildPokemon, PokeballType ball);
 
 // getters
 bool isAlive(pokemonInBattle *pokemon);

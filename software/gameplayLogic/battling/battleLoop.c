@@ -1,5 +1,6 @@
 #include "battleLoop.h"
 #include "../entities/pokemonObject.h"
+#include "../bag.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@ static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *att
         snprintf(buf, sizeof(buf), "Opposing %s used %s!", attackerName, moveName);
     }
     else {
-        snprintf(buf, sizeof(buf), "Your %s used %s!", attackerName, moveName);
+        snprintf(buf, sizeof(buf), "%s used %s!", attackerName, moveName);
     }
 
     battlePushMessage(state, buf);
@@ -163,7 +164,72 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
             }
             break;
         case ACTION_ITEM:
-            // todo: implement bag/items; for now it consumes the player's decision.
+            {
+                if (state->playerBag == NULL) {
+                    battlePushMessage(state, "No bag!");
+                    break;
+                }
+
+                const ItemId item = (ItemId)param;
+                const char *name = itemName(item);
+                char buf[96];
+
+                if (item == ITEM_NONE) {
+                    battlePushMessage(state, "No item selected!");
+                    break;
+                }
+
+                if (bagCount(state->playerBag, item) <= 0) {
+                    snprintf(buf, sizeof(buf), "You're out of %s!", name);
+                    battlePushMessage(state, buf);
+                    break;
+                }
+
+                // Balls only work in wild battles.
+                if (itemIsBall(item) && state->type != BATTLE_WILD) {
+                    battlePushMessage(state, "You can't catch that Pokemon!");
+                    break;
+                }
+
+                // Consume item (except "blocked" trainer-ball case above).
+                (void)bagRemove(state->playerBag, item, 1);
+
+                snprintf(buf, sizeof(buf), "Used %s!", name);
+                battlePushMessage(state, buf);
+
+                if (itemIsHealing(item)) {
+                    int heal = 0;
+                    if (item == ITEM_POTION) heal = 20;
+                    else if (item == ITEM_SUPER_POTION) heal = 50;
+                    else if (item == ITEM_HYPER_POTION) heal = 200;
+
+                    if (item == ITEM_FULL_RESTORE) {
+                        fullHeal(player);
+                        battlePushMessage(state, "Restored health!");
+                    } else {
+                        healPokemon(player, heal);
+                        battlePushMessage(state, "Recovered HP!");
+                    }
+                    break;
+                }
+
+                if (itemIsBall(item)) {
+                    PokeballType ball = POKEBALL_POKE;
+                    if (item == ITEM_POKEBALL) ball = POKEBALL_POKE;
+                    else if (item == ITEM_GREAT_BALL) ball = POKEBALL_GREAT;
+                    else if (item == ITEM_ULTRA_BALL) ball = POKEBALL_ULTRA;
+                    else if (item == ITEM_MASTER_BALL) ball = POKEBALL_MASTER;
+
+                    const bool caught = attemptCatchWithBall(enemy, ball);
+                    if (caught) {
+                        battlePushMessage(state, "Gotcha!");
+                        state->result = BATTLE_RESULT_CAUGHT;
+                    } else {
+                        battlePushMessage(state, "Oh no! It broke free!");
+                    }
+                    break;
+                }
+            }
             break;
         case ACTION_RUN:
             resolveFlee(state);
@@ -265,10 +331,11 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
     if (enemy != NULL) tickStatusEffect(enemy);
 }
 
-void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, BattleType type) {
+void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, Bag *playerBag, BattleType type) {
     if (state == NULL) return;
     state->playerParty = playerParty;
     state->enemyParty = enemyParty;
+    state->playerBag = playerBag;
     state->type = type;
     state->result = BATTLE_RESULT_ONGOING;
     state->fleeAttempts = 0;
@@ -285,7 +352,7 @@ void battleApplyPlayerAction(BattleState *state, BattleAction action, int param)
 
 BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type) {
     BattleState state;
-    initBattleState(&state, playerParty, enemyParty, type);
+    initBattleState(&state, playerParty, enemyParty, NULL, type);
 
 
     while (state.result == BATTLE_RESULT_ONGOING) {

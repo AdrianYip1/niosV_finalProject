@@ -9,6 +9,7 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
     pokemon->level = level;
     pokemon->exp = 0;
     pokemon->alive = true;
+    pokemon->caughtIn = POKEBALL_NONE;
     pokemon->inBattle = false;
     pokemon->status = STATUS_NONE;
     pokemon->sleepTurnsRemaining = 0;
@@ -198,6 +199,23 @@ bool attemptCatch(pokemonInBattle *wildPokemon, float ballModifier) {
     if (wildPokemon->status == STATUS_PARALYSIS || wildPokemon->status == STATUS_BURN || wildPokemon->status == STATUS_POISON) statusBonus = 1.5f;
     float catchChance = hpFactor * statusBonus * ballModifier;
     return (rand() % 256) < (int)(catchChance * 50);
+}
+
+bool attemptCatchWithBall(pokemonInBattle *wildPokemon, PokeballType ball) {
+    if (wildPokemon == NULL) return false;
+
+    float modifier = 1.0f;
+    switch (ball) {
+        case POKEBALL_POKE: modifier = 1.0f; break;
+        case POKEBALL_GREAT: modifier = 1.5f; break;
+        case POKEBALL_ULTRA: modifier = 2.0f; break;
+        case POKEBALL_MASTER: modifier = 255.0f; break; // guaranteed 
+        default: modifier = 1.0f; break;
+    }
+
+    const bool caught = attemptCatch(wildPokemon, modifier);
+    if (caught) wildPokemon->caughtIn = ball;
+    return caught;
 }
 
 void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {

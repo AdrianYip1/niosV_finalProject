@@ -3,6 +3,7 @@
 
 #include "../entities/pokemonObject.h"
 #include "../entities/learnset.h"
+#include "../bag.h"
 #include "party.h"
 
 typedef enum {
@@ -28,6 +29,7 @@ typedef enum {
 typedef struct {
     Party *playerParty;
     Party *enemyParty;
+    Bag *playerBag;
     BattleType type;
     BattleResult result;
     int fleeAttempts;
@@ -43,7 +45,7 @@ typedef struct {
 BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type);
 
 
-void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, BattleType type);
+void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, Bag *playerBag, BattleType type);
 void battleApplyPlayerAction(BattleState *state, BattleAction action, int param);
 
 static inline void battleStubApplyPlayerAction(BattleState *state, BattleAction action, int param) {

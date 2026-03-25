@@ -41,6 +41,7 @@
 #include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
 #include "gameplayLogic/battling/battleLoop.h"
 #include "gameplayLogic/entities/pokemonDataBase.h"
+#include "gameplayLogic/bag.h"
 #include "gameplayLogic/storage/pc.h"
 #include "graphics/sprites/battleItemsUI/useLastItem.h"
 #include "graphics/sprites/battleItemsUI/useButton.h"
@@ -190,6 +191,7 @@ typedef enum {
     GAME_STATE_BATTLE_INTRO_TEXT = 3,
     GAME_STATE_BATTLE_ACTION_TEXT = 4,
     GAME_STATE_POKEBALL_THROW = 5,
+    GAME_STATE_POKEBALL_CATCH = 6,
 } GameState;
 
 typedef enum {
@@ -438,7 +440,24 @@ int main(void)
     float pokeballPeakX = 0.0f;
     float pokeballTLand = 0.0f;
     float pokeballLandX = 0.0f, pokeballLandY = 0.0f;
-    int pokeballLandingFrame = POKEBALL_UNOPENED_FRAME_COUNT;
+    int pokeballLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
+
+    // Pokeball catch animation state (throw to enemy + catch/shake).
+    bool pokeballCatchInit = false;
+    bool pokeballCatchLanding = false;
+    bool pokeballCatchEscape = false;
+    bool pokeballCatchSuccess = false;
+    ItemId pokeballCatchItem = ITEM_NONE;
+    int pokeballCatchT = 0;
+    int pokeballCatchThrownTimer = 0;
+    int pokeballCatchLandingTimer = 0;
+    int pokeballCatchSeqTimer = 0;
+    int pokeballCatchFrame = 0;
+    int pokeballCatchLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
+    int pokeballCatchSeqFrame = POKEBALLTHROW_CATCH_FRAME_START;
+    float pokeballCatchStartX = 0.0f, pokeballCatchStartY = 0.0f;
+    float pokeballCatchEndX = 0.0f, pokeballCatchEndY = 0.0f;
+    float pokeballCatchCtrlX = 0.0f, pokeballCatchCtrlY = 0.0f;
 
     unsigned int frame_count = 0;
     int current_phase = 0;    
@@ -458,6 +477,9 @@ int main(void)
 
     char battleThrowPokeballText[96];
     bool battleThrowPokeballTextReady = false;
+    bool pokeballThrowShowText = true;
+    bool pokeballThrowAutoAdvance = false;
+    GameState pokeballThrowReturnState = GAME_STATE_BATTLE;
 
     GameState currentGameState = GAME_STATE_BATTLE;
     BattleUiState battleUi = BATTLE_UI_MENU;
@@ -465,13 +487,14 @@ int main(void)
     int battleCursor = 0;
 
     // Bag UI state.
-    const int bagHpItemCount = 12;
-    const int bagBallItemCount = 12;
+    const int bagHpTypes = bagHpItemCount();
+    const int bagBallTypes = bagBallItemCount();
     int bagHpPage = 0;
     int bagBallPage = 0;
     BattleUiState bagDescReturnUi = BATTLE_UI_BAG_HP_LIST;
     int bagDescReturnCursor = 0;
     int bagDescReturnPage = 0;
+    ItemId bagDescItem = ITEM_NONE;
 
     int arrowAnimFrame = 0;
     int arrowAnimTimer = 0;
@@ -489,6 +512,7 @@ int main(void)
     Party playerParty;
     Party enemyParty;
     PC playerPc;
+    Bag playerBag;
     pokemonInBattle wildEnemy;
 
     StaticSprite playerBackSprite;
@@ -514,6 +538,12 @@ int main(void)
     // init the roster and party (persistent).
     pcInit(&playerPc);
     initParty(&playerParty);
+
+    bagInit(&playerBag);
+    // Starter bag (tweak as desired).
+    bagAdd(&playerBag, ITEM_POTION, 3);
+    bagAdd(&playerBag, ITEM_POKEBALL, 5);
+
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
         int ownedIndex = -1;
@@ -525,7 +555,7 @@ int main(void)
     initParty(&enemyParty);
     initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
     addPokemonToParty(&enemyParty, &wildEnemy);
-    initBattleState(&battleState, &playerParty, &enemyParty, BATTLE_WILD);
+    initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, BATTLE_WILD);
 
     initPokemonBackBattleSpriteDefault(&playerBackSprite, playerParty.slots[playerParty.activeIndex]->id.backFrame_ID);
     initPokemonFrontBattleSpriteDefault(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex]->id.frontFrame_ID);
@@ -669,7 +699,7 @@ int main(void)
                 initParty(&enemyParty);
                 initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
                 addPokemonToParty(&enemyParty, &wildEnemy);
-                initBattleState(&battleState, &playerParty, &enemyParty, BATTLE_WILD);
+                initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, BATTLE_WILD);
 
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
@@ -761,7 +791,7 @@ int main(void)
                     } else if (arrowCtx == ARROW_CTX_BATTLE_BAG_LIST) {
                         const int oldIndex = battleCursor;
                         int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
-                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemCount : bagBallItemCount;
+                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpTypes : bagBallTypes;
                         int pageCount = (itemCount + 3) / 4;
                         if (pageCount < 1) pageCount = 1;
                         if (*pagePtr < 0) *pagePtr = 0;
@@ -844,6 +874,23 @@ int main(void)
                             battleApplyPlayerAction(&battleState, ACTION_SWITCH, slot);
                             play_sfx(plink_audio, plink_audio_len);
                             syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+
+                            // Play the send-out Pokeball animation on the player's side when switching.
+                            // (battleLoop already queues "Go! ...", so don't show it here too)
+                            pokeballThrowShowText = false;
+                            pokeballThrowAutoAdvance = true;
+                            pokeballThrowReturnState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            pokeballThrowInit = false;
+                            battleThrowPokeballTextReady = false;
+
+                            actionTextReturnUi = BATTLE_UI_MENU;
+                            actionTextReturnCursor = 0;
+                            actionTextAwaitSpaceRelease = true;
+
+                            battleUi = BATTLE_UI_MENU;
+                            battleCursor = 0;
+                            currentGameState = GAME_STATE_POKEBALL_THROW;
+                            previousGameState = GAME_STATE_POKEBALL_THROW;
                         }
                     }
                 } else if (battleUi == BATTLE_UI_ATTACK_MENU) {
@@ -887,16 +934,45 @@ int main(void)
                         battleCursor = 0;
                         bagBallPage = 0;
                     } else {
-                        battleUiSetSingleMessage(&battleState, "No last item yet!");
-                        actionTextReturnUi = battleUi;
-                        actionTextReturnCursor = battleCursor;
-                        currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                        actionTextAwaitSpaceRelease = true;
+                        if (playerBag.lastUsedItem != ITEM_NONE) {
+                            const ItemId last = playerBag.lastUsedItem;
+                            if (itemIsBall(last)) {
+                                if (bagCount(&playerBag, last) <= 0) {
+                                    char buf[96];
+                                    snprintf(buf, sizeof(buf), "You're out of %s!", itemName(last));
+                                    battleUiSetSingleMessage(&battleState, buf);
+                                    actionTextReturnUi = battleUi;
+                                    actionTextReturnCursor = battleCursor;
+                                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                    actionTextAwaitSpaceRelease = true;
+                                } else {
+                                    (void)bagRemove(&playerBag, last, 1);
+                                    pokeballCatchItem = last;
+                                    pokeballCatchInit = false;
+                                    currentGameState = GAME_STATE_POKEBALL_CATCH;
+                                    previousGameState = GAME_STATE_POKEBALL_CATCH;
+                                    battleUi = BATTLE_UI_MENU;
+                                    battleCursor = 0;
+                                }
+                            } else {
+                                battleApplyPlayerAction(&battleState, ACTION_ITEM, (int)last);
+                                syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                                battleUi = BATTLE_UI_MENU;
+                                battleCursor = 0;
+                            }
+                        } else {
+                            battleUiSetSingleMessage(&battleState, "No last item yet!");
+                            actionTextReturnUi = battleUi;
+                            actionTextReturnCursor = battleCursor;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
+                        }
                     }
                 } else if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) {
                     const int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
-                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemCount : bagBallItemCount;
+                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpTypes : bagBallTypes;
                     const int itemIndex = (*pagePtr) * 4 + battleCursor;
 
                     play_sfx(plink_audio, plink_audio_len);
@@ -912,28 +988,58 @@ int main(void)
                         bagDescReturnUi = battleUi;
                         bagDescReturnCursor = battleCursor;
                         bagDescReturnPage = *pagePtr;
+                        bagDescItem = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemAt(itemIndex) : bagBallItemAt(itemIndex);
                         battleUi = BATTLE_UI_BAG_ITEM_DESC;
                         battleCursor = 0;
                     }
                 } else if (battleUi == BATTLE_UI_BAG_ITEM_DESC) {
-                    // return to the list on confirm for now
                     play_sfx(plink_audio, plink_audio_len);
-                    battleUi = bagDescReturnUi;
-                    battleCursor = bagDescReturnCursor;
-                    if (bagDescReturnUi == BATTLE_UI_BAG_HP_LIST) {
-                        bagHpPage = bagDescReturnPage;
-                    } else if (bagDescReturnUi == BATTLE_UI_BAG_BALL_LIST) {
-                        bagBallPage = bagDescReturnPage;
+
+                    if (bagDescItem != ITEM_NONE) {
+                        const ItemId item = bagDescItem;
+                        if (itemIsBall(item)) {
+                            if (bagCount(&playerBag, item) <= 0) {
+                                char buf[96];
+                                snprintf(buf, sizeof(buf), "You're out of %s!", itemName(item));
+                                battleUiSetSingleMessage(&battleState, buf);
+                                actionTextReturnUi = bagDescReturnUi;
+                                actionTextReturnCursor = bagDescReturnCursor;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
+                            } else {
+                                (void)bagRemove(&playerBag, item, 1);
+                                pokeballCatchItem = item;
+                                pokeballCatchInit = false;
+                                currentGameState = GAME_STATE_POKEBALL_CATCH;
+                                previousGameState = GAME_STATE_POKEBALL_CATCH;
+                                battleUi = BATTLE_UI_MENU;
+                                battleCursor = 0;
+                            }
+                        } else {
+                            battleApplyPlayerAction(&battleState, ACTION_ITEM, (int)item);
+                            syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                            battleUi = BATTLE_UI_MENU;
+                            battleCursor = 0;
+                        }
+                    } else {
+                        battleUi = bagDescReturnUi;
+                        battleCursor = bagDescReturnCursor;
+                        if (bagDescReturnUi == BATTLE_UI_BAG_HP_LIST) {
+                            bagHpPage = bagDescReturnPage;
+                        } else if (bagDescReturnUi == BATTLE_UI_BAG_BALL_LIST) {
+                            bagBallPage = bagDescReturnPage;
+                        }
                     }
                 }
 
-                if (battleState.messageCount > 0) {
+                if (currentGameState == GAME_STATE_BATTLE && battleState.messageCount > 0) {
                     actionTextReturnUi = battleUi;
                     actionTextReturnCursor = battleCursor;
                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     actionTextAwaitSpaceRelease = true;
-                } else if (battleState.result != BATTLE_RESULT_ONGOING) {
+                } else if (currentGameState == GAME_STATE_BATTLE && battleState.result != BATTLE_RESULT_ONGOING) {
                     currentGameState = GAME_STATE_MAP;
                 }
             }
@@ -1220,7 +1326,7 @@ int main(void)
                 const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
                 const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
 
-                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemCount : bagBallItemCount;
+                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpTypes : bagBallTypes;
                 const int page = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpPage : bagBallPage;
                 int pageCount = (itemCount + 3) / 4;
                 if (pageCount < 1) pageCount = 1;
@@ -1515,6 +1621,9 @@ int main(void)
          
             if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
+                pokeballThrowShowText = true;
+                pokeballThrowAutoAdvance = false;
+                pokeballThrowReturnState = GAME_STATE_BATTLE;
                 currentGameState = GAME_STATE_POKEBALL_THROW;
                 previousGameState = GAME_STATE_POKEBALL_THROW;
                 battleThrowPokeballTextReady = false;
@@ -1533,7 +1642,7 @@ int main(void)
                 pokeballThrownFrame = 0;
                 pokeballThrownTimer = 0;
                 pokeballLandingTimer = 0;
-                pokeballLandingFrame = POKEBALL_UNOPENED_FRAME_COUNT;
+                pokeballLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
 
                 // Start off-screen (left + below). We only draw it at/after the peak.
                 pokeballX0 = -(float)POKEBALLTHROW_WIDTH;
@@ -1566,7 +1675,7 @@ int main(void)
                 pokeballX0 = pokeballPeakX - pokeballVx * (float)pokeballTPeak;
             }
 
-            if (!battleThrowPokeballTextReady) {
+            if (pokeballThrowShowText && !battleThrowPokeballTextReady) {
                 const pokemonInBattle *myActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
                 const char *myPokemonName = (myActive != NULL && myActive->id.data != NULL && myActive->id.data->name != NULL)
                                                 ? myActive->id.data->name
@@ -1593,8 +1702,8 @@ int main(void)
 
             // Update/draw projectile.
             if (!pokeballThrown) {
-                // Advance the simulated time (frames).
-                const int timeStep = 2; // increase to speed up the throw without changing the arc math
+                // advance time
+                const int timeStep = 2; // increasing speed since this uses the same projectile motion formula but further distance
                 pokeballThrowT += timeStep;
 
                 const float t = (float)pokeballThrowT;
@@ -1604,19 +1713,14 @@ int main(void)
                 // Start the landing/open animation once the ball hits the target y.
                 if (!pokeballLanding && pokeballThrowT >= pokeballTPeak && y >= pokeballLandY) {
                     pokeballLanding = true;
-                    pokeballLandingFrame = POKEBALL_UNOPENED_FRAME_COUNT;
+                    pokeballLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
                     pokeballLandingTimer = 0;
                 }
 
-                if (!pokeballLanding && pokeballThrowT >= pokeballTPeak) {
-                    // Animate frames 0-7 while in flight (ball appears at peak).
-                    const int inflightFrames = POKEBALL_UNOPENED_FRAME_COUNT;
+                if (!pokeballLanding) {
+                    // frames 0-7 while in flight.
+                    const int inflightFrames = POKEBALLTHROW_THROW_FRAME_COUNT;
                     const int inflightSpeed = 1;
-                    pokeballThrownTimer++;
-                    if (pokeballThrownTimer >= inflightSpeed) {
-                        pokeballThrownTimer = 0;
-                        pokeballThrownFrame = (pokeballThrownFrame + 1) % inflightFrames;
-                    }
 
                     const int dx = (int)(x + 0.5f);
                     const int dy = (int)(y + 0.5f);
@@ -1628,15 +1732,21 @@ int main(void)
                                         dy,
                                         TRANSPARENT_COLOUR);
                     }
+
+                    // Advance after drawing so the first visible frame is frame 0.
+                    pokeballThrownTimer++;
+                    if (pokeballThrownTimer >= inflightSpeed) {
+                        pokeballThrownTimer = 0;
+                        pokeballThrownFrame = (pokeballThrownFrame + 1) % inflightFrames;
+                    }
                 }
 
                 if (pokeballLanding) {
                     const int landSpeed = 3;
-                    pokeballLandingTimer++;
                     if (pokeballLandingTimer >= landSpeed) {
                         pokeballLandingTimer = 0;
                         pokeballLandingFrame++;
-                        if (pokeballLandingFrame >= POKEBALLTHROW_FRAME_COUNT - 1) {
+                        if (pokeballLandingFrame >= (POKEBALLTHROW_LAND_FRAME_START + POKEBALLTHROW_LAND_FRAME_COUNT)) {
                             pokeballThrown = true;
                         }
                     }
@@ -1651,21 +1761,207 @@ int main(void)
                                         dy,
                                         TRANSPARENT_COLOUR);
                     }
+
+                    pokeballLandingTimer++;
                 }
             }
 
             // UI background covers the sprites
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleThrowPokeballText, BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, pokeballThrowShowText ? battleThrowPokeballText : "", BLACK);
 
-            if (pokeballThrown && spacePressed) {
-                play_sfx(plink_audio, plink_audio_len);
-                currentGameState = GAME_STATE_BATTLE;
-                previousGameState = GAME_STATE_BATTLE;
-                battleThrowPokeballTextReady = false;
-                pokeballThrowInit = false;
+            if (pokeballThrown) {
+                if (pokeballThrowAutoAdvance) {
+                    currentGameState = pokeballThrowReturnState;
+                    previousGameState = pokeballThrowReturnState;
+                    battleThrowPokeballTextReady = false;
+                    pokeballThrowInit = false;
+                } else if (spacePressed) {
+                    play_sfx(plink_audio, plink_audio_len);
+                    currentGameState = GAME_STATE_BATTLE;
+                    previousGameState = GAME_STATE_BATTLE;
+                    battleThrowPokeballTextReady = false;
+                    pokeballThrowInit = false;
+                }
             }
+            break;
+        }
+
+        case GAME_STATE_POKEBALL_CATCH: {
+            // Throw a ball at the opponent and play the cshake frames sequence.
+            if (!pokeballCatchInit) {
+                pokeballCatchInit = true;
+                pokeballCatchLanding = false;
+                pokeballCatchEscape = false;
+                pokeballCatchT = 0;
+                pokeballCatchThrownTimer = 0;
+                pokeballCatchLandingTimer = 0;
+                pokeballCatchSeqTimer = 0;
+                pokeballCatchFrame = 0;
+                pokeballCatchLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
+                pokeballCatchSeqFrame = POKEBALLTHROW_CATCH_FRAME_START;
+
+                pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+                PokeballType ball = POKEBALL_POKE;
+                if (pokeballCatchItem == ITEM_GREAT_BALL) ball = POKEBALL_GREAT;
+                else if (pokeballCatchItem == ITEM_ULTRA_BALL) ball = POKEBALL_ULTRA;
+                else if (pokeballCatchItem == ITEM_MASTER_BALL) ball = POKEBALL_MASTER;
+                else ball = POKEBALL_POKE;
+
+                pokeballCatchSuccess = (enemyActive != NULL) ? attemptCatchWithBall(enemyActive, ball) : false;
+
+                pokeballCatchStartX = (float)(playerBackSprite.x + playerBackSprite.width / 2 - POKEBALLTHROW_WIDTH / 2);
+                pokeballCatchStartY = (float)(playerBackSprite.y + playerBackSprite.height / 2 - POKEBALLTHROW_HEIGHT / 2);
+                pokeballCatchEndX = (float)(enemyFrontSprite.x + enemyFrontSprite.width / 2 - POKEBALLTHROW_WIDTH / 2);
+                pokeballCatchEndY = (float)(enemyFrontSprite.y + enemyFrontSprite.height / 2 - POKEBALLTHROW_HEIGHT / 2 + 8);
+
+                pokeballCatchCtrlX = 0.5f * (pokeballCatchStartX + pokeballCatchEndX);
+                pokeballCatchCtrlY = ((pokeballCatchStartY < pokeballCatchEndY) ? pokeballCatchStartY : pokeballCatchEndY) - 70.0f;
+                if (pokeballCatchCtrlY < 0.0f) pokeballCatchCtrlY = 0.0f;
+            }
+
+            draw_map();
+
+            // Draw base battle sprites.
+            if (playerBackSprite.pixels != NULL) {
+                draw_sprite_any(playerBackSprite.pixels,
+                                playerBackSprite.width, playerBackSprite.height,
+                                playerBackSprite.x, playerBackSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
+            if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
+
+            // Animate the ball.
+            const int tMax = 36;
+            const int timeStep = 2;
+
+            if (!pokeballCatchLanding) {
+                pokeballCatchT += timeStep;
+                if (pokeballCatchT > tMax) pokeballCatchT = tMax;
+
+                const float u = (float)pokeballCatchT / (float)tMax;
+                const float inv = 1.0f - u;
+                const float x = (inv * inv) * pokeballCatchStartX + (2.0f * inv * u) * pokeballCatchCtrlX + (u * u) * pokeballCatchEndX;
+                const float y = (inv * inv) * pokeballCatchStartY + (2.0f * inv * u) * pokeballCatchCtrlY + (u * u) * pokeballCatchEndY;
+
+                const int dx = (int)(x + 0.5f);
+                const int dy = (int)(y + 0.5f);
+                if (dy >= -POKEBALLTHROW_HEIGHT && dy < SCREEN_HEIGHT) {
+                    draw_sprite_any(pokeballThrowFrames[pokeballCatchFrame],
+                                    POKEBALLTHROW_WIDTH,
+                                    POKEBALLTHROW_HEIGHT,
+                                    dx,
+                                    dy,
+                                    TRANSPARENT_COLOUR);
+                }
+
+                pokeballCatchThrownTimer++;
+                if (pokeballCatchThrownTimer >= 1) {
+                    pokeballCatchThrownTimer = 0;
+                    pokeballCatchFrame = (pokeballCatchFrame + 1) % POKEBALLTHROW_THROW_FRAME_COUNT;
+                }
+
+                if (pokeballCatchT >= tMax) {
+                    pokeballCatchLanding = true;
+                    pokeballCatchLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
+                    pokeballCatchLandingTimer = 0;
+                    pokeballCatchSeqFrame = POKEBALLTHROW_CATCH_FRAME_START;
+                    pokeballCatchSeqTimer = 0;
+                }
+            } else {
+                const int landEnd = POKEBALLTHROW_LAND_FRAME_START + POKEBALLTHROW_LAND_FRAME_COUNT;
+                if (pokeballCatchLandingFrame < landEnd) {
+                    const int dx = (int)(pokeballCatchEndX + 0.5f);
+                    const int dy = (int)(pokeballCatchEndY + 0.5f);
+                    draw_sprite_any(pokeballThrowFrames[pokeballCatchLandingFrame],
+                                    POKEBALLTHROW_WIDTH,
+                                    POKEBALLTHROW_HEIGHT,
+                                    dx,
+                                    dy,
+                                    TRANSPARENT_COLOUR);
+
+                    if (pokeballCatchLandingTimer >= 3) {
+                        pokeballCatchLandingTimer = 0;
+                        pokeballCatchLandingFrame++;
+                    }
+                    pokeballCatchLandingTimer++;
+                } else {
+                    const int seqSpeed = 3;
+                    const int dx = (int)(pokeballCatchEndX + 0.5f);
+                    const int dy = (int)(pokeballCatchEndY + 0.5f);
+
+                    draw_sprite_any(pokeballThrowFrames[pokeballCatchSeqFrame],
+                                    POKEBALLTHROW_WIDTH,
+                                    POKEBALLTHROW_HEIGHT,
+                                    dx,
+                                    dy,
+                                    TRANSPARENT_COLOUR);
+
+                    if (pokeballCatchSeqTimer >= seqSpeed) {
+                        pokeballCatchSeqTimer = 0;
+
+                        const int escapeStart = POKEBALLTHROW_THROW_FRAME_START + (POKEBALLTHROW_THROW_FRAME_COUNT - 1); // frame 8 
+                        const int escapeEnd = POKEBALLTHROW_LAND_FRAME_START + POKEBALLTHROW_LAND_FRAME_COUNT;          // up to frame 10 
+
+                        if (!pokeballCatchEscape) {
+                            pokeballCatchSeqFrame++;
+                            if (!pokeballCatchSuccess &&
+                                pokeballCatchSeqFrame >= (POKEBALLTHROW_SHAKE_FRAME_START + POKEBALLTHROW_SHAKE_FRAME_COUNT)) {
+                                // Escaped right after the shake frames.
+                                pokeballCatchEscape = true;
+                                pokeballCatchSeqFrame = escapeStart;
+                            }
+                        } else {
+                            pokeballCatchSeqFrame++;
+                        }
+
+                        if (!pokeballCatchEscape) {
+                            if (pokeballCatchSeqFrame >= POKEBALLTHROW_FRAME_COUNT) {
+                                // Done (caught).
+                                battleUiSetSingleMessage(&battleState, "Gotcha!");
+                                battleState.result = BATTLE_RESULT_CAUGHT;
+                                actionTextReturnUi = BATTLE_UI_MENU;
+                                actionTextReturnCursor = 0;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
+                                pokeballCatchInit = false;
+                            }
+                        } else {
+                            if (pokeballCatchSeqFrame >= escapeEnd) {
+                                // escaped
+                                battleUiSetSingleMessage(&battleState, "Oh no! It broke free!");
+                                battleState.result = BATTLE_RESULT_ONGOING;
+                                actionTextReturnUi = BATTLE_UI_MENU;
+                                actionTextReturnCursor = 0;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
+                                pokeballCatchInit = false;
+                            }
+                        }
+                    }
+                    pokeballCatchSeqTimer++;
+                }
+            }
+
+            // UI background covers the sprites
+            draw_sprite_any(battleUIBackgroundSprite,
+                            BATTLE_UI_BACKGROUND_WIDTH,
+                            BATTLE_UI_BACKGROUND_HEIGHT,
+                            0,
+                            battleBackdropY,
+                            TRANSPARENT_COLOUR);
+
+            // Blank textbox during the animation.
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "", BLACK);
+
             break;
         }
       

@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 
-SRC_GIF = Path("ImageConvertHelpers/pokeballThrow16x23/pokeball.gif")
+SRC_GIF = Path("ImageConvertHelpers/pokeballThrow16x23/pokeballThrow.gif")
 # directly into the project's sprites folder 
 OUT_C = Path("software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c")
 OUT_H = Path("software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h")
@@ -19,6 +19,16 @@ def is_magentaish(r: int, g: int, b: int) -> bool:
 
 PREFIX = "pokeballThrow_frame_"
 FRAMES_ARRAY_NAME = "pokeballThrowFrames"
+
+# Frame layout in the GIF (1-based in design notes, 0-based in code):
+#  - 1..8: throwing arc
+#  - 9..10: landing on ground
+#  - 11..21: catch sequence (17..19 are shaking)
+THROW_FRAME_COUNT = 8
+LAND_FRAME_COUNT = 2
+CATCH_FRAME_START = THROW_FRAME_COUNT + LAND_FRAME_COUNT
+SHAKE_FRAME_START = 16  # 0-based index (frame 17 in 1-based numbering)
+SHAKE_FRAME_COUNT = 3
 
 
 def rgb_to_565(r: int, g: int, b: int) -> int:
@@ -53,6 +63,18 @@ def main() -> None:
                 f"#define POKEBALLTHROW_WIDTH  {w}",
                 f"#define POKEBALLTHROW_HEIGHT {h}",
                 f"#define POKEBALLTHROW_FRAME_COUNT {frame_count}",
+                "",
+                f"#define POKEBALLTHROW_THROW_FRAME_START 0",
+                f"#define POKEBALLTHROW_THROW_FRAME_COUNT {THROW_FRAME_COUNT}",
+                f"#define POKEBALLTHROW_LAND_FRAME_START {THROW_FRAME_COUNT}",
+                f"#define POKEBALLTHROW_LAND_FRAME_COUNT {LAND_FRAME_COUNT}",
+                f"#define POKEBALLTHROW_CATCH_FRAME_START {CATCH_FRAME_START}",
+                "#define POKEBALLTHROW_CATCH_FRAME_COUNT (POKEBALLTHROW_FRAME_COUNT - POKEBALLTHROW_CATCH_FRAME_START)",
+                "",
+                f"#define POKEBALLTHROW_SHAKE_FRAME_START {SHAKE_FRAME_START}",
+                f"#define POKEBALLTHROW_SHAKE_FRAME_COUNT {SHAKE_FRAME_COUNT}",
+                "",
+                f"#define POKEBALL_UNOPENED_FRAME_COUNT POKEBALLTHROW_THROW_FRAME_COUNT",
                 "",
                 *[
                     f"extern const unsigned short {PREFIX}{i}[POKEBALLTHROW_WIDTH * POKEBALLTHROW_HEIGHT];"
