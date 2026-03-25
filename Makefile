@@ -150,6 +150,8 @@ DEF_TEXT		:= @$(BASH) 'printf "\033[0m"'
 ############################################
 # Compilation Targets
 
+.PHONY: COMPILE SYMBOLS OBJDUMP CLEAN clean rebuild
+
 COMPILE: $(basename $(MAIN)).elf
 
 $(basename $(MAIN)).elf: $(OBJS)
@@ -185,6 +187,10 @@ CLEAN:
 	$(DEF_TEXT)
 	@echo $(basename $(MAIN)).elf $(OBJS)
 	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(OBJS)'
+
+clean: CLEAN
+
+rebuild: CLEAN COMPILE
 
 ############################################
 # System Targets
