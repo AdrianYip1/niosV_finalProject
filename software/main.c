@@ -2183,12 +2183,14 @@ int main(void)
         //exp calculations, levelup, evolution, learn moves
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
+            currentGameState = GAME_STATE_MAP;
             break;
 
         case GAME_STATE_BATTLE_LOSE:
 
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "LOSE", BLACK);
+            currentGameState = GAME_STATE_MAP;
             break;
 
         case GAME_STATE_MAP:
