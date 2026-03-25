@@ -1407,11 +1407,15 @@ int main(void)
                     draw_sprite_any(pokeballs, POKEBALLS_WIDTH, POKEBALLS_HEIGHT, itemXRight, itemY, TRANSPARENT_COLOUR);
                 }
                 if (battleCursor == 2) {
-                    draw_sprite_any_shade_pulse(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
+                    draw_sprite_any_shade_pulse(playerBag.lastUsedItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
                                                 USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any_shade_pulse(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
+                                                LAST_USED_ITEM_X, LAST_USED_ITEM_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                 } else {
                     draw_sprite_any(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
                                             USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR);
+                    draw_sprite_any_shade_pulse(useLastItem, BATTLE_BAG_USE_LAST_ITEM_WIDTH, BATTLE_BAG_USE_LAST_ITEM_HEIGHT,
+                                                LAST_USED_ITEM_X, LAST_USED_ITEM_Y, TRANSPARENT_COLOUR, shadePulseFrame);
                 }
             }
 
