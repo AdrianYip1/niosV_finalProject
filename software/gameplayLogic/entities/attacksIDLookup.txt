@@ -18,3 +18,17 @@ ID 41 = Dragon Claw
 ID 50 = Wing Attack
 ID 51 = Air Slash
 
+ID 52 = Twister
+ID 53 = Ancient Power
+ID 54 = Dragon Dance
+ID 55 = Crunch
+ID 56 = Fly
+ID 57 = Rest
+
+ID 58 = Extreme Speed
+ID 59 = Outrage
+
+ID 60 = Hyperbeam
+
+
+

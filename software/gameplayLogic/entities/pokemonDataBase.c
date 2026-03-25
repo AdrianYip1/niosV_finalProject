@@ -38,6 +38,15 @@ const AttackData DRAGON_RAGE = {40, "Dragon Rage", 40, 100, 10, ATTACK_SPECIAL, 
 const AttackData DRAGON_CLAW = {41, "Dragon Claw", 80, 100, 15, ATTACK_PHYSICAL, TYPE_DRAGON};
 const AttackData WING_ATTACK = {50, "Wing Attack", 60, 100, 35, ATTACK_PHYSICAL, TYPE_FLYING};
 const AttackData AIR_SLASH = {51, "Air Slash", 75, 95, 15, ATTACK_SPECIAL,  TYPE_FLYING};
+const AttackData TWISTER = {52, "Twister", 40, 100, 20, ATTACK_SPECIAL,  TYPE_DRAGON};
+const AttackData ANCIENT_POWER = {53, "Ancient Power", 60, 100, 5, ATTACK_SPECIAL,  TYPE_ROCK};
+const AttackData DRAGON_DANCE = {54, "Dragon Dance", 0, 100, 20, ATTACK_STATUS,  TYPE_DRAGON};
+const AttackData CRUNCH = {55, "Crunch", 80, 100, 15, ATTACK_PHYSICAL,  TYPE_DARK};
+const AttackData FLY = {56, "Fly", 70, 95, 15, ATTACK_PHYSICAL,  TYPE_FLYING};
+const AttackData REST = {57, "Rest", 0, 100, 5, ATTACK_STATUS,  TYPE_PSYCHIC};
+const AttackData EXTREME_SPEED = {58, "Extreme Speed", 90, 100, 5, ATTACK_PHYSICAL,  TYPE_NORMAL};
+const AttackData OUTRAGE = {59, "Outrage", 120, 90, 10, ATTACK_PHYSICAL,  TYPE_DRAGON};
+const AttackData HYPERBEAM = {60, "Hyper Beam", 150, 90, 5, ATTACK_SPECIAL,  TYPE_NORMAL};
 
 const PokemonData CHARMANDER = {
     .id = 1, .name = "Charmander",
@@ -58,5 +67,12 @@ const PokemonData CHARIZARD = {
     .baseHp = 78, .baseAttack = 84, .baseSpAttack = 109,
     .baseDefense = 78, .baseSpDefense = 85, .baseSpeed = 100,
     .type1 = TYPE_FIRE, .type2 = TYPE_FLYING,
+    .evolution = {EVO_NONE, 0, NULL}
+};
+const PokemonData RAYQIAZA = {
+    .id = 4, .name = "Rayquaza",
+    .baseHp = 105, .baseAttack = 150, .baseSpAttack = 150,
+    .baseDefense = 90, .baseSpDefense = 90, .baseSpeed = 95,
+    .type1 = TYPE_DRAGON, .type2 = TYPE_FLYING,
     .evolution = {EVO_NONE, 0, NULL}
 };

@@ -32,3 +32,18 @@ const LearnsetEntry LEARNSET_CHARIZARD[] = {
     {79, &AIR_SLASH},
     LEARNSET_END
 };
+
+const LearnsetEntry LEARNSET_RAYQUAZA[] = {
+    {1, &TWISTER},
+    {5, &SCARY_FACE},
+    {15, &ANCIENT_POWER},
+    {20, &DRAGON_CLAW},
+    {30, &DRAGON_DANCE},
+    {35, &CRUNCH},
+    {45, &FLY},
+    {50, &REST},
+    {60, &EXTREME_SPEED},
+    {65, &OUTRAGE},
+    {75, &HYPERBEAM},
+    LEARNSET_END
+};

@@ -327,6 +327,7 @@ static const PokemonData *speciesFromPokemonSpriteId(int pokemonId) {
         case POKEMON_ID_CHARMANDER: return &CHARMANDER;
         case POKEMON_ID_CHARMELEON: return &CHARMELEON;
         case POKEMON_ID_CHARIZARD:  return &CHARIZARD;
+        case POKEMON_ID_RAYQUAZA:  return &RAYQUAZA;
         default: return NULL;
     }
 }
@@ -584,7 +585,7 @@ int main(void)
 
     // Temporary team 
     const int playerTeamSpriteIds[6] = {
-        POKEMON_ID_CHARIZARD,
+        POKEMON_ID_RAYQUAZA,
         POKEMON_ID_CHARMANDER,
         POKEMON_ID_CHARMELEON,
         POKEMON_ID_CHARIZARD,

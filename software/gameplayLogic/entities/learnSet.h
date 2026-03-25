@@ -12,12 +12,15 @@ typedef struct {
 extern const LearnsetEntry LEARNSET_CHARMANDER[];
 extern const LearnsetEntry LEARNSET_CHARMELEON[];
 extern const LearnsetEntry LEARNSET_CHARIZARD[];
+extern const LearnsetEntry LEARNSET_RAYQUAZA[];
+
 
 static inline const LearnsetEntry *getLearnset(int speciesId) {
     switch (speciesId) {
         case 1: return LEARNSET_CHARMANDER;
         case 2: return LEARNSET_CHARMELEON;
         case 3: return LEARNSET_CHARIZARD;
+        case 4: return LEARNSET_RAYQUAZA;
         default: return NULL;
     }
 }
