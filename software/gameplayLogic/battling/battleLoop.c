@@ -1,6 +1,8 @@
 #include "battleLoop.h"
 #include "../entities/pokemonObject.h"
 #include "../bag.h"
+#include "../../../hardware/audio.h"
+#include "../../se/recover_audio.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -198,6 +200,7 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                 battlePushMessage(state, buf);
 
                 if (itemIsHealing(item)) {
+                    play_sfx(recover_audio, recover_audio_len);
                     int heal = 0;
                     if (item == ITEM_POTION) heal = 20;
                     else if (item == ITEM_SUPER_POTION) heal = 50;

@@ -65,6 +65,11 @@ SRCS := software/main.c \
         software/se/battle_audio.c \
         software/se/map_audio.c \
         software/se/plink_audio.c \
+        software/se/pokeball_audio.c \
+        software/se/pokeball_shaking_audio.c \
+        software/se/caught_pokemon_audio.c \
+        software/se/hit_normal_audio.c \
+        software/se/recover_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
         software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
         software/gameplayLogic/battling/party.c \

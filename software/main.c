@@ -19,6 +19,11 @@
 #include "../software/se/battle_audio.h"
 #include "../software/se/map_audio.h"
 #include "../software/se/plink_audio.h"
+#include "../software/se/pokeball_audio.h"
+#include "../software/se/pokeball_shaking_audio.h"
+#include "../software/se/caught_pokemon_audio.h"
+#include "../software/se/hit_normal_audio.h"
+#include "../software/se/recover_audio.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
 #include "graphics/sprites/battleicons/battle_icons.h"
@@ -1606,6 +1611,10 @@ int main(void)
             } else if (battleState.messageReadIndex != actionTextLastMsgIndex) {
                 actionTextAutoTimer = 0;
                 actionTextLastMsgIndex = battleState.messageReadIndex;
+
+                if (msg != NULL && strstr(msg, " used ") != NULL) {
+                    play_sfx(hit_normal_audio, hit_normal_audio_len);
+                }
             }
 
             const bool manual = isManualBattleMessage(msg);
@@ -1776,6 +1785,7 @@ int main(void)
         case GAME_STATE_POKEBALL_THROW: {
             //  projectile motion variables (for arc throwing)
             if (!pokeballThrowInit) {
+                play_sfx(pokeball_audio, pokeball_audio_len);
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
                 pokeballThrowInit = true;
                 pokeballThrown = false;
@@ -1933,6 +1943,7 @@ int main(void)
         case GAME_STATE_POKEBALL_CATCH: {
             // Throw a ball at the opponent and play the cshake frames sequence.
             if (!pokeballCatchInit) {
+                play_sfx(pokeball_audio, pokeball_audio_len);
                 pokeballCatchInit = true;
                 pokeballCatchLanding = false;
                 pokeballCatchEscape = false;
@@ -2035,7 +2046,9 @@ int main(void)
                     }
                     pokeballCatchLandingTimer++;
                 } else {
-                    const int seqSpeed = 3;
+                    int seqSpeed = (pokeballCatchSeqFrame >= POKEBALLTHROW_SHAKE_FRAME_START && 
+                                    pokeballCatchSeqFrame < POKEBALLTHROW_SHAKE_FRAME_START + POKEBALLTHROW_SHAKE_FRAME_COUNT) 
+                                    ? 45 : 3;
                     const int dx = (int)(pokeballCatchEndX + 0.5f);
                     const int dy = (int)(pokeballCatchEndY + 0.5f);
 
@@ -2054,6 +2067,10 @@ int main(void)
 
                         if (!pokeballCatchEscape) {
                             pokeballCatchSeqFrame++;
+                            if (pokeballCatchSeqFrame >= POKEBALLTHROW_SHAKE_FRAME_START && 
+                                pokeballCatchSeqFrame < POKEBALLTHROW_SHAKE_FRAME_START + POKEBALLTHROW_SHAKE_FRAME_COUNT) {
+                                play_sfx(pokeball_shaking_audio, pokeball_shaking_audio_len);
+                            }
                             if (!pokeballCatchSuccess &&
                                 pokeballCatchSeqFrame >= (POKEBALLTHROW_SHAKE_FRAME_START + POKEBALLTHROW_SHAKE_FRAME_COUNT)) {
                                 // Escaped right after the shake frames.
@@ -2067,6 +2084,8 @@ int main(void)
                         if (!pokeballCatchEscape) {
                             if (pokeballCatchSeqFrame >= POKEBALLTHROW_FRAME_COUNT) {
                                 // Done (caught).
+                                stop_bgm();
+                                play_sfx(caught_pokemon_audio, caught_pokemon_audio_len);
                                 battleUiSetSingleMessage(&battleState, "Gotcha!");
                                 battleState.result = BATTLE_RESULT_CAUGHT;
                                 actionTextReturnUi = BATTLE_UI_MENU;
