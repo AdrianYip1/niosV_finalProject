@@ -184,7 +184,7 @@
 
 //location from top left of itemslot
 #define ITEM_X 20 //20 right
-#define ITEM_Y 28 //28 down
+#define ITEM_Y 24 //24 down
 
 #define ITEM_NAME_X 20 //20 right
 #define ITEM_NAME_Y 8 //8 down
@@ -195,9 +195,9 @@
 #define DEFINITION_X 30
 #define DEFINITION_Y 30
 #define DEFINITION_X_NAME 52
-#define DEFINITION_Y_NAME 20
+#define DEFINITION_Y_NAME 15
 #define DEFINITION_X_TEXT 21
-#define DEFINITION_Y_TEXT 51
+#define DEFINITION_Y_TEXT 45
 
 #define ITEM_AMOUNT_X 54
 #define ITEM_AMOUNT_Y 31
@@ -1437,13 +1437,12 @@ int main(void)
                                                 ? bagHpVisibleAt(&playerBag, visibleIndex)
                                                 : bagBallVisibleAt(&playerBag, visibleIndex);
                         if (item != ITEM_NONE) {
-                            draw_string_f(mxs[i] + ITEM_NAME_X, mys[i] + ITEM_NAME_Y, itemName(item), BLACK, FONT_5X9);
+                            draw_string_f(mxs[i] + ITEM_NAME_X, mys[i] + ITEM_NAME_Y, itemName(item), WHITE, FONT_5X9);
 
-                            // Amount (e.g., "x5"), positioned relative to the item slot's top-left.
                             const int count = bagCount(&playerBag, item);
                             char amountBuf[8];
                             snprintf(amountBuf, sizeof(amountBuf), "x%d", (count < 0) ? 0 : count);
-                            draw_string_f(mxs[i] + ITEM_AMOUNT_X, mys[i] + ITEM_AMOUNT_Y, amountBuf, BLACK, FONT_5X9);
+                            draw_string_f(mxs[i] + ITEM_AMOUNT_X, mys[i] + ITEM_AMOUNT_Y, amountBuf, WHITE, FONT_5X9);
 
                             if (battleUi == BATTLE_UI_BAG_BALL_LIST) {
                                 const unsigned short *icon = NULL;
@@ -1477,8 +1476,10 @@ int main(void)
                                 descX, descY, TRANSPARENT_COLOUR);
 
                 if (bagDescItem != ITEM_NONE) {
-                    draw_string_f(descX + DEFINITION_X_NAME, descY + DEFINITION_Y_NAME, itemName(bagDescItem), BLACK, FONT_5X9);
-                    draw_wrapped_5x9(descX + DEFINITION_X_TEXT, descY + DEFINITION_Y_TEXT, 112, 3, getItemDescription(bagDescItem), BLACK);
+                    draw_sprite_any(itemDescription, BATTLE_BAG_ITEM_DESCRIPTION_WIDTH, BATTLE_BAG_ITEM_DESCRIPTION_HEIGHT,
+                                descX, descY, TRANSPARENT_COLOUR);
+                    draw_string_f(descX + DEFINITION_X_NAME, descY + DEFINITION_Y_NAME, itemName(bagDescItem), WHITE, FONT_5X9);
+                    draw_wrapped_5x9(descX + DEFINITION_X_TEXT, descY + DEFINITION_Y_TEXT, 112, 3, getItemDescription(bagDescItem), WHITE);
                 }
             }
       

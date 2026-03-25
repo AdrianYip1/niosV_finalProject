@@ -11,11 +11,11 @@ static const ItemData ITEM_DB[ITEM_ID_COUNT] = {
     [ITEM_FULL_RESTORE] = {ITEM_FULL_RESTORE, "Full Restore", "Fully restores HP and cures any status condition of a Pokémon."},
 
     // Balls
-    [ITEM_POKEBALL] = {ITEM_POKEBALL, "Poke Ball", "Catches wild Pokémon."},
-    [ITEM_GREAT_BALL] = {ITEM_GREAT_BALL, "Great Ball", "Catches wild Pokémon with 1.5x the rate of a Poké Ball."},
-    [ITEM_ULTRA_BALL] = {ITEM_ULTRA_BALL, "Ultra Ball", "Catches wild Pokémon with 2x the rate of a Poké Ball"},
-    [ITEM_PREMIER_BALL] = {ITEM_PREMIER_BALL, "Premier Ball", "Catches wild Pokémon; received after buying 10 Poké Balls."},
-    [ITEM_MASTER_BALL] = {ITEM_MASTER_BALL, "Master Ball", "Catches any wild Pokémon without fail."},
+    [ITEM_POKEBALL] = {ITEM_POKEBALL, "Poke Ball", "Catches wild Pokemon."},
+    [ITEM_GREAT_BALL] = {ITEM_GREAT_BALL, "Great Ball", "Catches wild Pokemon with 1.5x the rate of a Poké Ball."},
+    [ITEM_ULTRA_BALL] = {ITEM_ULTRA_BALL, "Ultra Ball", "Catches wild Pokemon with 2x the rate of a Poké Ball"},
+    [ITEM_PREMIER_BALL] = {ITEM_PREMIER_BALL, "Premier Ball", "Catches wild Pokemon; received after buying 10 Poké Balls."},
+    [ITEM_MASTER_BALL] = {ITEM_MASTER_BALL, "Master Ball", "Catches any wild Pokemon without fail."},
 };
 
 const ItemData *getItemData(ItemId id) {
