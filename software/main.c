@@ -1476,8 +1476,20 @@ int main(void)
                                 descX, descY, TRANSPARENT_COLOUR);
 
                 if (bagDescItem != ITEM_NONE) {
-                    draw_sprite_any(itemDescription, BATTLE_BAG_ITEM_DESCRIPTION_WIDTH, BATTLE_BAG_ITEM_DESCRIPTION_HEIGHT,
-                                descX, descY, TRANSPARENT_COLOUR);
+                    const unsigned short *itemIcon = NULL;
+                    if (bagDescItem == ITEM_POKEBALL) itemIcon = pokeballIcon_poke;
+                    else if (bagDescItem == ITEM_GREAT_BALL) itemIcon = pokeballIcon_great;
+                    else if (bagDescItem == ITEM_ULTRA_BALL) itemIcon = pokeballIcon_ultra;
+                    else if (bagDescItem == ITEM_PREMIER_BALL) itemIcon = pokeballIcon_premier;
+
+                    if (itemIcon != NULL) {
+                        draw_sprite_any(itemIcon,
+                                        POKEBALL_ICON_WIDTH,
+                                        POKEBALL_ICON_HEIGHT,
+                                        descX + DEFINITION_X,
+                                        descY + DEFINITION_Y,
+                                        TRANSPARENT_COLOUR);
+                    }
                     draw_string_f(descX + DEFINITION_X_NAME, descY + DEFINITION_Y_NAME, itemName(bagDescItem), WHITE, FONT_5X9);
                     draw_wrapped_5x9(descX + DEFINITION_X_TEXT, descY + DEFINITION_Y_TEXT, 112, 3, getItemDescription(bagDescItem), WHITE);
                 }
