@@ -192,8 +192,8 @@
 #define LAST_USED_ITEM_X 20 //20 right
 #define LAST_USED_ITEM_Y 10 //10 down
 
-#define DEFINITION_X 30
-#define DEFINITION_Y 30
+#define DEFINITION_X 20
+#define DEFINITION_Y 10
 #define DEFINITION_X_NAME 52
 #define DEFINITION_Y_NAME 15
 #define DEFINITION_X_TEXT 21
