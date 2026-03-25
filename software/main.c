@@ -178,9 +178,36 @@
 
 #define USE_LAST_ICON_X 60
 #define USE_LAST_ICON_Y 240 - BATTLE_BAG_USE_LAST_ITEM_HEIGHT - 1
-//location for attacks and pp
 
-#define MOVE_
+#define ITEM1_X
+#define ITEM1_Y
+
+#define ITEM2_X
+#define ITEM2_Y
+
+#define ITEM3_X
+#define ITEM3_Y
+
+#define ITEM4_X
+#define ITEM4_Y
+
+#define ITEM1_X_NAME
+#define ITEM1_Y_NAME
+
+#define ITEM2_X_NAME
+#define ITEM2_Y_NAME
+
+#define ITEM3_X_NAME
+#define ITEM3_Y_NAME
+
+#define ITEM4_X_NAME
+#define ITEM4_Y_NAME
+
+#define LAST_USED_ITEM_X
+#define LAST_USED_ITEM_Y
+
+#define LAST_USED_ITEM_X_NAME
+#define LAST_USED_ITEM_Y_NAME
 
 // Game States
 typedef enum {
@@ -1215,7 +1242,7 @@ int main(void)
             if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) {
                 const int mxLeft = 18;
                 const int mxRight = 160 + 18;
-                const int myTop = 240 - 89;
+                const int myTop = 240 - 90;
                 const int myBottom = 240 - 45;
                 const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
                 const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
