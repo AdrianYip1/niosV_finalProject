@@ -1283,8 +1283,18 @@ int main(void)
                     AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
                                                                        : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
 
-                    // The type sprites have transparent regions; paint a solid base so we don't see unrelated UI/text underneath.
-                    draw_rect(mxs[i], mys[i], moveTypeSprite.width, moveTypeSprite.height, WHITE);
+                    // The type sprites have transparent regions; redraw the UI background under the button
+                    // so HP/name text drawn earlier can't show through those transparent pixels.
+                    draw_sprite_any_region(battleUIBackgroundSprite,
+                                           BATTLE_UI_BACKGROUND_WIDTH,
+                                           BATTLE_UI_BACKGROUND_HEIGHT,
+                                           mxs[i],
+                                           mys[i] - battleBackdropY,
+                                           moveTypeSprite.width,
+                                           moveTypeSprite.height,
+                                           mxs[i],
+                                           mys[i],
+                                           TRANSPARENT_COLOUR);
 
                     if (battleCursor == i) {
                         draw_sprite_any_shade_pulse(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
