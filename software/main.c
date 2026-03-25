@@ -1367,7 +1367,7 @@ int main(void)
                 if (manual) {
                     shouldAdvance = spacePressed;
                 } else {
-                    const int delayFrames = 60; // 1 second at 60 FPS
+                    const int delayFrames = 15; 
                     actionTextAutoTimer++;
                     if (actionTextAutoTimer >= delayFrames) {
                         shouldAdvance = true;
