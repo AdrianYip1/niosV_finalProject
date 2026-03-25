@@ -1,0 +1,12 @@
+software/gameplayLogic/map_movement/mcMoving.c.o: \
+ software/gameplayLogic/map_movement/mcMoving.c \
+ software/gameplayLogic/map_movement/mcDirectionChecker.h \
+ software/gameplayLogic/map_movement/mcMoving.h \
+ software/gameplayLogic/map_movement/../../graphics/mcWalkingDraw.h \
+ software/gameplayLogic/map_movement/../../../hardware/keyboard.h \
+ software/gameplayLogic/map_movement/../../../hardware/audio.h
+software/gameplayLogic/map_movement/mcDirectionChecker.h:
+software/gameplayLogic/map_movement/mcMoving.h:
+software/gameplayLogic/map_movement/../../graphics/mcWalkingDraw.h:
+software/gameplayLogic/map_movement/../../../hardware/keyboard.h:
+software/gameplayLogic/map_movement/../../../hardware/audio.h:

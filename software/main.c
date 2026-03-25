@@ -205,6 +205,9 @@
 #define ITEM_AMOUNT_X 54
 #define ITEM_AMOUNT_Y 31
 
+//restore items are a bit differnt in dimensions compared to pokeballs (like a bit higher and to the left)
+#define RESTORE_ITEM_X ITEM_X - 6
+#define RESTORE_ITEM_Y ITEM_Y - 5
 
 // Game States
 typedef enum {
@@ -617,7 +620,7 @@ int main(void)
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
         int ownedIndex = -1;
-        if (species != NULL && pcAdd(&playerPc, species, 20 + i, &ownedIndex)) {
+        if (species != NULL && pcAdd(&playerPc, species, 50 + i, &ownedIndex)) {
             addPokemonToParty(&playerParty, pcGet(&playerPc, ownedIndex));
         }
     }
@@ -1474,8 +1477,8 @@ int main(void)
                                     draw_sprite_any(icon,
                                                     HEALING_ITEM_ICON_WIDTH,
                                                     HEALING_ITEM_ICON_HEIGHT,
-                                                    mxs[i] + ITEM_X,
-                                                    mys[i] + ITEM_Y,
+                                                    mxs[i] + RESTORE_ITEM_X,
+                                                    mys[i] + RESTORE_ITEM_Y,
                                                     TRANSPARENT_COLOUR);
                                 }
                             }
