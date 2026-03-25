@@ -25,6 +25,7 @@ SRCS := software/main.c \
         software/graphics/sprites/battleItemsUI/pokeballs.c \
         software/graphics/sprites/battleItemsUI/itemDescription.c \
         software/graphics/sprites/battleItemsUI/itemSlot.c \
+        software/graphics/sprites/battleItemsUI/pokeballIcons.c \
         software/graphics/sprites/battleItemsUI/useButton.c \
         software/graphics/sprites/battleItemsUI/useLastItem.c \
         software/graphics/sprites/battleIcons/battleHp/para.c \
@@ -69,6 +70,7 @@ SRCS := software/main.c \
         software/gameplayLogic/battling/party.c \
         software/gameplayLogic/battling/battleLoop.c \
         software/gameplayLogic/bag.c \
+        software/gameplayLogic/itemDatabase.c \
         software/gameplayLogic/entities/pokemonDataBase.c \
         software/gameplayLogic/entities/learnset.c \
         software/gameplayLogic/storage/pc.c \
@@ -112,11 +114,12 @@ USERCCFLAGS	:= -g -O1 -ffunction-sections -fverbose-asm -fno-inline -gdwarf-2
 USERLDFLAGS	:= -Wl,--defsym=__stack_pointer$$=0x4000000 -Wl,--defsym  -Wl,JTAG_UART_BASE=0xff201000
 ARCHCCFLAGS	:= -march=rv32im_zicsr -mabi=ilp32
 ARCHLDFLAGS	:= -march=rv32im_zicsr -mabi=ilp32
-CCFLAGS		:= -Wall -c $(USERCCFLAGS) $(ARCHCCFLAGS)
+CCFLAGS		:= -Wall -c $(USERCCFLAGS) $(ARCHCCFLAGS) -MMD -MP
 LDFLAGS		:= $(USERLDFLAGS) $(ARCHLDFLAGS)
 
 # Files
 OBJS		:= $(patsubst %, %.o, $(SRCS))
+DEPS		:= $(OBJS:.o=.d)
 
 ############################################
 # GDB Macros
@@ -164,7 +167,7 @@ $(basename $(MAIN)).elf: $(OBJS)
 	@$(BASH) 'printf "\n"'
 	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) $(OBJS) -lm -o $@'
 
-%.c.o: %.c $(HDRS)
+%.c.o: %.c
 	@$(BASH) 'cd "$(CURDIR)"; $(RM) $@'
 	$(GREEN_TEXT)
 	@echo Compiling
@@ -185,12 +188,14 @@ CLEAN:
 	$(RED_TEXT)
 	@$(BASH) 'printf "$(RM) "'
 	$(DEF_TEXT)
-	@echo $(basename $(MAIN)).elf $(OBJS)
-	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(OBJS)'
+	@echo $(basename $(MAIN)).elf $(OBJS) $(DEPS)
+	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(OBJS) $(DEPS)'
 
 clean: CLEAN
 
 rebuild: CLEAN COMPILE
+
+-include $(DEPS)
 
 ############################################
 # System Targets

@@ -209,6 +209,7 @@ bool attemptCatchWithBall(pokemonInBattle *wildPokemon, PokeballType ball) {
         case POKEBALL_POKE: modifier = 1.0f; break;
         case POKEBALL_GREAT: modifier = 1.5f; break;
         case POKEBALL_ULTRA: modifier = 2.0f; break;
+        case POKEBALL_PREMIER: modifier = 1.0f; break;
         case POKEBALL_MASTER: modifier = 255.0f; break; // guaranteed 
         default: modifier = 1.0f; break;
     }

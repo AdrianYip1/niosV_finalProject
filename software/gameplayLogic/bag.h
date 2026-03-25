@@ -14,6 +14,7 @@ typedef enum {
     ITEM_POKEBALL,
     ITEM_GREAT_BALL,
     ITEM_ULTRA_BALL,
+    ITEM_PREMIER_BALL,
     ITEM_MASTER_BALL,
 
     ITEM_ID_COUNT
@@ -34,7 +35,7 @@ static inline bool itemIsHealing(ItemId item) {
 }
 
 static inline bool itemIsBall(ItemId item) {
-    return item == ITEM_POKEBALL || item == ITEM_GREAT_BALL || item == ITEM_ULTRA_BALL || item == ITEM_MASTER_BALL;
+    return item == ITEM_POKEBALL || item == ITEM_GREAT_BALL || item == ITEM_ULTRA_BALL || item == ITEM_PREMIER_BALL || item == ITEM_MASTER_BALL;
 }
 
 const char *itemName(ItemId item);

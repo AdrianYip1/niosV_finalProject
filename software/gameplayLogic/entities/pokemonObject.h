@@ -26,6 +26,7 @@ typedef enum {
     POKEBALL_POKE,
     POKEBALL_GREAT,
     POKEBALL_ULTRA,
+    POKEBALL_PREMIER,
     POKEBALL_MASTER
 } PokeballType;
 

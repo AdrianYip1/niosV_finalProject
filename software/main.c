@@ -42,11 +42,13 @@
 #include "gameplayLogic/battling/battleLoop.h"
 #include "gameplayLogic/entities/pokemonDataBase.h"
 #include "gameplayLogic/bag.h"
+#include "gameplayLogic/itemDatabase.h"
 #include "gameplayLogic/storage/pc.h"
 #include "graphics/sprites/battleItemsUI/useLastItem.h"
 #include "graphics/sprites/battleItemsUI/useButton.h"
 #include "graphics/sprites/battleItemsUI/itemSlot.h"
 #include "graphics/sprites/battleItemsUI/itemDescription.h"
+#include "graphics/sprites/battleItemsUI/pokeballIcons.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -196,6 +198,9 @@
 #define DEFINITION_Y_NAME 20
 #define DEFINITION_X_TEXT 21
 #define DEFINITION_Y_TEXT 51
+
+#define ITEM_AMOUNT_X 54
+#define ITEM_AMOUNT_Y 31
 
 
 // Game States
@@ -394,6 +399,51 @@ static void drawCenteredStringInBox(int boxX, int boxY, int boxW, int boxH,
     }
 }
 
+static void draw_wrapped_5x9(int x, int y, int maxW, int maxLines, const char *text, short colour) {
+    if (text == NULL) return;
+    if (maxW <= 0 || maxLines <= 0) return;
+
+    const int advance = 6; // 5px width + 1px gap
+    const int glyphW = 5;
+    int maxChars = (maxW - glyphW) / advance + 1;
+    if (maxChars < 1) maxChars = 1;
+    if (maxChars > 30) maxChars = 30;
+
+    int pos = 0;
+    for (int line = 0; line < maxLines && text[pos]; line++) {
+        while (text[pos] == ' ') pos++;
+
+        char buf[32];
+        int bi = 0;
+        int lastSpace = -1;
+        int consumed = 0;
+
+        while (text[pos] && bi < maxChars) {
+            char c = text[pos];
+            if (c == '\n') break;
+            if (c == ' ') lastSpace = bi;
+            buf[bi++] = c;
+            pos++;
+            consumed++;
+        }
+
+        // If we cut a word, backtrack to last space.
+        if (text[pos] && text[pos] != '\n' && lastSpace > 0 && bi == maxChars) {
+            int back = bi - lastSpace - 1;
+            pos -= back;
+            bi = lastSpace;
+        }
+
+        // Trim trailing spaces.
+        while (bi > 0 && buf[bi - 1] == ' ') bi--;
+        buf[bi] = '\0';
+
+        if (bi > 0) draw_string_f(x, y + line * 10, buf, colour, FONT_5X9);
+
+        if (text[pos] == '\n') pos++;
+    }
+}
+
 typedef struct {
     const unsigned short *pixels;
     int width;
@@ -556,6 +606,9 @@ int main(void)
     // Starter bag 
     bagAdd(&playerBag, ITEM_POTION, 3);
     bagAdd(&playerBag, ITEM_POKEBALL, 5);
+    bagAdd(&playerBag, ITEM_GREAT_BALL, 2);
+    bagAdd(&playerBag, ITEM_ULTRA_BALL, 1);
+    bagAdd(&playerBag, ITEM_PREMIER_BALL, 1);
 
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
@@ -1377,6 +1430,39 @@ int main(void)
                         draw_sprite_any(itemSlot, BATTLE_BAG_ITEM_SLOT_WIDTH, BATTLE_BAG_ITEM_SLOT_HEIGHT,
                                         mxs[i], mys[i], TRANSPARENT_COLOUR);
                     }
+
+                    const int visibleIndex = page * 4 + i;
+                    if (visibleIndex >= 0 && visibleIndex < itemCount) {
+                        const ItemId item = (battleUi == BATTLE_UI_BAG_HP_LIST)
+                                                ? bagHpVisibleAt(&playerBag, visibleIndex)
+                                                : bagBallVisibleAt(&playerBag, visibleIndex);
+                        if (item != ITEM_NONE) {
+                            draw_string_f(mxs[i] + ITEM_NAME_X, mys[i] + ITEM_NAME_Y, itemName(item), BLACK, FONT_5X9);
+
+                            // Amount (e.g., "x5"), positioned relative to the item slot's top-left.
+                            const int count = bagCount(&playerBag, item);
+                            char amountBuf[8];
+                            snprintf(amountBuf, sizeof(amountBuf), "x%d", (count < 0) ? 0 : count);
+                            draw_string_f(mxs[i] + ITEM_AMOUNT_X, mys[i] + ITEM_AMOUNT_Y, amountBuf, BLACK, FONT_5X9);
+
+                            if (battleUi == BATTLE_UI_BAG_BALL_LIST) {
+                                const unsigned short *icon = NULL;
+                                if (item == ITEM_POKEBALL) icon = pokeballIcon_poke;
+                                else if (item == ITEM_GREAT_BALL) icon = pokeballIcon_great;
+                                else if (item == ITEM_ULTRA_BALL) icon = pokeballIcon_ultra;
+                                else if (item == ITEM_PREMIER_BALL) icon = pokeballIcon_premier;
+
+                                if (icon != NULL) {
+                                    draw_sprite_any(icon,
+                                                    POKEBALL_ICON_WIDTH,
+                                                    POKEBALL_ICON_HEIGHT,
+                                                    mxs[i] + ITEM_X,
+                                                    mys[i] + ITEM_Y,
+                                                    TRANSPARENT_COLOUR);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 char pageBuf[24];
@@ -1389,6 +1475,11 @@ int main(void)
                 const int descY = battleBackdropY + (BATTLE_UI_BACKGROUND_HEIGHT - BATTLE_BAG_ITEM_DESCRIPTION_HEIGHT) / 2;
                 draw_sprite_any(itemDescription, BATTLE_BAG_ITEM_DESCRIPTION_WIDTH, BATTLE_BAG_ITEM_DESCRIPTION_HEIGHT,
                                 descX, descY, TRANSPARENT_COLOUR);
+
+                if (bagDescItem != ITEM_NONE) {
+                    draw_string_f(descX + DEFINITION_X_NAME, descY + DEFINITION_Y_NAME, itemName(bagDescItem), BLACK, FONT_5X9);
+                    draw_wrapped_5x9(descX + DEFINITION_X_TEXT, descY + DEFINITION_Y_TEXT, 112, 3, getItemDescription(bagDescItem), BLACK);
+                }
             }
       
             break;
@@ -1844,6 +1935,7 @@ int main(void)
                 PokeballType ball = POKEBALL_POKE;
                 if (pokeballCatchItem == ITEM_GREAT_BALL) ball = POKEBALL_GREAT;
                 else if (pokeballCatchItem == ITEM_ULTRA_BALL) ball = POKEBALL_ULTRA;
+                else if (pokeballCatchItem == ITEM_PREMIER_BALL) ball = POKEBALL_PREMIER;
                 else if (pokeballCatchItem == ITEM_MASTER_BALL) ball = POKEBALL_MASTER;
                 else ball = POKEBALL_POKE;
 

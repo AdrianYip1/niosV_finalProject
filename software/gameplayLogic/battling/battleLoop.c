@@ -218,6 +218,7 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     if (item == ITEM_POKEBALL) ball = POKEBALL_POKE;
                     else if (item == ITEM_GREAT_BALL) ball = POKEBALL_GREAT;
                     else if (item == ITEM_ULTRA_BALL) ball = POKEBALL_ULTRA;
+                    else if (item == ITEM_PREMIER_BALL) ball = POKEBALL_PREMIER;
                     else if (item == ITEM_MASTER_BALL) ball = POKEBALL_MASTER;
 
                     const bool caught = attemptCatchWithBall(enemy, ball);

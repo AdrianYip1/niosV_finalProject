@@ -1,4 +1,5 @@
 #include "bag.h"
+#include "itemDatabase.h"
 #include <string.h>
 
 void bagInit(Bag *bag) {
@@ -36,17 +37,7 @@ bool bagRemove(Bag *bag, ItemId item, int amount) {
 }
 
 const char *itemName(ItemId item) {
-    switch (item) {
-        case ITEM_POTION: return "Potion";
-        case ITEM_SUPER_POTION: return "Super Potion";
-        case ITEM_HYPER_POTION: return "Hyper Potion";
-        case ITEM_FULL_RESTORE: return "Full Restore";
-        case ITEM_POKEBALL: return "Poke Ball";
-        case ITEM_GREAT_BALL: return "Great Ball";
-        case ITEM_ULTRA_BALL: return "Ultra Ball";
-        case ITEM_MASTER_BALL: return "Master Ball";
-        default: return "Item";
-    }
+    return getItemData(item)->name;
 }
 
 int bagHpItemCount(void) { return 4; }
@@ -59,7 +50,8 @@ ItemId bagHpItemAt(int index) {
 }
 
 ItemId bagBallItemAt(int index) {
-    static const ItemId items[] = { ITEM_POKEBALL, ITEM_GREAT_BALL, ITEM_ULTRA_BALL, ITEM_MASTER_BALL };
+
+    static const ItemId items[] = { ITEM_POKEBALL, ITEM_GREAT_BALL, ITEM_ULTRA_BALL, ITEM_PREMIER_BALL };
     if (index < 0 || index >= (int)(sizeof(items) / sizeof(items[0]))) return ITEM_NONE;
     return items[index];
 }
