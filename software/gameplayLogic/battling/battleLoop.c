@@ -23,35 +23,33 @@ static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *att
     const char *attackerName = (attacker != NULL && attacker->id.data != NULL && attacker->id.data->name != NULL)
                                    ? attacker->id.data->name
                                    : "???";
-    const char *targetName = (target != NULL && target->id.data != NULL && target->id.data->name != NULL)
-                               ? target->id.data->name
-                               : "???";
     const char *moveName = (move != NULL && move->name != NULL) ? move->name : "???";
     char buf[96];
+
+    const float eff = (move != NULL) ? getTypeEffectiveness(move->type, target->type1, target->type2) : 1.0f;
+    const bool hasEffectivenessMsg = (eff == 0.0f) || (eff < 0.99f) || (eff > 1.01f);
     char effectivenessBuf[96];
+    if (hasEffectivenessMsg) {
+        if (eff == 0.0f) {
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It had no effect!");
+        } else if (eff < 1.0f) {
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective...");
+        } else {
+            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective!");
+        }
+    }
+
     if (opposing) {
         snprintf(buf, sizeof(buf), "Opposing %s used %s!", attackerName, moveName);
-        if (getTypeEffectiveness(move->type, target->type1, target->type2) < 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective\nto your %s!", targetName);
-        }
-        else if (getTypeEffectiveness(move->type, target->type1, target->type2) > 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective\nto your %s...", targetName);
-        }
-        else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Your %s\nwas affected.", targetName);
     }
     else {
         snprintf(buf, sizeof(buf), "Your %s used %s!", attackerName, moveName);
-        if (getTypeEffectiveness(move->type, target->type1, target->type2) < 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective\nto opposing %s...", targetName);
-        }
-        else if (getTypeEffectiveness(move->type, target->type1, target->type2) > 1) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective\nto opposing %s!", targetName);
-        }
-        else snprintf(effectivenessBuf, sizeof(effectivenessBuf), "Opposing %s\nwas affected.", targetName);
     }
 
     battlePushMessage(state, buf);
-    battlePushMessage(state, effectivenessBuf);
+    if (hasEffectivenessMsg) {
+        battlePushMessage(state, effectivenessBuf);
+    }
 }
 
 static int aiChooseMove(pokemonInBattle *pokemon) {

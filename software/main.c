@@ -43,6 +43,9 @@
 #include "gameplayLogic/entities/pokemonDataBase.h"
 #include "gameplayLogic/storage/pc.h"
 #include "graphics/sprites/battleItemsUI/useLastItem.h"
+#include "graphics/sprites/battleItemsUI/useButton.h"
+#include "graphics/sprites/battleItemsUI/itemSlot.h"
+#include "graphics/sprites/battleItemsUI/itemDescription.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -192,19 +195,25 @@ typedef enum {
     ARROW_CTX_NONE = 0,
     ARROW_CTX_BATTLE_MENU = 1,
     ARROW_CTX_BATTLE_ATTACK = 2,
-    ARROW_CTX_BATTLE_BAG = 3,
+    ARROW_CTX_BATTLE_BAG_MENU = 3,
+    ARROW_CTX_BATTLE_BAG_LIST = 4,
 } ArrowContext;
 
 typedef enum {
     BATTLE_UI_MENU = 0,
     BATTLE_UI_ATTACK_MENU = 1,
     BATTLE_UI_BAG_MENU = 2,
+    BATTLE_UI_BAG_HP_LIST = 3,
+    BATTLE_UI_BAG_BALL_LIST = 4,
+    BATTLE_UI_BAG_ITEM_DESC = 5,
 } BattleUiState;
 
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
     if (state != GAME_STATE_BATTLE) return ARROW_CTX_NONE;
     if (battleUi == BATTLE_UI_ATTACK_MENU) return ARROW_CTX_BATTLE_ATTACK;
-    if (battleUi == BATTLE_UI_BAG_MENU) return ARROW_CTX_BATTLE_BAG;
+    if (battleUi == BATTLE_UI_BAG_MENU) return ARROW_CTX_BATTLE_BAG_MENU;
+    if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) return ARROW_CTX_BATTLE_BAG_LIST;
+    if (battleUi == BATTLE_UI_BAG_ITEM_DESC) return ARROW_CTX_NONE;
     return ARROW_CTX_BATTLE_MENU;
 }
 
@@ -212,12 +221,20 @@ static int arrowCursorCount(ArrowContext ctx) {
     switch (ctx) {
         case ARROW_CTX_BATTLE_MENU: return 9;   // Fight/Bag/Run/party members
         case ARROW_CTX_BATTLE_ATTACK: return 4; 
-        case ARROW_CTX_BATTLE_BAG: return 3;   
+        case ARROW_CTX_BATTLE_BAG_MENU: return 3;
+        case ARROW_CTX_BATTLE_BAG_LIST: return 4;
         default: return 0;
     }
 }
 
-// 0=Fight, 1=Bag, 2=Run, 3..8=Party slots 1..6 (left->right, top row then bottom row).
+static bool isManualBattleMessage(const char *msg) {
+    if (msg == NULL) return false;
+    // Type effectiveness messages should require a button press.
+    return (strstr(msg, "super effective") != NULL) ||
+           (strstr(msg, "not very effective") != NULL) ||
+           (strstr(msg, "no effect") != NULL);
+}
+
 typedef enum { DIR_UP = 0, DIR_LEFT = 1, DIR_DOWN = 2, DIR_RIGHT = 3 } NavDir;
 static int navBattleBag3(int index, NavDir dir) {
     if (index < 0) index = 0;
@@ -227,15 +244,12 @@ static int navBattleBag3(int index, NavDir dir) {
         if (dir == DIR_UP) return 0;
         return 2;
     }
-
     if (dir == DIR_DOWN) return 2;
-
     if (index == 0) {
         if (dir == DIR_RIGHT) return 1;
         return 0;
     }
 
-    // index == 1
     if (dir == DIR_LEFT) return 0;
     return 1;
 }
@@ -245,12 +259,12 @@ static int navBattleMenu9(int index, NavDir dir) {
         /*0 Fight*/ {0, 0, 0, 1},
         /*1 Bag */ {1, 0, 2, 3},
         /*2 Run */ {1, 0, 2, 6},
-        /*3 P1  */ {3, 1, 6, 4},
-        /*4 P2  */ {4, 3, 7, 5},
-        /*5 P3  */ {5, 4, 8, 5},
-        /*6 P4  */ {3, 2, 6, 7},
-        /*7 P5  */ {4, 6, 7, 8},
-        /*8 P6  */ {5, 7, 8, 8},
+        /*3 P1 */ {3, 1, 6, 4},
+        /*4 P2 */ {4, 3, 7, 5},
+        /*5 P3 */ {5, 4, 8, 5},
+        /*6 P4 */ {3, 2, 6, 7},
+        /*7 P5 */ {4, 6, 7, 8},
+        /*8 P6 */ {5, 7, 8, 8},
     };
 
     if (index < 0) index = 0;
@@ -448,6 +462,16 @@ int main(void)
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
     int battleCursor = 0;
+
+    // Bag UI state.
+    const int bagHpItemCount = 12;
+    const int bagBallItemCount = 12;
+    int bagHpPage = 0;
+    int bagBallPage = 0;
+    BattleUiState bagDescReturnUi = BATTLE_UI_BAG_HP_LIST;
+    int bagDescReturnCursor = 0;
+    int bagDescReturnPage = 0;
+
     int arrowAnimFrame = 0;
     int arrowAnimTimer = 0;
     const int arrowAnimSpeedFrames = 8;
@@ -456,6 +480,8 @@ int main(void)
     bool actionTextAwaitSpaceRelease = false;
     BattleUiState actionTextReturnUi = BATTLE_UI_MENU;
     int actionTextReturnCursor = 0;
+    int actionTextAutoTimer = 0;
+    int actionTextLastMsgIndex = -1;
 
     // Battle logic (stub for now).
     BattleState battleState;
@@ -660,12 +686,33 @@ int main(void)
         const bool escPressed = escDown && !prevEsc;
         prevEsc = escDown;
 
-        if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
-            battleUi = BATTLE_UI_MENU;
-            battleCursor = 0;
-        } else if (escPressed && battleUi == BATTLE_UI_BAG_MENU) {
-            battleUi = BATTLE_UI_MENU;
-            battleCursor = 1;
+        if (currentGameState == GAME_STATE_BATTLE && escPressed) {
+            if (battleUi == BATTLE_UI_ATTACK_MENU) {
+                battleUi = BATTLE_UI_MENU;
+                battleCursor = 0;
+                play_sfx(plink_audio, plink_audio_len);
+            } else if (battleUi == BATTLE_UI_BAG_MENU) {
+                battleUi = BATTLE_UI_MENU;
+                battleCursor = 1;
+                play_sfx(plink_audio, plink_audio_len);
+            } else if (battleUi == BATTLE_UI_BAG_HP_LIST) {
+                battleUi = BATTLE_UI_BAG_MENU;
+                battleCursor = 0;
+                play_sfx(plink_audio, plink_audio_len);
+            } else if (battleUi == BATTLE_UI_BAG_BALL_LIST) {
+                battleUi = BATTLE_UI_BAG_MENU;
+                battleCursor = 1;
+                play_sfx(plink_audio, plink_audio_len);
+            } else if (battleUi == BATTLE_UI_BAG_ITEM_DESC) {
+                battleUi = bagDescReturnUi;
+                battleCursor = bagDescReturnCursor;
+                if (bagDescReturnUi == BATTLE_UI_BAG_HP_LIST) {
+                    bagHpPage = bagDescReturnPage;
+                } else if (bagDescReturnUi == BATTLE_UI_BAG_BALL_LIST) {
+                    bagBallPage = bagDescReturnPage;
+                }
+                play_sfx(plink_audio, plink_audio_len);
+            }
         }
 
         //WASD and arrow keys
@@ -703,13 +750,46 @@ int main(void)
                         if (downPressed) battleCursor = navBattleAttack4(battleCursor, DIR_DOWN);
                         if (rightPressed) battleCursor = navBattleAttack4(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
-                    } else if (arrowCtx == ARROW_CTX_BATTLE_BAG) {
+                    } else if (arrowCtx == ARROW_CTX_BATTLE_BAG_MENU) {
                         const int oldIndex = battleCursor;
                         if (upPressed) battleCursor = navBattleBag3(battleCursor, DIR_UP);
                         if (leftPressed) battleCursor = navBattleBag3(battleCursor, DIR_LEFT);
                         if (downPressed) battleCursor = navBattleBag3(battleCursor, DIR_DOWN);
                         if (rightPressed) battleCursor = navBattleBag3(battleCursor, DIR_RIGHT);
                         didMoveBattleCursor = (battleCursor != oldIndex);
+                    } else if (arrowCtx == ARROW_CTX_BATTLE_BAG_LIST) {
+                        const int oldIndex = battleCursor;
+                        int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
+                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemCount : bagBallItemCount;
+                        int pageCount = (itemCount + 3) / 4;
+                        if (pageCount < 1) pageCount = 1;
+                        if (*pagePtr < 0) *pagePtr = 0;
+                        if (*pagePtr >= pageCount) *pagePtr = pageCount - 1;
+                        const int oldPage = *pagePtr;
+
+                        if (upPressed) battleCursor = navBattleAttack4(battleCursor, DIR_UP);
+                        if (downPressed) battleCursor = navBattleAttack4(battleCursor, DIR_DOWN);
+
+                        if (leftPressed) {
+                            const int next = navBattleAttack4(battleCursor, DIR_LEFT);
+                            const bool atLeftEdge = (battleCursor == 0 || battleCursor == 2) && (next == battleCursor);
+                            if (atLeftEdge && *pagePtr > 0) {
+                                (*pagePtr)--;
+                            } else {
+                                battleCursor = next;
+                            }
+                        }
+                        if (rightPressed) {
+                            const int next = navBattleAttack4(battleCursor, DIR_RIGHT);
+                            const bool atRightEdge = (battleCursor == 1 || battleCursor == 3) && (next == battleCursor);
+                            if (atRightEdge && *pagePtr < pageCount - 1) {
+                                (*pagePtr)++;
+                            } else {
+                                battleCursor = next;
+                            }
+                        }
+
+                        didMoveBattleCursor = (battleCursor != oldIndex) || (*pagePtr != oldPage);
                     } else if (arrowCtx == ARROW_CTX_BATTLE_MENU) {
                         const int oldIndex = battleCursor;
                         if (upPressed) battleCursor = navBattleMenu9(battleCursor, DIR_UP);
@@ -796,20 +876,54 @@ int main(void)
                         battleCursor = 0;
                     }
                 } else if (battleUi == BATTLE_UI_BAG_MENU) {
-                    // Show a message and return to the bag menu.
+                    play_sfx(plink_audio, plink_audio_len);
                     if (battleCursor == 0) {
-                        battleUiSetSingleMessage(&battleState, "No HP items yet!");
+                        battleUi = BATTLE_UI_BAG_HP_LIST;
+                        battleCursor = 0;
+                        bagHpPage = 0;
                     } else if (battleCursor == 1) {
-                        battleUiSetSingleMessage(&battleState, "No Pokeballs yet!");
+                        battleUi = BATTLE_UI_BAG_BALL_LIST;
+                        battleCursor = 0;
+                        bagBallPage = 0;
                     } else {
                         battleUiSetSingleMessage(&battleState, "No last item yet!");
+                        actionTextReturnUi = battleUi;
+                        actionTextReturnCursor = battleCursor;
+                        currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        actionTextAwaitSpaceRelease = true;
                     }
-                    actionTextReturnUi = battleUi;
-                    actionTextReturnCursor = battleCursor;
-                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                    actionTextAwaitSpaceRelease = true;
+                } else if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) {
+                    const int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
+                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemCount : bagBallItemCount;
+                    const int itemIndex = (*pagePtr) * 4 + battleCursor;
+
                     play_sfx(plink_audio, plink_audio_len);
+
+                    if (itemIndex < 0 || itemIndex >= itemCount) {
+                        battleUiSetSingleMessage(&battleState, "Empty slot!");
+                        actionTextReturnUi = battleUi;
+                        actionTextReturnCursor = battleCursor;
+                        currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        actionTextAwaitSpaceRelease = true;
+                    } else {
+                        bagDescReturnUi = battleUi;
+                        bagDescReturnCursor = battleCursor;
+                        bagDescReturnPage = *pagePtr;
+                        battleUi = BATTLE_UI_BAG_ITEM_DESC;
+                        battleCursor = 0;
+                    }
+                } else if (battleUi == BATTLE_UI_BAG_ITEM_DESC) {
+                    // return to the list on confirm for now
+                    play_sfx(plink_audio, plink_audio_len);
+                    battleUi = bagDescReturnUi;
+                    battleCursor = bagDescReturnCursor;
+                    if (bagDescReturnUi == BATTLE_UI_BAG_HP_LIST) {
+                        bagHpPage = bagDescReturnPage;
+                    } else if (bagDescReturnUi == BATTLE_UI_BAG_BALL_LIST) {
+                        bagBallPage = bagDescReturnPage;
+                    }
                 }
 
                 if (battleState.messageCount > 0) {
@@ -824,13 +938,6 @@ int main(void)
             }
 
             if (didMoveBattleCursor) {
-                play_sfx(plink_audio, plink_audio_len);
-            }
-
-            if (escPressed && battleUi == BATTLE_UI_ATTACK_MENU) {
-                play_sfx(plink_audio, plink_audio_len);
-            }
-            if (escPressed && battleUi == BATTLE_UI_BAG_MENU) {
                 play_sfx(plink_audio, plink_audio_len);
             }
 
@@ -854,7 +961,7 @@ int main(void)
             }
 
 
-            // Battle base layer (always drawn in battle state).
+            // Battle base layer
             draw_map();
  
             draw_sprite_any_bob(playerBackSprite.pixels,
@@ -1103,7 +1210,43 @@ int main(void)
                                             USE_LAST_ICON_X, USE_LAST_ICON_Y, TRANSPARENT_COLOUR);
                 }
             }
-     
+
+            if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) {
+                const int mxLeft = 18;
+                const int mxRight = 160 + 18;
+                const int myTop = 240 - 89;
+                const int myBottom = 240 - 45;
+                const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
+                const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
+
+                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemCount : bagBallItemCount;
+                const int page = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpPage : bagBallPage;
+                int pageCount = (itemCount + 3) / 4;
+                if (pageCount < 1) pageCount = 1;
+
+                // Draw 4 slots (like the attack menu grid).
+                for (int i = 0; i < 4; i++) {
+                    if (battleCursor == i) {
+                        draw_sprite_any_shade_pulse(itemSlot, BATTLE_BAG_ITEM_SLOT_WIDTH, BATTLE_BAG_ITEM_SLOT_HEIGHT,
+                                                    mxs[i], mys[i], TRANSPARENT_COLOUR, shadePulseFrame);
+                    } else {
+                        draw_sprite_any(itemSlot, BATTLE_BAG_ITEM_SLOT_WIDTH, BATTLE_BAG_ITEM_SLOT_HEIGHT,
+                                        mxs[i], mys[i], TRANSPARENT_COLOUR);
+                    }
+                }
+
+                char pageBuf[24];
+                snprintf(pageBuf, sizeof(pageBuf), "Page %d/%d", page + 1, pageCount);
+                draw_string_f(8, myTop - 10, pageBuf, BLACK, FONT_5X9);
+            }
+
+            if (battleUi == BATTLE_UI_BAG_ITEM_DESC) {
+                const int descX = (SCREEN_WIDTH - BATTLE_BAG_ITEM_DESCRIPTION_WIDTH) / 2;
+                const int descY = battleBackdropY + (BATTLE_UI_BACKGROUND_HEIGHT - BATTLE_BAG_ITEM_DESCRIPTION_HEIGHT) / 2;
+                draw_sprite_any(itemDescription, BATTLE_BAG_ITEM_DESCRIPTION_WIDTH, BATTLE_BAG_ITEM_DESCRIPTION_HEIGHT,
+                                descX, descY, TRANSPARENT_COLOUR);
+            }
+      
             break;
         }
 
@@ -1208,11 +1351,39 @@ int main(void)
                                   : "";
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
 
-            if (!actionTextAwaitSpaceRelease && spacePressed) {
+            // when attacks happen, normal attack messages are auto, supereffective or noneffective message swill have space
+            if (battleState.messageCount <= 0) {
+                actionTextAutoTimer = 0;
+                actionTextLastMsgIndex = -1;
+            } else if (battleState.messageReadIndex != actionTextLastMsgIndex) {
+                actionTextAutoTimer = 0;
+                actionTextLastMsgIndex = battleState.messageReadIndex;
+            }
+
+            const bool manual = isManualBattleMessage(msg);
+            bool shouldAdvance = false;
+
+            if (!actionTextAwaitSpaceRelease) {
+                if (manual) {
+                    shouldAdvance = spacePressed;
+                } else {
+                    const int delayFrames = 60; // 1 second at 60 FPS
+                    actionTextAutoTimer++;
+                    if (actionTextAutoTimer >= delayFrames) {
+                        shouldAdvance = true;
+                    }
+                }
+            }
+
+            if (shouldAdvance) {
+                actionTextAutoTimer = 0;
                 battleState.messageReadIndex++;
+                actionTextLastMsgIndex = battleState.messageReadIndex;
+
                 if (battleState.messageReadIndex >= battleState.messageCount) {
                     battleState.messageReadIndex = 0;
                     battleState.messageCount = 0;
+                    actionTextLastMsgIndex = -1;
 
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
                         currentGameState = GAME_STATE_MAP;
@@ -1467,7 +1638,7 @@ int main(void)
                     if (pokeballLandingTimer >= landSpeed) {
                         pokeballLandingTimer = 0;
                         pokeballLandingFrame++;
-                        if (pokeballLandingFrame >= POKEBALLTHROW_FRAME_COUNT) {
+                        if (pokeballLandingFrame >= POKEBALLTHROW_FRAME_COUNT - 1) {
                             pokeballThrown = true;
                         }
                     }
