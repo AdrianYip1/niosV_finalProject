@@ -41,7 +41,7 @@ const char *itemName(ItemId item) {
 }
 
 int bagHpItemCount(void) { return 4; }
-int bagBallItemCount(void) { return 4; }
+int bagBallItemCount(void) { return 5; }
 
 ItemId bagHpItemAt(int index) {
     static const ItemId items[] = { ITEM_POTION, ITEM_SUPER_POTION, ITEM_HYPER_POTION, ITEM_FULL_RESTORE };
@@ -51,7 +51,7 @@ ItemId bagHpItemAt(int index) {
 
 ItemId bagBallItemAt(int index) {
 
-    static const ItemId items[] = { ITEM_POKEBALL, ITEM_GREAT_BALL, ITEM_ULTRA_BALL, ITEM_PREMIER_BALL };
+    static const ItemId items[] = { ITEM_POKEBALL, ITEM_GREAT_BALL, ITEM_ULTRA_BALL, ITEM_PREMIER_BALL, ITEM_MASTER_BALL };
     if (index < 0 || index >= (int)(sizeof(items) / sizeof(items[0]))) return ITEM_NONE;
     return items[index];
 }
