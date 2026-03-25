@@ -96,10 +96,22 @@ extern const AttackData DRAGON_CLAW;
 extern const AttackData WING_ATTACK;
 extern const AttackData AIR_SLASH;
 
+extern const AttackData TWISTER;
+extern const AttackData ANCIENT_POWER;
+extern const AttackData DRAGON_DANCE;
+extern const AttackData CRUNCH;
+extern const AttackData FLY;
+extern const AttackData REST;
+extern const AttackData EXTREME_SPEED;
+extern const AttackData OUTRAGE;
+extern const AttackData HYPERBEAM;
+
+
 // pokemon
 extern const PokemonData CHARMANDER;
 extern const PokemonData CHARMELEON;
 extern const PokemonData CHARIZARD;
+extern const PokemonData RAYQUAZA;
 
 // type chart
 extern const float typeChart[NUM_TYPES][NUM_TYPES];
