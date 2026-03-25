@@ -68,6 +68,7 @@ SRCS := software/main.c \
         software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
         software/gameplayLogic/battling/party.c \
         software/gameplayLogic/battling/battleLoop.c \
+        software/gameplayLogic/bag.c \
         software/gameplayLogic/entities/pokemonDataBase.c \
         software/gameplayLogic/entities/learnset.c \
         software/gameplayLogic/storage/pc.c \
