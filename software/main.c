@@ -180,35 +180,16 @@
 #define USE_LAST_ICON_X 60
 #define USE_LAST_ICON_Y 240 - BATTLE_BAG_USE_LAST_ITEM_HEIGHT - 1
 
-#define ITEM1_X
-#define ITEM1_Y
+//location from top left of itemslot
+#define ITEM_X 20 //20 right
+#define ITEM_Y 28 //28 down
 
-#define ITEM2_X
-#define ITEM2_Y
+#define ITEM_NAME_X 20 //20 right
+#define ITEM_NAME_Y 8 //8 down
 
-#define ITEM3_X
-#define ITEM3_Y
+#define LAST_USED_ITEM_X 20 //20 right
+#define LAST_USED_ITEM_Y 10 //10 down
 
-#define ITEM4_X
-#define ITEM4_Y
-
-#define ITEM1_X_NAME
-#define ITEM1_Y_NAME
-
-#define ITEM2_X_NAME
-#define ITEM2_Y_NAME
-
-#define ITEM3_X_NAME
-#define ITEM3_Y_NAME
-
-#define ITEM4_X_NAME
-#define ITEM4_Y_NAME
-
-#define LAST_USED_ITEM_X
-#define LAST_USED_ITEM_Y
-
-#define LAST_USED_ITEM_X_NAME
-#define LAST_USED_ITEM_Y_NAME
 
 // Game States
 typedef enum {
