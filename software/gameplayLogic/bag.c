@@ -64,3 +64,33 @@ ItemId bagBallItemAt(int index) {
     return items[index];
 }
 
+static ItemId visibleAt(const Bag *bag, ItemId (*at)(int), int (*countFn)(void), int visibleIndex) {
+    if (bag == NULL) return ITEM_NONE;
+    if (visibleIndex < 0) return ITEM_NONE;
+    const int n = countFn();
+    int seen = 0;
+    for (int i = 0; i < n; i++) {
+        const ItemId item = at(i);
+        if (item != ITEM_NONE && bagCount(bag, item) > 0) {
+            if (seen == visibleIndex) return item;
+            seen++;
+        }
+    }
+    return ITEM_NONE;
+}
+
+static int visibleCount(const Bag *bag, ItemId (*at)(int), int (*countFn)(void)) {
+    if (bag == NULL) return 0;
+    const int n = countFn();
+    int c = 0;
+    for (int i = 0; i < n; i++) {
+        const ItemId item = at(i);
+        if (item != ITEM_NONE && bagCount(bag, item) > 0) c++;
+    }
+    return c;
+}
+
+int bagHpVisibleCount(const Bag *bag) { return visibleCount(bag, bagHpItemAt, bagHpItemCount); }
+int bagBallVisibleCount(const Bag *bag) { return visibleCount(bag, bagBallItemAt, bagBallItemCount); }
+ItemId bagHpVisibleAt(const Bag *bag, int visibleIndex) { return visibleAt(bag, bagHpItemAt, bagHpItemCount, visibleIndex); }
+ItemId bagBallVisibleAt(const Bag *bag, int visibleIndex) { return visibleAt(bag, bagBallItemAt, bagBallItemCount, visibleIndex); }

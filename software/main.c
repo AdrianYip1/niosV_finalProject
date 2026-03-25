@@ -514,8 +514,6 @@ int main(void)
     int battleCursor = 0;
 
     // Bag UI state.
-    const int bagHpTypes = bagHpItemCount();
-    const int bagBallTypes = bagBallItemCount();
     int bagHpPage = 0;
     int bagBallPage = 0;
     BattleUiState bagDescReturnUi = BATTLE_UI_BAG_HP_LIST;
@@ -818,7 +816,7 @@ int main(void)
                     } else if (arrowCtx == ARROW_CTX_BATTLE_BAG_LIST) {
                         const int oldIndex = battleCursor;
                         int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
-                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpTypes : bagBallTypes;
+                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
                         int pageCount = (itemCount + 3) / 4;
                         if (pageCount < 1) pageCount = 1;
                         if (*pagePtr < 0) *pagePtr = 0;
@@ -900,11 +898,17 @@ int main(void)
                         } else {
                             battleApplyPlayerAction(&battleState, ACTION_SWITCH, slot);
                             play_sfx(plink_audio, plink_audio_len);
-                            syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
                             // Play the send-out Pokeball animation on the player's side when switching.
-                            // (battleLoop already queues "Go! ...", so don't show it here too)
-                            pokeballThrowShowText = false;
+                            // Show "Go! ..." during the throw, then skip the queued "Go! ..." message afterward.
+                            if (battleState.messageCount <= 1) {
+                                battleState.messageCount = 0;
+                                battleState.messageReadIndex = 0;
+                            } else {
+                                battleState.messageReadIndex = 1;
+                            }
+
+                            pokeballThrowShowText = true;
                             pokeballThrowAutoAdvance = true;
                             pokeballThrowReturnState = GAME_STATE_BATTLE_ACTION_TEXT;
                             pokeballThrowInit = false;
@@ -953,13 +957,31 @@ int main(void)
                 } else if (battleUi == BATTLE_UI_BAG_MENU) {
                     play_sfx(plink_audio, plink_audio_len);
                     if (battleCursor == 0) {
-                        battleUi = BATTLE_UI_BAG_HP_LIST;
-                        battleCursor = 0;
-                        bagHpPage = 0;
+                        if (bagHpVisibleCount(&playerBag) <= 0) {
+                            battleUiSetSingleMessage(&battleState, "No HP items!");
+                            actionTextReturnUi = battleUi;
+                            actionTextReturnCursor = battleCursor;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
+                        } else {
+                            battleUi = BATTLE_UI_BAG_HP_LIST;
+                            battleCursor = 0;
+                            bagHpPage = 0;
+                        }
                     } else if (battleCursor == 1) {
-                        battleUi = BATTLE_UI_BAG_BALL_LIST;
-                        battleCursor = 0;
-                        bagBallPage = 0;
+                        if (bagBallVisibleCount(&playerBag) <= 0) {
+                            battleUiSetSingleMessage(&battleState, "No Poke Balls!");
+                            actionTextReturnUi = battleUi;
+                            actionTextReturnCursor = battleCursor;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
+                        } else {
+                            battleUi = BATTLE_UI_BAG_BALL_LIST;
+                            battleCursor = 0;
+                            bagBallPage = 0;
+                        }
                     } else {
                         if (playerBag.lastUsedItem != ITEM_NONE) {
                             const ItemId last = playerBag.lastUsedItem;
@@ -999,7 +1021,7 @@ int main(void)
                     }
                 } else if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) {
                     const int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
-                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpTypes : bagBallTypes;
+                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
                     const int itemIndex = (*pagePtr) * 4 + battleCursor;
 
                     play_sfx(plink_audio, plink_audio_len);
@@ -1015,7 +1037,7 @@ int main(void)
                         bagDescReturnUi = battleUi;
                         bagDescReturnCursor = battleCursor;
                         bagDescReturnPage = *pagePtr;
-                        bagDescItem = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpItemAt(itemIndex) : bagBallItemAt(itemIndex);
+                        bagDescItem = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleAt(&playerBag, itemIndex) : bagBallVisibleAt(&playerBag, itemIndex);
                         battleUi = BATTLE_UI_BAG_ITEM_DESC;
                         battleCursor = 0;
                     }
@@ -1278,8 +1300,8 @@ int main(void)
                 // 97x9px tall, positioned 10px left and 11px down from the move sprite's top-left.
                 const int nameBoxW = 97;
                 const int nameBoxH = 9;
-                const int nameBoxDx = -5;
-                const int nameBoxDy = 13;
+                const int nameBoxDx = 10;
+                const int nameBoxDy = 11;
 
                 for (int i = 0; i < 4; i++) {
                     const AttackData *move = (playerActive != NULL) ? playerActive->attacks[i] : NULL;
@@ -1287,6 +1309,9 @@ int main(void)
 
                     AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
                                                                        : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
+
+                    // The type sprites have transparent regions; paint a solid base so we don't see unrelated UI/text underneath.
+                    draw_rect(mxs[i], mys[i], moveTypeSprite.width, moveTypeSprite.height, WHITE);
 
                     if (battleCursor == i) {
                         draw_sprite_any_shade_pulse(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
@@ -1353,7 +1378,7 @@ int main(void)
                 const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
                 const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
 
-                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpTypes : bagBallTypes;
+                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
                 const int page = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpPage : bagBallPage;
                 int pageCount = (itemCount + 3) / 4;
                 if (pageCount < 1) pageCount = 1;
@@ -1662,6 +1687,7 @@ int main(void)
         case GAME_STATE_POKEBALL_THROW: {
             //  projectile motion variables (for arc throwing)
             if (!pokeballThrowInit) {
+                syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
                 pokeballThrowInit = true;
                 pokeballThrown = false;
                 pokeballLanding = false;
