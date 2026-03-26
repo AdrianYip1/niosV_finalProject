@@ -340,7 +340,31 @@ static const PokemonData *speciesFromPokemonSpriteId(int pokemonId) {
         case POKEMON_ID_CHARMELEON: return &CHARMELEON;
         case POKEMON_ID_CHARIZARD:  return &CHARIZARD;
         case POKEMON_ID_RAYQUAZA:  return &RAYQUAZA;
+        case POKEMON_ID_GARCHOMP:  return &GARCHOMP;
+        case POKEMON_ID_LUCARIO:   return &LUCARIO;
+        case POKEMON_ID_MILOTIC:   return &MILOTIC;
+        case POKEMON_ID_ROSERADE:  return &ROSERADE;
+        case POKEMON_ID_SPIRITOMB: return &SPIRITOMB;
+        case POKEMON_ID_TOGEKISS:  return &TOGEKISS;
         default: return NULL;
+    }
+}
+
+static void setupCynthiaTrainerParty(Party *enemyParty, pokemonInBattle team[6]) {
+    if (enemyParty == NULL || team == NULL) return;
+
+    initParty(enemyParty);
+
+    // Cynthia's party
+    initPokemonInBattle(&team[0], &SPIRITOMB, 61);
+    initPokemonInBattle(&team[1], &ROSERADE, 60);
+    initPokemonInBattle(&team[2], &TOGEKISS, 60);
+    initPokemonInBattle(&team[3], &LUCARIO, 63);
+    initPokemonInBattle(&team[4], &MILOTIC, 63);
+    initPokemonInBattle(&team[5], &GARCHOMP, 66);
+
+    for (int i = 0; i < 6; i++) {
+        (void)addPokemonToParty(enemyParty, &team[i]);
     }
 }
 
@@ -584,13 +608,16 @@ int main(void)
     int actionTextAutoTimer = 0;
     int actionTextLastMsgIndex = -1;
 
-    // Battle logic (stub for now).
+    // Battle logic 
     BattleState battleState;
     Party playerParty;
     Party enemyParty;
     PC playerPc;
     Bag playerBag;
     pokemonInBattle wildEnemy;
+
+    pokemonInBattle cynthiaTeam[6];
+    BattleType nextBattleType = BATTLE_WILD;
 
     StaticSprite playerBackSprite;
     StaticSprite enemyFrontSprite;
@@ -756,10 +783,15 @@ int main(void)
         {
             char ch = 0;
             while (keyboard_pop_char(&ch)) {
-                if (ch == '1') {
-                    currentGameState = GAME_STATE_BATTLE;
-                } else if (ch == '2') {
+                if (ch == '2') {
                     currentGameState = GAME_STATE_MAP;
+                    nextBattleType = BATTLE_WILD;
+                } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
+                    nextBattleType = BATTLE_WILD;
+                    currentGameState = GAME_STATE_BATTLE;
+                } else if (ch == '3' && currentGameState == GAME_STATE_MAP) {
+                    nextBattleType = BATTLE_TRAINER;
+                    currentGameState = GAME_STATE_BATTLE;
                 }
             }
         }
@@ -779,18 +811,24 @@ int main(void)
                 battleUi = BATTLE_UI_MENU;
                 battleCursor = 0;
 
-                // Reset battle state whenever battle starts.
+ 
                 // Player party is persistent for this program run
-                initParty(&enemyParty);
-                initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
-                addPokemonToParty(&enemyParty, &wildEnemy);
-                initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, BATTLE_WILD);
+                if (nextBattleType == BATTLE_WILD) {
+                    initParty(&enemyParty);
+                    initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
+                    addPokemonToParty(&enemyParty, &wildEnemy);
+                } else {
+                    //battle type is BATTLE_TRAINER
+                    setupCynthiaTrainerParty(&enemyParty, cynthiaTeam);
+                }
+                initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, nextBattleType);
 
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
                 currentGameState = GAME_STATE_BATTLE_TRANSITION;
                 transitionFrame = 0;
                 transitionTimer = 0;
+                battleIntroTextReady = false;
             }
             previousGameState = currentGameState;
         }
@@ -1795,31 +1833,24 @@ int main(void)
                     transitionFrame = 0;
                 }
             } else {
-                // Trainer battle transition (placeholder)
-                draw_map();
-                draw_sprite_any(battleUIBackgroundSprite,
-                                BATTLE_UI_BACKGROUND_WIDTH,
-                                BATTLE_UI_BACKGROUND_HEIGHT,
-                                0, battleBackdropY,
-                                TRANSPARENT_COLOUR);
-
+                // Trainer battle transition 
                 draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
-                draw_string_f(92, 112, "TRAINER BATTLE", WHITE, FONT_5X9);
+                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
 
-                transitionTimer++;
-                if (transitionTimer >= transitionSpeedFrames) {
-                    transitionTimer = 0;
-                    transitionFrame++;
-                }
-
-                if (transitionFrame >= 20) {
-                    currentGameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                    previousGameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                    battleIntroTextReady = false;
+                if (spacePressed) {
+                    play_sfx(plink_audio, plink_audio_len);
+                    pokeballThrowShowText = true;
+                    pokeballThrowAutoAdvance = false;
+                    pokeballThrowReturnState = GAME_STATE_BATTLE;
+                    currentGameState = GAME_STATE_POKEBALL_THROW;
+                    previousGameState = GAME_STATE_POKEBALL_THROW;
+                    battleThrowPokeballTextReady = false;
+                    pokeballThrowInit = false;
                     transitionFrame = 0;
+                    transitionTimer = 0;
                 }
             }
-        
+         
             break;
         }
         

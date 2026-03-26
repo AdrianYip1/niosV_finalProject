@@ -3,7 +3,13 @@
 #include "charizardSprite.h"
 #include "charmanderSprite.h"
 #include "charmeleonSprite.h"
+#include "garchompSprite.h"
+#include "lucarioSprite.h"
+#include "miloticSprite.h"
 #include "rayquazaSprite.h"
+#include "roseradeSprite.h"
+#include "spiritombSprite.h"
+#include "togekissSprite.h"
 
 static void initFromPixels(StaticSprite* out, const unsigned short* pixels, int w, int h, int x, int y) {
     if (!out) return;
@@ -41,6 +47,30 @@ static bool getPixelsById(int pokemon_id, bool want_front,
         case POKEMON_ID_RAYQUAZA:
             if (want_front) { pixels = rayquazaFront;   w = RAYQUAZA_FRONT_WIDTH;   h = RAYQUAZA_FRONT_HEIGHT;   }
             else            { pixels = rayquazaBack;    w = RAYQUAZA_BACK_WIDTH;    h = RAYQUAZA_BACK_HEIGHT;    }
+            break;
+        case POKEMON_ID_GARCHOMP:
+            if (want_front) { pixels = garchompFront;   w = GARCHOMP_FRONT_WIDTH;   h = GARCHOMP_FRONT_HEIGHT;   }
+            else            { pixels = garchompBack;    w = GARCHOMP_BACK_WIDTH;    h = GARCHOMP_BACK_HEIGHT;    }
+            break;
+        case POKEMON_ID_LUCARIO:
+            if (want_front) { pixels = lucarioFront;    w = LUCARIO_FRONT_WIDTH;    h = LUCARIO_FRONT_HEIGHT;    }
+            else            { pixels = lucarioBack;     w = LUCARIO_BACK_WIDTH;     h = LUCARIO_BACK_HEIGHT;     }
+            break;
+        case POKEMON_ID_MILOTIC:
+            if (want_front) { pixels = miloticFront;    w = MILOTIC_FRONT_WIDTH;    h = MILOTIC_FRONT_HEIGHT;    }
+            else            { pixels = miloticBack;     w = MILOTIC_BACK_WIDTH;     h = MILOTIC_BACK_HEIGHT;     }
+            break;
+        case POKEMON_ID_ROSERADE:
+            if (want_front) { pixels = roseradeFront;   w = ROSERADE_FRONT_WIDTH;   h = ROSERADE_FRONT_HEIGHT;   }
+            else            { pixels = roseradeBack;    w = ROSERADE_BACK_WIDTH;    h = ROSERADE_BACK_HEIGHT;    }
+            break;
+        case POKEMON_ID_SPIRITOMB:
+            if (want_front) { pixels = spiritombFront;  w = SPIRITOMB_FRONT_WIDTH;  h = SPIRITOMB_FRONT_HEIGHT;  }
+            else            { pixels = spiritombBack;   w = SPIRITOMB_BACK_WIDTH;   h = SPIRITOMB_BACK_HEIGHT;   }
+            break;
+        case POKEMON_ID_TOGEKISS:
+            if (want_front) { pixels = togekissFront;   w = TOGEKISS_FRONT_WIDTH;   h = TOGEKISS_FRONT_HEIGHT;   }
+            else            { pixels = togekissBack;    w = TOGEKISS_BACK_WIDTH;    h = TOGEKISS_BACK_HEIGHT;    }
             break;
         default:
             return false;

@@ -105,6 +105,24 @@ extern const AttackData REST;
 extern const AttackData EXTREME_SPEED;
 extern const AttackData OUTRAGE;
 extern const AttackData HYPERBEAM;
+extern const AttackData METAL_CLAW;
+extern const AttackData BONE_RUSH;
+extern const AttackData EARTHQUAKE;
+extern const AttackData WATER_GUN;
+extern const AttackData SURF;
+extern const AttackData HYDRO_PUMP;
+extern const AttackData ICE_BEAM;
+extern const AttackData AURA_SPHERE;
+extern const AttackData CLOSE_COMBAT;
+extern const AttackData SLUDGE_BOMB;
+extern const AttackData GIGA_DRAIN;
+extern const AttackData SHADOW_BALL;
+extern const AttackData DAZZLING_GLEAM;
+extern const AttackData DARK_PULSE;
+extern const AttackData POISON_JAB;
+extern const AttackData LEAF_STORM;
+extern const AttackData AQUA_TAIL;
+extern const AttackData SUCKER_PUNCH;
 
 
 // pokemon
@@ -112,6 +130,12 @@ extern const PokemonData CHARMANDER;
 extern const PokemonData CHARMELEON;
 extern const PokemonData CHARIZARD;
 extern const PokemonData RAYQUAZA;
+extern const PokemonData GARCHOMP;
+extern const PokemonData LUCARIO;
+extern const PokemonData MILOTIC;
+extern const PokemonData ROSERADE;
+extern const PokemonData SPIRITOMB;
+extern const PokemonData TOGEKISS;
 
 // type chart
 extern const float typeChart[NUM_TYPES][NUM_TYPES];

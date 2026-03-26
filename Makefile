@@ -45,12 +45,24 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemon/charizardSprite.c \
         software/graphics/sprites/pokemon/charmanderSprite.c \
         software/graphics/sprites/pokemon/charmeleonSprite.c \
+        software/graphics/sprites/pokemon/garchompSprite.c \
+        software/graphics/sprites/pokemon/lucarioSprite.c \
+        software/graphics/sprites/pokemon/miloticSprite.c \
         software/graphics/sprites/pokemon/rayquazaSprite.c \
+        software/graphics/sprites/pokemon/roseradeSprite.c \
+        software/graphics/sprites/pokemon/spiritombSprite.c \
+        software/graphics/sprites/pokemon/togekissSprite.c \
         software/graphics/sprites/pokemon/pokemonSpriteInit.c \
         software/graphics/sprites/boxSprites/charizardBoxSprite.c \
         software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
         software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
+        software/graphics/sprites/boxSprites/garchompBoxSprite.c \
+        software/graphics/sprites/boxSprites/lucarioBoxSprite.c \
+        software/graphics/sprites/boxSprites/miloticBoxSprite.c \
         software/graphics/sprites/boxSprites/rayquazaBoxSprite.c \
+        software/graphics/sprites/boxSprites/roseradeBoxSprite.c \
+        software/graphics/sprites/boxSprites/spiritombBoxSprite.c \
+        software/graphics/sprites/boxSprites/togekissBoxSprite.c \
         software/graphics/sprites/boxSprites/pokemonBoxSpriteInit.c \
         software/graphics/sprites/statEffects/statUp.c \
         software/graphics/sprites/statEffects/statDown.c \
@@ -75,6 +87,7 @@ SRCS := software/main.c \
         software/se/recover_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
         software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
+        software/graphics/sprites/vsCynthia/vsCynthiaSprite.c \
         software/gameplayLogic/battling/party.c \
         software/gameplayLogic/battling/battleLoop.c \
         software/gameplayLogic/bag.c \
