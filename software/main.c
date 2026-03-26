@@ -935,6 +935,7 @@ int main(void)
             
             const int menuX = (SCREEN_WIDTH - MENU_PARTY_MENU_WIDTH) / 2;
             const int menuY = (SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2;
+            const int menuY_right = menuY + 8;
 
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 5) menuCursor = 5;
@@ -981,7 +982,6 @@ int main(void)
                                     TRANSPARENT_COLOUR);
                 }
             }
-
             break;
         }
         case GAME_STATE_WILD_BATTLE:
