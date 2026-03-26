@@ -6,6 +6,7 @@
 #include "graphics/sprites/pokemon/pokemonSpriteInit.h"
 #include "graphics/sprites/staticSprite.h"
 #include "gameplayLogic/map_movement/mcMoving.h"
+#include "gameplayLogic/worldMap.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
 #include "graphics/sprites/vsCynthia/vsCynthiaSprite.h"
@@ -626,6 +627,7 @@ int main(void)
     GameState currentGameState = GAME_STATE_MAP;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
+    WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
     GameState activeBattleMenuState = GAME_STATE_WILD_BATTLE;
     int battleCursor = 0;
 
@@ -816,9 +818,8 @@ int main(void)
     // Initial state setup: start in the walkable map.
     currentGameState = GAME_STATE_MAP;
     previousGameState = GAME_STATE_MAP;
-    init_map();
-    load_map_preset(MAP_PRESET_GROUND);
-    mcMovingInit(80, 112, MC_FACING_S);
+    currentMapId = WORLD_MAP_ROUTE_A;
+    load_world_map(currentMapId, 80, 112, MC_FACING_S);
     play_bgm(map_audio, map_audio_len);
     wait_for_vsync();
 
@@ -854,10 +855,7 @@ int main(void)
         if (wasOverworld != isOverworld) {
             if (isOverworld) {
                 play_bgm(map_audio, map_audio_len);
-                init_map();
-                load_map_preset(MAP_PRESET_GROUND);
-                apply_map_decor();
-                mcMovingInit(80, 112, MC_FACING_S);
+                load_world_map(currentMapId, 80, 112, MC_FACING_S);
             } else {
                 play_bgm(battle_audio, battle_audio_len);
                 init_map();
@@ -2724,9 +2722,21 @@ int main(void)
 
         case GAME_STATE_MAP:
         default:
-
-            draw_map();
-            mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
+            {
+                draw_map();
+                const McMoveResult moveResult = mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
+                WorldMapId targetMap;
+                int spawnX;
+                int spawnY;
+                McFacing spawnFacing;
+                if (resolve_map_transition(currentMapId, moveResult,
+                                           upDown, downDown, leftDown, rightDown,
+                                           &targetMap, &spawnX, &spawnY, &spawnFacing)) {
+                    currentMapId = targetMap;
+                    load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
+                    draw_map();
+                }
+            }
             break;
         }
 
