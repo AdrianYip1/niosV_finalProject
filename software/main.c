@@ -1875,12 +1875,18 @@ int main(void)
                 actionTextLastMsgIndex = battleState.messageReadIndex;
 
                 if (msg != NULL && strstr(msg, " used ") != NULL) {
-                    play_sfx(hit_normal_audio, hit_normal_audio_len);
-                //checks string to see who attacked
-                    if (strncmp(msg, "Opposing ", 9) == 0) {
-                        playerHitShakeFrame = 0;
-                    } else {
-                        enemyHitShakeFrame = 0;
+                    const int idx = battleState.messageReadIndex;
+                    //check flag for damage dealt
+                    const bool didDamage = (idx >= 0 && idx < BATTLE_MSG_MAX) ? (battleState.messageFlags[idx] != 0) : false;
+
+                    if (didDamage) {
+                        play_sfx(hit_normal_audio, hit_normal_audio_len);
+                        // checks string to see who attacked
+                        if (strncmp(msg, "Opposing ", 9) == 0) {
+                            playerHitShakeFrame = 0;
+                        } else {
+                            enemyHitShakeFrame = 0;
+                        }
                     }
                 }
             }

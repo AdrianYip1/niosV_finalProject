@@ -38,6 +38,7 @@ typedef struct {
 #define BATTLE_MSG_MAX 4
 #endif
     char messages[BATTLE_MSG_MAX][96];
+    unsigned char messageFlags[BATTLE_MSG_MAX];  // 1 if this message displays a damaging hit (exclude no effect)
     int messageCount;
     int messageReadIndex;
 } BattleState;

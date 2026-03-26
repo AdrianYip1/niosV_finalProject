@@ -11,7 +11,10 @@ static void battleClearMessages(BattleState *state) {
     if (state == NULL) return;
     state->messageCount = 0;
     state->messageReadIndex = 0;
-    for (int i = 0; i < BATTLE_MSG_MAX; i++) state->messages[i][0] = '\0';
+    for (int i = 0; i < BATTLE_MSG_MAX; i++) {
+        state->messages[i][0] = '\0';
+        state->messageFlags[i] = 0;
+    }
 }
 
 static void battlePushMessage(BattleState *state, const char *msg) {
@@ -112,8 +115,19 @@ static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
     if (!canAct(attacker)) return;
 
     const AttackData *move = (moveIndex >= 0 && moveIndex < 4) ? attacker->attacks[moveIndex] : NULL;
+    const int usedMsgIndex = (state != NULL) ? state->messageCount : 0;
+
     if (move != NULL) battlePushUsedMessage(state, attacker, move, opposing, target);
+
+    const int hpBefore = target->scaledStatsWithLevel[0];
     (void)useAttack(attacker, target, moveIndex);
+    const int hpAfter = target->scaledStatsWithLevel[0];
+    const int tookDamage = (hpBefore > hpAfter) ? 1 : 0;
+
+    // check flag for damage in message 
+    if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {
+        state->messageFlags[usedMsgIndex] = (unsigned char)tookDamage;
+    }
 }
 
 static void resolveSwitch(Party *party, int slot) {
