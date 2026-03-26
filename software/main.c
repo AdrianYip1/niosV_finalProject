@@ -1710,6 +1710,8 @@ int main(void)
             const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
             const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
             const bool playerFainted = (playerActive != NULL) && (!playerActive->alive || playerHp <= 0);
+            const int playerCurrentExp = (playerActive != NULL) ? playerActive->exp : 0;
+            const int playerNeededExp = (playerActive != NULL) ? expRequiredAtLevel(playerActive->level) : 0;
 
             
             if (playerFainted) {
@@ -1729,6 +1731,8 @@ int main(void)
 
             const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
             const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
+
+            const int playerExpBarWidth = (playerNeededExp > 0) ? (EXP_WIDTH * playerCurrentExp) / playerNeededExp : 0;
 
             const int enemyHpPct = (enemyMaxHp > 0) ? (enemyHp * 100) / enemyMaxHp : 0;
             const int playerHpPct = (playerMaxHp > 0) ? (playerHp * 100) / playerMaxHp : 0;
@@ -1756,7 +1760,7 @@ int main(void)
             0, -1, -1, 0, 0, 1, 1, 0 };
             int offsetY = dy_pattern[bobFrame];
             draw_rect(myHP_X, myHP_Y + offsetY, (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth), HP_HEIGHT, playerHpBarColour);
-            draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
+            draw_rect(EXP_X, EXP_Y + offsetY, (playerExpBarWidth < 0) ? 0 : ((playerExpBarWidth > HP_WIDTH) ? EXP_WIDTH : playerExpBarWidth), EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
             draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
