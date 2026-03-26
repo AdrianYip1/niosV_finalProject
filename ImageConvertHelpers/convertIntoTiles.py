@@ -20,7 +20,7 @@ DEFAULT_SRC = Path("ImageConvertHelpers/background/bg1.png")
 OUTPUT_C_FILE = Path("software/graphics/backdrops/backdrop1_tiles.c")
 OUTPUT_H_FILE = Path("software/graphics/backdrops/backdrop1_tiles.h")
 PREFIX = "backdrop1"
-ENUM_PREFIX = "TILE_BACKDROP1_"
+TILE_ENUM_START = "TILE_BACKDROP1_START"
 
 def rgb_to_565(r, g, b):
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
         out.write(f"const TileId preset_backdrop1[MAP_HEIGHT][MAP_WIDTH] = {{\n")
         for tile_row in range(TILES_Y):
-            ids = ", ".join(f"{ENUM_PREFIX}{tile_row * TILES_X + tile_col:03d}"
+            ids = ", ".join(f"{TILE_ENUM_START} + {tile_row * TILES_X + tile_col}"
                             for tile_col in range(TILES_X))
             end = "," if tile_row + 1 < TILES_Y else ""
             out.write(f"    {{ {ids} }}{end}\n")
