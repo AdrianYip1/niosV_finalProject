@@ -2,6 +2,7 @@
 #include "tiles.h"
 #include "backdrops/backdrop1_tiles.h"
 #include "backdrops/ground_tiles.h"
+#include "backdrops/pokemon_center_interior_tiles.h"
 
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 int map_overlay[MAP_HEIGHT][MAP_WIDTH];
@@ -108,6 +109,24 @@ static void add_decor_entry(TileId tile, int x, int y) {
     g_decor_entry_count++;
 }
 
+static bool map_place_overlay_rect(int x, int y,
+                                   int width, int height,
+                                   const TileId *tiles_to_place) {
+    if (x < 0 || y < 0 || x + width > MAP_WIDTH || y + height > MAP_HEIGHT) {
+        return false;
+    }
+
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            const TileId tile = tiles_to_place[row * width + col];
+            map_overlay[y + row][x + col] = tile;
+            add_decor_entry(tile, x + col, y + row);
+        }
+    }
+
+    return true;
+}
+
 static void draw_overlay_tile(TileId tile, int x, int y) {
     const short *overlay_tile = tiles[tile];
     const int screen_x = x * TILE_SIZE;
@@ -150,6 +169,9 @@ void apply_map_decor_layout(MapDecorLayout layout) {
         {19, 0}, {19, 1}, {19, 2}, {19, 3}, {19, 4}, {19, 5}, {19, 6},
         {19, 7}, {19, 8}, {19, 9}, {19, 10}, {19, 11}, {19, 12}, {19, 13}
     };
+    static const MapTilePosition route_a_pokemon_centers[] = {
+        {8, 1},
+    };
 
     static const MapTilePosition route_b_grass_patch_positions[] = {
         {7,4}, {8,4}, {9,4}, {10,4}, {11,4}, {12,4},
@@ -180,6 +202,8 @@ void apply_map_decor_layout(MapDecorLayout layout) {
     const MapDecorDefinition *decor = &route_a_decor;
 
     switch (layout) {
+        case MAP_DECOR_NONE:
+            return;
         case MAP_DECOR_ROUTE_B:
             decor = &route_b_decor;
             break;
@@ -193,6 +217,11 @@ void apply_map_decor_layout(MapDecorLayout layout) {
     }
     for (unsigned int i = 0; i < decor->tree_count; i++) {
         map_place_tree_xy(decor->tree_positions[i].x, decor->tree_positions[i].y);
+    }
+    if (layout == MAP_DECOR_ROUTE_A) {
+        for (unsigned int i = 0; i < sizeof(route_a_pokemon_centers) / sizeof(route_a_pokemon_centers[0]); i++) {
+            map_place_pokemon_center_xy(route_a_pokemon_centers[i].x, route_a_pokemon_centers[i].y);
+        }
     }
 }
 
@@ -243,6 +272,7 @@ static const TileId *const preset_ptrs[] = {
     (const TileId *)preset_black,
     (const TileId *)preset_backdrop1,
     (const TileId *)preset_ground,
+    (const TileId *)preset_pokemon_center_interior,
 };
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
@@ -286,6 +316,15 @@ bool map_place_tree_xy(int x, int y) {
     return true;
 }
 
+bool map_place_pokemon_center_xy(int x, int y) {
+    static const TileId pokemon_center_tiles[3 * 3] = {
+        TILE_POKEMON_CENTER_TOP_LEFT, TILE_POKEMON_CENTER_TOP_MIDDLE, TILE_POKEMON_CENTER_TOP_RIGHT,
+        TILE_POKEMON_CENTER_MIDDLE_LEFT, TILE_POKEMON_CENTER_MIDDLE_MIDDLE, TILE_POKEMON_CENTER_MIDDLE_RIGHT,
+        TILE_POKEMON_CENTER_BOTTOM_LEFT, TILE_POKEMON_CENTER_BOTTOM_MIDDLE, TILE_POKEMON_CENTER_BOTTOM_RIGHT,
+    };
+    return map_place_overlay_rect(x, y, 3, 3, pokemon_center_tiles);
+}
+
 bool map_set_overlay_tile_xy(int x, int y, TileId tile) {
     if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) {
         return false;
@@ -297,7 +336,16 @@ bool map_set_overlay_tile_xy(int x, int y, TileId tile) {
 }
 
 bool map_is_walkable_tile(TileId tile) {
-    return tile != TILE_TREE_TOP && tile != TILE_TREE_BOTTOM;
+    return tile != TILE_TREE_TOP &&
+           tile != TILE_TREE_BOTTOM &&
+           tile != TILE_POKEMON_CENTER_TOP_LEFT &&
+           tile != TILE_POKEMON_CENTER_TOP_MIDDLE &&
+           tile != TILE_POKEMON_CENTER_TOP_RIGHT &&
+           tile != TILE_POKEMON_CENTER_MIDDLE_LEFT &&
+           tile != TILE_POKEMON_CENTER_MIDDLE_MIDDLE &&
+           tile != TILE_POKEMON_CENTER_MIDDLE_RIGHT &&
+           tile != TILE_POKEMON_CENTER_BOTTOM_LEFT &&
+           tile != TILE_POKEMON_CENTER_BOTTOM_RIGHT;
 }
 
 bool map_is_walkable_at_xy(int x, int y) {

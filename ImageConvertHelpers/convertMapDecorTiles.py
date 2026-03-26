@@ -51,15 +51,20 @@ def format_array(name: str, vals: list[int]) -> str:
 def main() -> None:
     tree = load_rgba(TREE_SRC, 16, 32)
     grass = load_rgba(GRASS_SRC, 16, 16)
-    pokemon_center = load_rgba(POKEMON_CENTER_SRC, 32, 32)
+    pokemon_center = load_rgba(POKEMON_CENTER_SRC, 48, 48)
 
     tree_top_vals = rgba_to_565_values(tree.crop((0, 0, 16, 16)))
     tree_bottom_vals = rgba_to_565_values(tree.crop((0, 16, 16, 32)))
     grass_vals = rgba_to_565_values(grass)
     pokemon_center_top_left_vals = rgba_to_565_values(pokemon_center.crop((0, 0, 16, 16)))
-    pokemon_center_top_right_vals = rgba_to_565_values(pokemon_center.crop((16, 0, 32, 16)))
-    pokemon_center_bottom_left_vals = rgba_to_565_values(pokemon_center.crop((0, 16, 16, 32)))
-    pokemon_center_bottom_right_vals = rgba_to_565_values(pokemon_center.crop((16, 16, 32, 32)))
+    pokemon_center_top_middle_vals = rgba_to_565_values(pokemon_center.crop((16, 0, 32, 16)))
+    pokemon_center_top_right_vals = rgba_to_565_values(pokemon_center.crop((32, 0, 48, 16)))
+    pokemon_center_middle_left_vals = rgba_to_565_values(pokemon_center.crop((0, 16, 16, 32)))
+    pokemon_center_middle_middle_vals = rgba_to_565_values(pokemon_center.crop((16, 16, 32, 32)))
+    pokemon_center_middle_right_vals = rgba_to_565_values(pokemon_center.crop((32, 16, 48, 32)))
+    pokemon_center_bottom_left_vals = rgba_to_565_values(pokemon_center.crop((0, 32, 16, 48)))
+    pokemon_center_bottom_middle_vals = rgba_to_565_values(pokemon_center.crop((16, 32, 32, 48)))
+    pokemon_center_bottom_right_vals = rgba_to_565_values(pokemon_center.crop((32, 32, 48, 48)))
 
     header = "\n".join([
         "#pragma once",
@@ -70,8 +75,13 @@ def main() -> None:
         "extern const short tree_bottom_tile[TILE_SIZE * TILE_SIZE];",
         "extern const short grass_patch_tile[TILE_SIZE * TILE_SIZE];",
         "extern const short pokemon_center_top_left_tile[TILE_SIZE * TILE_SIZE];",
+        "extern const short pokemon_center_top_middle_tile[TILE_SIZE * TILE_SIZE];",
         "extern const short pokemon_center_top_right_tile[TILE_SIZE * TILE_SIZE];",
+        "extern const short pokemon_center_middle_left_tile[TILE_SIZE * TILE_SIZE];",
+        "extern const short pokemon_center_middle_middle_tile[TILE_SIZE * TILE_SIZE];",
+        "extern const short pokemon_center_middle_right_tile[TILE_SIZE * TILE_SIZE];",
         "extern const short pokemon_center_bottom_left_tile[TILE_SIZE * TILE_SIZE];",
+        "extern const short pokemon_center_bottom_middle_tile[TILE_SIZE * TILE_SIZE];",
         "extern const short pokemon_center_bottom_right_tile[TILE_SIZE * TILE_SIZE];",
         "",
     ])
@@ -83,8 +93,13 @@ def main() -> None:
         format_array("tree_bottom_tile", tree_bottom_vals),
         format_array("grass_patch_tile", grass_vals),
         format_array("pokemon_center_top_left_tile", pokemon_center_top_left_vals),
+        format_array("pokemon_center_top_middle_tile", pokemon_center_top_middle_vals),
         format_array("pokemon_center_top_right_tile", pokemon_center_top_right_vals),
+        format_array("pokemon_center_middle_left_tile", pokemon_center_middle_left_vals),
+        format_array("pokemon_center_middle_middle_tile", pokemon_center_middle_middle_vals),
+        format_array("pokemon_center_middle_right_tile", pokemon_center_middle_right_vals),
         format_array("pokemon_center_bottom_left_tile", pokemon_center_bottom_left_vals),
+        format_array("pokemon_center_bottom_middle_tile", pokemon_center_bottom_middle_vals),
         format_array("pokemon_center_bottom_right_tile", pokemon_center_bottom_right_vals),
         "",
     ])

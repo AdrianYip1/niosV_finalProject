@@ -35,15 +35,21 @@ typedef struct {
 
 static const MapTransition kRouteATransitions[] = {
     { MAP_TRANSITION_EDGE, MAP_TRANSITION_INPUT_LEFT, 0, 0, MC_MOVE_EXIT_LEFT, WORLD_MAP_ROUTE_B, (MAP_WIDTH * TILE_SIZE) - 24, 112, MC_FACING_W },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 9, 3, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
 };
 
 static const MapTransition kRouteBTransitions[] = {
     { MAP_TRANSITION_EDGE, MAP_TRANSITION_INPUT_RIGHT, 0, 0, MC_MOVE_EXIT_RIGHT, WORLD_MAP_ROUTE_A, 8, 112, MC_FACING_E },
 };
 
+static const MapTransition kPokemonCenter1Transitions[] = {
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 9, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 152, 64, MC_FACING_S },
+};
+
 static const WorldMapDefinition kWorldMaps[WORLD_MAP_COUNT] = {
     { MAP_PRESET_GROUND, MAP_DECOR_ROUTE_A, kRouteATransitions, (int)(sizeof(kRouteATransitions) / sizeof(kRouteATransitions[0])) },
     { MAP_PRESET_GROUND, MAP_DECOR_ROUTE_B, kRouteBTransitions, (int)(sizeof(kRouteBTransitions) / sizeof(kRouteBTransitions[0])) },
+    { MAP_PRESET_POKEMON_CENTER_INTERIOR, MAP_DECOR_NONE, kPokemonCenter1Transitions, (int)(sizeof(kPokemonCenter1Transitions) / sizeof(kPokemonCenter1Transitions[0])) },
 };
 
 void load_world_map(WorldMapId map_id, int start_x, int start_y, McFacing facing) {
