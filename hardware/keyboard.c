@@ -7,6 +7,7 @@ static bool a_pressed = false;
 static bool s_pressed = false;
 static bool d_pressed = false;
 static bool space_pressed = false;
+static bool tab_pressed = false;
 static bool shift_pressed = false;
 
 static bool up_pressed = false;
@@ -96,6 +97,9 @@ static char scan_to_char(unsigned char code) {
         // space
         case 0x29: return ' ';
 
+        // tab
+        case 0x0D: return '\t';
+
         // backspace (use '\b' as a marker)
         case 0x66: return '\b';
 
@@ -149,6 +153,9 @@ void update_keyboard(void) {
                         case 0x29: 
                             if (state) space_pressed = true; // Latch Make Code only
                             break;
+                        case 0x0D:
+                            if (state) tab_pressed = true;
+                            break;
                         case 0x76: esc_pressed = state; break;
                         default: break;
                     }
@@ -176,6 +183,11 @@ bool is_key_space_pressed(void) {
     bool temp = space_pressed;
     space_pressed = false; // クリアして「読んだ」ことにする（Fast-Tap対策）
     return temp; 
+}
+bool is_key_tab_pressed(void) {
+    bool temp = tab_pressed;
+    tab_pressed = false;
+    return temp;
 }
 bool is_key_escape_pressed(void) { return esc_pressed; }
 

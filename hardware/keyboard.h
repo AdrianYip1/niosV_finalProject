@@ -10,6 +10,7 @@ bool is_key_a_pressed(void);
 bool is_key_s_pressed(void);
 bool is_key_d_pressed(void);
 bool is_key_space_pressed(void);
+bool is_key_tab_pressed(void);
 bool is_key_shift_pressed(void);
 bool is_key_escape_pressed(void);
 
