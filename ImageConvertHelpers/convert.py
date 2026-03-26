@@ -7,7 +7,7 @@ import re
 from PIL import Image
 
 
-SRC_DIR = Path("ImageConvertHelpers/cynthia192x192")
+SRC_DIR = Path("C:\ecefinal\niosV_finalProject\ImageConvertHelpers\cynthia192x192\cynthiaFront.png")
 OUT_DIR = Path("software/graphics/sprites/cynthiaFront")
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
