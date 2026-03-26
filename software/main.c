@@ -1761,6 +1761,75 @@ int main(void)
                                 BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT,
                                 0, battleBackdropY,
                                 TRANSPARENT_COLOUR);
+
+                // Keep HP UI visible during the pause
+                {
+                    pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+                    pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+
+                    const int enemyHp = (enemyActive != NULL) ? enemyActive->scaledStatsWithLevel[0] : 0;
+                    const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
+                    const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
+                    const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
+                    const bool playerFainted = (playerActive != NULL) && (!playerActive->alive || playerHp <= 0);
+
+                    if (playerFainted) {
+                        draw_sprite_any_bob_greyscale(myHpEmpty,
+                                                      MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                                      MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                                      TRANSPARENT_COLOUR,
+                                                      bobFrame);
+                    } else {
+                        draw_sprite_any_bob(myHpEmpty,
+                                            MY_HP_EMPTY_WIDTH, MY_HP_EMPTY_HEIGHT,
+                                            MY_HP_EMPTY_X, MY_HP_EMPTY_Y,
+                                            TRANSPARENT_COLOUR,
+                                            bobFrame);
+                    }
+                    draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+
+                    const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
+                    const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
+
+                    const int enemyHpPct = (enemyMaxHp > 0) ? (enemyHp * 100) / enemyMaxHp : 0;
+                    const int playerHpPct = (playerMaxHp > 0) ? (playerHp * 100) / playerMaxHp : 0;
+
+                    const short enemyHpBarColour = (enemyHpPct < 15) ? RED : ((enemyHpPct < 50) ? ORANGE : GREEN);
+                    const short playerHpBarColour = (playerHpPct < 15) ? RED : ((playerHpPct < 50) ? ORANGE : GREEN);
+
+                    char oppLvlBuf[8];
+                    char myLvlBuf[8];
+                    char myHpCurBuf[8];
+                    char myHpMaxBuf[8];
+                    snprintf(oppLvlBuf, sizeof(oppLvlBuf), "%d", (enemyActive != NULL) ? enemyActive->level : 0);
+                    snprintf(myLvlBuf, sizeof(myLvlBuf), "%d", (playerActive != NULL) ? playerActive->level : 0);
+                    snprintf(myHpCurBuf, sizeof(myHpCurBuf), "%d", playerHp);
+                    snprintf(myHpMaxBuf, sizeof(myHpMaxBuf), "%d", playerMaxHp);
+
+                    draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20,
+                              (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth),
+                              HP_HEIGHT,
+                              enemyHpBarColour);
+                    draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
+                    draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                    draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                    draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
+
+                    static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
+                    0, -1, -1, 0, 0, 1, 1, 0,
+                    0, -1, -1, 0, 0, 1, 1, 0 };
+                    int offsetY = dy_pattern[bobFrame];
+                    draw_rect(myHP_X, myHP_Y + offsetY,
+                              (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth),
+                              HP_HEIGHT,
+                              playerHpBarColour);
+                    draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
+                    draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
+                    draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
+                    draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
+                    draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
+                    draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+                }
                 break;
             }
 

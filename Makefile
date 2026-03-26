@@ -73,6 +73,8 @@ SRCS := software/main.c \
         software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
+        software/graphics/sprites/pokemonAreas/pokemonAreaBack.c \
+        software/graphics/sprites/pokemonAreas/pokemonAreaFront.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
         software/se/opening_audio.c \
