@@ -52,7 +52,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/gameplayLogic/battling/battleLoop.h \
  software/gameplayLogic/battling/../entities/pokemonObject.h \
  software/gameplayLogic/battling/../entities/pokemonDataBase.h \
- software/gameplayLogic/battling/../entities/learnset.h \
+ software/gameplayLogic/battling/../entities/learnSet.h \
  software/gameplayLogic/battling/../bag.h \
  software/gameplayLogic/battling/party.h \
  software/gameplayLogic/itemDatabase.h \
@@ -63,6 +63,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/sprites/battleItemsUI/itemDescription.h \
  software/graphics/sprites/battleItemsUI/pokeballIcons.h \
  software/graphics/sprites/battleItemsUI/healingItemIcons.h \
+ software/graphics/sprites/menu/menuSprites.h \
  software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h
 software/graphics/graphics.h:
 software/graphics/predefined_graphics.h:
@@ -121,7 +122,7 @@ software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h:
 software/gameplayLogic/battling/battleLoop.h:
 software/gameplayLogic/battling/../entities/pokemonObject.h:
 software/gameplayLogic/battling/../entities/pokemonDataBase.h:
-software/gameplayLogic/battling/../entities/learnset.h:
+software/gameplayLogic/battling/../entities/learnSet.h:
 software/gameplayLogic/battling/../bag.h:
 software/gameplayLogic/battling/party.h:
 software/gameplayLogic/itemDatabase.h:
@@ -132,4 +133,5 @@ software/graphics/sprites/battleItemsUI/itemSlot.h:
 software/graphics/sprites/battleItemsUI/itemDescription.h:
 software/graphics/sprites/battleItemsUI/pokeballIcons.h:
 software/graphics/sprites/battleItemsUI/healingItemIcons.h:
+software/graphics/sprites/menu/menuSprites.h:
 software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h:
