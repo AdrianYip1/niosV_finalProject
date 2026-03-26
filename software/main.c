@@ -2448,7 +2448,7 @@ int main(void)
         //exp calculations, levelup, evolution, learn moves
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
-            if (is_key_space_pressed) currentGameState = GAME_STATE_MAP;
+            if (spacePressed) currentGameState = GAME_STATE_MAP;
 
             break;
 
@@ -2456,7 +2456,7 @@ int main(void)
 
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "LOSE", BLACK);
-             if (is_key_space_pressed) currentGameState = GAME_STATE_MAP;
+             if (spacePressed) currentGameState = GAME_STATE_MAP;
             currentGameState = GAME_STATE_MAP;
             
             break;
