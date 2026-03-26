@@ -77,6 +77,8 @@ SRCS := software/main.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaBack.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaFront.c \
+        software/graphics/sprites/menu/menuSprites.c \
+        software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
         software/gameplayLogic/worldMap.c \
