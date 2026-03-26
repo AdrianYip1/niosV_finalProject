@@ -20,6 +20,10 @@ void init_predefined_graphics(void)
     memcpy(tiles[TILE_TREE_TOP], tree_top_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_TREE_BOTTOM], tree_bottom_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_GRASS_PATCH], grass_patch_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKEMON_CENTER_TOP_LEFT], pokemon_center_top_left_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKEMON_CENTER_TOP_RIGHT], pokemon_center_top_right_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKEMON_CENTER_BOTTOM_LEFT], pokemon_center_bottom_left_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKEMON_CENTER_BOTTOM_RIGHT], pokemon_center_bottom_right_tile, sizeof(tiles[0]));
 
     for (int i = 0; i < BACKDROP1_TILE_COUNT; i++) {
         memcpy(tiles[TILE_BACKDROP1_START + i], backdrop1_tiles[i], sizeof(tiles[0]));
