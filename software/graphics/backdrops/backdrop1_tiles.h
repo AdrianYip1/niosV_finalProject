@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tiles.h"
-#include "map.h"
+#include "../tiles.h"
+#include "../map.h"
 
 #define BACKDROP1_TILE_COUNT 300
 
