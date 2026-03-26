@@ -581,6 +581,8 @@ int main(void)
     int shadePulseFrame = 0;
     int shakeFrame = 0;
     int shakeTimer = 0;
+    int playerHitShakeFrame = -1;
+    int enemyHitShakeFrame = -1;
     int bobPartyFrame = 0;
     int bobPartyTimer = 0;
     const int shakeSpeedFrames = 3;
@@ -1254,6 +1256,14 @@ int main(void)
                 shakeTimer = 0;
                 shakeFrame = (shakeFrame + 1) % SHAKE_SPRITE_FRAME_COUNT;
             }
+            if (playerHitShakeFrame >= 0) {
+                playerHitShakeFrame++;
+                if (playerHitShakeFrame >= SHAKE_SPRITE_FRAME_COUNT) playerHitShakeFrame = -1;
+            }
+            if (enemyHitShakeFrame >= 0) {
+                enemyHitShakeFrame++;
+                if (enemyHitShakeFrame >= SHAKE_SPRITE_FRAME_COUNT) enemyHitShakeFrame = -1;
+            }
             bobTimer++;
             if (bobTimer >= bobSpeedFrames) {
                 bobTimer = 0;
@@ -1271,15 +1281,33 @@ int main(void)
             // Battle base layer
             draw_map();
  
-            draw_sprite_any_bob(playerBackSprite.pixels,
-                                playerBackSprite.width, playerBackSprite.height,
-                                playerBackSprite.x, playerBackSprite.y,
-                                TRANSPARENT_COLOUR,
-                                bobFrame);
-            draw_sprite_any(enemyFrontSprite.pixels,
-                            enemyFrontSprite.width, enemyFrontSprite.height,
-                            enemyFrontSprite.x, enemyFrontSprite.y,
-                            TRANSPARENT_COLOUR);
+            //shake effct for getting hit for your pokemon or opponents pokemon
+            if (playerHitShakeFrame >= 0) {
+                draw_sprite_any_shake(playerBackSprite.pixels,
+                                      playerBackSprite.width, playerBackSprite.height,
+                                      playerBackSprite.x, playerBackSprite.y,
+                                      TRANSPARENT_COLOUR,
+                                      playerHitShakeFrame);
+            } else {
+                draw_sprite_any_bob(playerBackSprite.pixels,
+                                    playerBackSprite.width, playerBackSprite.height,
+                                    playerBackSprite.x, playerBackSprite.y,
+                                    TRANSPARENT_COLOUR,
+                                    bobFrame);
+            }
+
+            if (enemyHitShakeFrame >= 0) {
+                draw_sprite_any_shake(enemyFrontSprite.pixels,
+                                      enemyFrontSprite.width, enemyFrontSprite.height,
+                                      enemyFrontSprite.x, enemyFrontSprite.y,
+                                      TRANSPARENT_COLOUR,
+                                      enemyHitShakeFrame);
+            } else {
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
 
             // Draw the battle UI background before do it wont cover HP .
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
@@ -1682,6 +1710,14 @@ int main(void)
                 shakeTimer = 0;
                 shakeFrame = (shakeFrame + 1) % SHAKE_SPRITE_FRAME_COUNT;
             }
+            if (playerHitShakeFrame >= 0) {
+                playerHitShakeFrame++;
+                if (playerHitShakeFrame >= SHAKE_SPRITE_FRAME_COUNT) playerHitShakeFrame = -1;
+            }
+            if (enemyHitShakeFrame >= 0) {
+                enemyHitShakeFrame++;
+                if (enemyHitShakeFrame >= SHAKE_SPRITE_FRAME_COUNT) enemyHitShakeFrame = -1;
+            }
             bobTimer++;
             if (bobTimer >= bobSpeedFrames) {
                 bobTimer = 0;
@@ -1691,15 +1727,32 @@ int main(void)
             // Draw the normal battle base.
             draw_map();
 
-            draw_sprite_any_bob(playerBackSprite.pixels,
-                                playerBackSprite.width, playerBackSprite.height,
-                                playerBackSprite.x, playerBackSprite.y,
-                                TRANSPARENT_COLOUR,
-                                bobFrame);
-            draw_sprite_any(enemyFrontSprite.pixels,
-                            enemyFrontSprite.width, enemyFrontSprite.height,
-                            enemyFrontSprite.x, enemyFrontSprite.y,
-                            TRANSPARENT_COLOUR);
+            if (playerHitShakeFrame >= 0) {
+                draw_sprite_any_shake(playerBackSprite.pixels,
+                                      playerBackSprite.width, playerBackSprite.height,
+                                      playerBackSprite.x, playerBackSprite.y,
+                                      TRANSPARENT_COLOUR,
+                                      playerHitShakeFrame);
+            } else {
+                draw_sprite_any_bob(playerBackSprite.pixels,
+                                    playerBackSprite.width, playerBackSprite.height,
+                                    playerBackSprite.x, playerBackSprite.y,
+                                    TRANSPARENT_COLOUR,
+                                    bobFrame);
+            }
+
+            if (enemyHitShakeFrame >= 0) {
+                draw_sprite_any_shake(enemyFrontSprite.pixels,
+                                      enemyFrontSprite.width, enemyFrontSprite.height,
+                                      enemyFrontSprite.x, enemyFrontSprite.y,
+                                      TRANSPARENT_COLOUR,
+                                      enemyHitShakeFrame);
+            } else {
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                TRANSPARENT_COLOUR);
+            }
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
             pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
@@ -1773,7 +1826,7 @@ int main(void)
                                   : "";
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
 
-            // Attack messages auto-advance; Space can also advance early.
+            // Attack messages auto advance
             if (battleState.messageCount <= 0) {
                 actionTextAutoTimer = 0;
                 actionTextLastMsgIndex = -1;
@@ -1783,6 +1836,12 @@ int main(void)
 
                 if (msg != NULL && strstr(msg, " used ") != NULL) {
                     play_sfx(hit_normal_audio, hit_normal_audio_len);
+                //checks string to see who attacked
+                    if (strncmp(msg, "Opposing ", 9) == 0) {
+                        playerHitShakeFrame = 0;
+                    } else {
+                        enemyHitShakeFrame = 0;
+                    }
                 }
             }
 
