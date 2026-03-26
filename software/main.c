@@ -2199,8 +2199,14 @@ int main(void)
                             battleBackdropY,
                             TRANSPARENT_COLOUR);
 
-            // Blank textbox during the animation.
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "", BLACK);
+
+            if (pokeballCatchItem != ITEM_NONE) {
+                char usedBuf[96];
+                snprintf(usedBuf, sizeof(usedBuf), "You used a %s!", itemName(pokeballCatchItem));
+                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, usedBuf, BLACK);
+            } else {
+                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "You used a Poke Ball!", BLACK);
+            }
 
             break;
         }
