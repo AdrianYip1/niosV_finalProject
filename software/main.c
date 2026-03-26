@@ -217,14 +217,19 @@
 // Game States
 typedef enum {
     GAME_STATE_MAP = 0,
-    GAME_STATE_BATTLE = 1,
-    GAME_STATE_BATTLE_TRANSITION = 2,
-    GAME_STATE_BATTLE_INTRO_TEXT = 3,
-    GAME_STATE_BATTLE_ACTION_TEXT = 4,
-    GAME_STATE_POKEBALL_THROW = 5,
-    GAME_STATE_POKEBALL_CATCH = 6,
-    GAME_STATE_BATTLE_WIN = 7,
-    GAME_STATE_BATTLE_LOSE = 8,
+    GAME_STATE_WILD_BATTLE = 1,
+    GAME_STATE_WILD_BATTLE_TRANSITION = 2,
+    GAME_STATE_WILD_BATTLE_INTRO_TEXT = 3,
+
+    GAME_STATE_TRAINER_BATTLE = 4,
+    GAME_STATE_TRAINER_BATTLE_TRANSITION = 5,
+    GAME_STATE_TRAINER_BATTLE_INTRO_TEXT = 6,
+
+    GAME_STATE_BATTLE_ACTION_TEXT = 7,
+    GAME_STATE_POKEBALL_THROW = 8,
+    GAME_STATE_POKEBALL_CATCH = 9,
+    GAME_STATE_BATTLE_WIN = 10,
+    GAME_STATE_BATTLE_LOSE = 11,
 } GameState;
 
 typedef enum {
@@ -244,8 +249,12 @@ typedef enum {
     BATTLE_UI_BAG_ITEM_DESC = 5,
 } BattleUiState;
 
+static inline bool isBattleMenuState(GameState state) {
+    return state == GAME_STATE_WILD_BATTLE || state == GAME_STATE_TRAINER_BATTLE;
+}
+
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
-    if (state != GAME_STATE_BATTLE) return ARROW_CTX_NONE;
+    if (!isBattleMenuState(state)) return ARROW_CTX_NONE;
     if (battleUi == BATTLE_UI_ATTACK_MENU) return ARROW_CTX_BATTLE_ATTACK;
     if (battleUi == BATTLE_UI_BAG_MENU) return ARROW_CTX_BATTLE_BAG_MENU;
     if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) return ARROW_CTX_BATTLE_BAG_LIST;
@@ -582,11 +591,12 @@ int main(void)
     bool battleThrowPokeballTextReady = false;
     bool pokeballThrowShowText = true;
     bool pokeballThrowAutoAdvance = false;
-    GameState pokeballThrowReturnState = GAME_STATE_BATTLE;
+    GameState pokeballThrowReturnState = GAME_STATE_WILD_BATTLE;
 
     GameState currentGameState = GAME_STATE_MAP;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
+    GameState activeBattleMenuState = GAME_STATE_WILD_BATTLE;
     int battleCursor = 0;
 
     // Bag UI state.
@@ -605,6 +615,7 @@ int main(void)
     bool actionTextAwaitSpaceRelease = false;
     BattleUiState actionTextReturnUi = BATTLE_UI_MENU;
     int actionTextReturnCursor = 0;
+    GameState actionTextReturnGameState = GAME_STATE_WILD_BATTLE;
     int actionTextAutoTimer = 0;
     int actionTextLastMsgIndex = -1;
 
@@ -768,7 +779,7 @@ int main(void)
     // Initial state setup 1 for battle, 2 for map
     init_map();
     load_map_preset(MAP_PRESET_BACKDROP1);
-    if (currentGameState == GAME_STATE_BATTLE) {
+    if (isBattleMenuState(currentGameState)) {
         play_bgm(battle_audio, battle_audio_len);
     } else {
         play_bgm(map_audio, map_audio_len);
@@ -788,10 +799,10 @@ int main(void)
                     nextBattleType = BATTLE_WILD;
                 } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
                     nextBattleType = BATTLE_WILD;
-                    currentGameState = GAME_STATE_BATTLE;
+                    currentGameState = GAME_STATE_WILD_BATTLE;
                 } else if (ch == '3' && currentGameState == GAME_STATE_MAP) {
                     nextBattleType = BATTLE_TRAINER;
-                    currentGameState = GAME_STATE_BATTLE;
+                    currentGameState = GAME_STATE_TRAINER_BATTLE;
                 }
             }
         }
@@ -825,7 +836,8 @@ int main(void)
 
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
-                currentGameState = GAME_STATE_BATTLE_TRANSITION;
+                activeBattleMenuState = (nextBattleType == BATTLE_WILD) ? GAME_STATE_WILD_BATTLE : GAME_STATE_TRAINER_BATTLE;
+                currentGameState = (nextBattleType == BATTLE_WILD) ? GAME_STATE_WILD_BATTLE_TRANSITION : GAME_STATE_TRAINER_BATTLE_TRANSITION;
                 transitionFrame = 0;
                 transitionTimer = 0;
                 battleIntroTextReady = false;
@@ -840,7 +852,7 @@ int main(void)
         const bool escPressed = escDown && !prevEsc;
         prevEsc = escDown;
 
-        if (currentGameState == GAME_STATE_BATTLE && escPressed) {
+        if (isBattleMenuState(currentGameState) && escPressed) {
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
                 battleUi = BATTLE_UI_MENU;
                 battleCursor = 0;
@@ -886,7 +898,10 @@ int main(void)
         prevRight = rightDown;
 
         switch (currentGameState) {
-        case GAME_STATE_BATTLE: {
+        case GAME_STATE_WILD_BATTLE:
+        case GAME_STATE_TRAINER_BATTLE: {
+            activeBattleMenuState = currentGameState;
+            actionTextReturnGameState = currentGameState;
             bool didMoveBattleCursor = false;
 
             {
@@ -968,11 +983,22 @@ int main(void)
                         battleCursor = 0;
                         play_sfx(plink_audio, plink_audio_len);
                     } else if (battleCursor == 2) {
-                        battleApplyPlayerAction(&battleState, ACTION_RUN, 0);
-                        play_sfx(plink_audio, plink_audio_len);
-                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
-                        if (battleState.result == BATTLE_RESULT_FLED) {
-                            currentGameState = GAME_STATE_MAP;
+                        if (battleState.type != BATTLE_WILD) {
+                            battleUiSetSingleMessage(&battleState, "You can't run from a trainer battle!");
+                            actionTextReturnUi = battleUi;
+                            actionTextReturnCursor = battleCursor;
+                            actionTextReturnGameState = activeBattleMenuState;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
+                            play_sfx(plink_audio, plink_audio_len);
+                        } else {
+                            battleApplyPlayerAction(&battleState, ACTION_RUN, 0);
+                            play_sfx(plink_audio, plink_audio_len);
+                            syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                            if (battleState.result == BATTLE_RESULT_FLED) {
+                                currentGameState = GAME_STATE_MAP;
+                            }
                         }
                     } else if (battleCursor >= 3 && battleCursor <= 8) {
                         // Don't consume a turn for invalid switches
@@ -1088,12 +1114,23 @@ int main(void)
                         if (playerBag.lastUsedItem != ITEM_NONE) {
                             const ItemId last = playerBag.lastUsedItem;
                             if (itemIsBall(last)) {
+                                if (battleState.type != BATTLE_WILD) {
+                                    battleUiSetSingleMessage(&battleState, "You can't catch a trainer's Pokemon!");
+                                    actionTextReturnUi = battleUi;
+                                    actionTextReturnCursor = battleCursor;
+                                    actionTextReturnGameState = activeBattleMenuState;
+                                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                    actionTextAwaitSpaceRelease = true;
+                                    break;
+                                }
                                 if (bagCount(&playerBag, last) <= 0) {
                                     char buf[96];
                                     snprintf(buf, sizeof(buf), "You're out of %s!", itemName(last));
                                     battleUiSetSingleMessage(&battleState, buf);
                                     actionTextReturnUi = battleUi;
                                     actionTextReturnCursor = battleCursor;
+                                    actionTextReturnGameState = activeBattleMenuState;
                                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                     actionTextAwaitSpaceRelease = true;
@@ -1149,12 +1186,22 @@ int main(void)
                     if (bagDescItem != ITEM_NONE) {
                         const ItemId item = bagDescItem;
                         if (itemIsBall(item)) {
+                            if (battleState.type != BATTLE_WILD) {
+                                battleUiSetSingleMessage(&battleState, "You can't catch a trainer's Pokemon!");
+                                actionTextReturnUi = bagDescReturnUi;
+                                actionTextReturnCursor = bagDescReturnCursor;
+                                actionTextReturnGameState = activeBattleMenuState;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
+                            } else
                             if (bagCount(&playerBag, item) <= 0) {
                                 char buf[96];
                                 snprintf(buf, sizeof(buf), "You're out of %s!", itemName(item));
                                 battleUiSetSingleMessage(&battleState, buf);
                                 actionTextReturnUi = bagDescReturnUi;
                                 actionTextReturnCursor = bagDescReturnCursor;
+                                actionTextReturnGameState = activeBattleMenuState;
                                 currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                 previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                 actionTextAwaitSpaceRelease = true;
@@ -1184,13 +1231,14 @@ int main(void)
                     }
                 }
 
-                if (currentGameState == GAME_STATE_BATTLE && battleState.messageCount > 0) {
+                if (isBattleMenuState(currentGameState) && battleState.messageCount > 0) {
                     actionTextReturnUi = battleUi;
                     actionTextReturnCursor = battleCursor;
+                    actionTextReturnGameState = activeBattleMenuState;
                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     actionTextAwaitSpaceRelease = true;
-                } else if (currentGameState == GAME_STATE_BATTLE && battleState.result != BATTLE_RESULT_ONGOING) {
+                } else if (isBattleMenuState(currentGameState) && battleState.result != BATTLE_RESULT_ONGOING) {
                     currentGameState = GAME_STATE_MAP;
                 }
             }
@@ -1760,8 +1808,8 @@ int main(void)
                     } else {
                         battleUi = actionTextReturnUi;
                         battleCursor = actionTextReturnCursor;
-                        currentGameState = GAME_STATE_BATTLE;
-                        previousGameState = GAME_STATE_BATTLE;
+                        currentGameState = actionTextReturnGameState;
+                        previousGameState = actionTextReturnGameState;
                     }
                 }
             }
@@ -1769,92 +1817,92 @@ int main(void)
             break;
         }
 
-        case GAME_STATE_BATTLE_TRANSITION: {
-            if (battleState.type == BATTLE_WILD) {
-                // Wild battle transition
+        case GAME_STATE_WILD_BATTLE_TRANSITION: {
+            // Precompute center
+            const int centerX = SCREEN_WIDTH / 2;
+            const int centerY = SCREEN_HEIGHT / 2;
 
-                // Precompute center
-                const int centerX = SCREEN_WIDTH / 2;
-                const int centerY = SCREEN_HEIGHT / 2;
+            // Draw battle scene underneath
+            draw_map();
+            draw_sprite_any(battleUIBackgroundSprite,
+                            BATTLE_UI_BACKGROUND_WIDTH,
+                            BATTLE_UI_BACKGROUND_HEIGHT,
+                            0, battleBackdropY,
+                            TRANSPARENT_COLOUR);
 
-                // Draw battle scene underneath
-                draw_map();
-                draw_sprite_any(battleUIBackgroundSprite,
-                                BATTLE_UI_BACKGROUND_WIDTH,
-                                BATTLE_UI_BACKGROUND_HEIGHT,
-                                0, battleBackdropY,
+            // Draw the opponent sprite underneath 
+            if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(enemyFrontSprite.pixels,
+                                enemyFrontSprite.width, enemyFrontSprite.height,
+                                enemyFrontSprite.x, enemyFrontSprite.y,
                                 TRANSPARENT_COLOUR);
-
-                // Draw the opponent sprite underneath 
-                if (enemyFrontSprite.pixels != NULL) {
-                    draw_sprite_any(enemyFrontSprite.pixels,
-                                    enemyFrontSprite.width, enemyFrontSprite.height,
-                                    enemyFrontSprite.x, enemyFrontSprite.y,
-                                    TRANSPARENT_COLOUR);
-                }
-
-                // Expanding rectangle
-                int halfW = transitionFrame * 12;  // speed (increase for faster)
-                int halfH = transitionFrame * 8;
-
-                int left = centerX - halfW;
-                int right = centerX + halfW;
-                int top = centerY - halfH;
-                int bottom = centerY + halfH;
-
-                // Clamp to screen
-                if (left < 0) left = 0;
-                if (right > SCREEN_WIDTH) right = SCREEN_WIDTH;
-                if (top < 0) top = 0;
-                if (bottom > SCREEN_HEIGHT) bottom = SCREEN_HEIGHT;
-
-                // Draw black borders
-                if (top > 0)
-                    draw_rect(0, 0, SCREEN_WIDTH, top, BLACK);
-                if (bottom < SCREEN_HEIGHT)
-                    draw_rect(0, bottom, SCREEN_WIDTH, SCREEN_HEIGHT - bottom, BLACK);
-                if (left > 0)
-                    draw_rect(0, top, left, bottom - top, BLACK);
-                if (right < SCREEN_WIDTH)
-                    draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
-
-                transitionTimer++;
-                if (transitionTimer >= transitionSpeedFrames) {
-                    transitionTimer = 0;
-                    transitionFrame++;
-                }
-
-                if (left == 0 && right == SCREEN_WIDTH &&
-                    top == 0 && bottom == SCREEN_HEIGHT) {
-
-                    currentGameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                    previousGameState = GAME_STATE_BATTLE_INTRO_TEXT;
-                    battleIntroTextReady = false;
-                    transitionFrame = 0;
-                }
-            } else {
-                // Trainer battle transition 
-                draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
-                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
-
-                if (spacePressed) {
-                    play_sfx(plink_audio, plink_audio_len);
-                    pokeballThrowShowText = true;
-                    pokeballThrowAutoAdvance = false;
-                    pokeballThrowReturnState = GAME_STATE_BATTLE;
-                    currentGameState = GAME_STATE_POKEBALL_THROW;
-                    previousGameState = GAME_STATE_POKEBALL_THROW;
-                    battleThrowPokeballTextReady = false;
-                    pokeballThrowInit = false;
-                    transitionFrame = 0;
-                    transitionTimer = 0;
-                }
             }
-         
+
+            // Expanding rectangle
+            int halfW = transitionFrame * 12;  // speed (increase for faster)
+            int halfH = transitionFrame * 8;
+
+            int left = centerX - halfW;
+            int right = centerX + halfW;
+            int top = centerY - halfH;
+            int bottom = centerY + halfH;
+
+            // Clamp to screen
+            if (left < 0) left = 0;
+            if (right > SCREEN_WIDTH) right = SCREEN_WIDTH;
+            if (top < 0) top = 0;
+            if (bottom > SCREEN_HEIGHT) bottom = SCREEN_HEIGHT;
+
+            // Draw black borders
+            if (top > 0)
+                draw_rect(0, 0, SCREEN_WIDTH, top, BLACK);
+            if (bottom < SCREEN_HEIGHT)
+                draw_rect(0, bottom, SCREEN_WIDTH, SCREEN_HEIGHT - bottom, BLACK);
+            if (left > 0)
+                draw_rect(0, top, left, bottom - top, BLACK);
+            if (right < SCREEN_WIDTH)
+                draw_rect(right, top, SCREEN_WIDTH - right, bottom - top, BLACK);
+
+            transitionTimer++;
+            if (transitionTimer >= transitionSpeedFrames) {
+                transitionTimer = 0;
+                transitionFrame++;
+            }
+
+            if (left == 0 && right == SCREEN_WIDTH &&
+                top == 0 && bottom == SCREEN_HEIGHT) {
+
+                currentGameState = GAME_STATE_WILD_BATTLE_INTRO_TEXT;
+                previousGameState = GAME_STATE_WILD_BATTLE_INTRO_TEXT;
+                battleIntroTextReady = false;
+                transitionFrame = 0;
+            }
+
+            break;
+        }
+
+        case GAME_STATE_TRAINER_BATTLE_TRANSITION: {
+            // Trainer battle transition (placeholder): blank screen + textbox prompt.
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
+
+            if (spacePressed) {
+                play_sfx(plink_audio, plink_audio_len);
+                pokeballThrowShowText = true;
+                pokeballThrowAutoAdvance = false;
+                pokeballThrowReturnState = activeBattleMenuState;
+                currentGameState = GAME_STATE_POKEBALL_THROW;
+                previousGameState = GAME_STATE_POKEBALL_THROW;
+                battleThrowPokeballTextReady = false;
+                pokeballThrowInit = false;
+                transitionFrame = 0;
+                transitionTimer = 0;
+            }
+
             break;
         }
         
-        case GAME_STATE_BATTLE_INTRO_TEXT: {
+        case GAME_STATE_WILD_BATTLE_INTRO_TEXT: {
             draw_map();
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
@@ -1882,12 +1930,30 @@ int main(void)
                 play_sfx(plink_audio, plink_audio_len);
                 pokeballThrowShowText = true;
                 pokeballThrowAutoAdvance = false;
-                pokeballThrowReturnState = GAME_STATE_BATTLE;
+                pokeballThrowReturnState = activeBattleMenuState;
                 currentGameState = GAME_STATE_POKEBALL_THROW;
                 previousGameState = GAME_STATE_POKEBALL_THROW;
                 battleThrowPokeballTextReady = false;
             }
          
+            break;
+        }
+
+        case GAME_STATE_TRAINER_BATTLE_INTRO_TEXT: {
+            // Placeholder trainer intro: black screen + textbox prompt.
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
+
+            if (spacePressed) {
+                play_sfx(plink_audio, plink_audio_len);
+                pokeballThrowShowText = true;
+                pokeballThrowAutoAdvance = false;
+                pokeballThrowReturnState = activeBattleMenuState;
+                currentGameState = GAME_STATE_POKEBALL_THROW;
+                previousGameState = GAME_STATE_POKEBALL_THROW;
+                battleThrowPokeballTextReady = false;
+            }
+
             break;
         }
 
@@ -2040,8 +2106,8 @@ int main(void)
                     pokeballThrowInit = false;
                 } else if (spacePressed) {
                     play_sfx(plink_audio, plink_audio_len);
-                    currentGameState = GAME_STATE_BATTLE;
-                    previousGameState = GAME_STATE_BATTLE;
+                    currentGameState = pokeballThrowReturnState;
+                    previousGameState = pokeballThrowReturnState;
                     battleThrowPokeballTextReady = false;
                     pokeballThrowInit = false;
                 }
@@ -2199,6 +2265,7 @@ int main(void)
                                 battleState.result = BATTLE_RESULT_CAUGHT;
                                 actionTextReturnUi = BATTLE_UI_MENU;
                                 actionTextReturnCursor = 0;
+                                actionTextReturnGameState = activeBattleMenuState;
                                 currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                 previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                 actionTextAwaitSpaceRelease = true;
@@ -2211,6 +2278,7 @@ int main(void)
                                 battleState.result = BATTLE_RESULT_ONGOING;
                                 actionTextReturnUi = BATTLE_UI_MENU;
                                 actionTextReturnCursor = 0;
+                                actionTextReturnGameState = activeBattleMenuState;
                                 currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                 previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                                 actionTextAwaitSpaceRelease = true;
