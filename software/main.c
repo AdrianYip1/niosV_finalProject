@@ -60,6 +60,7 @@
 #include "graphics/sprites/battleItemsUI/itemDescription.h"
 #include "graphics/sprites/battleItemsUI/pokeballIcons.h"
 #include "graphics/sprites/battleItemsUI/healingItemIcons.h"
+#include "graphics/sprites/menu/menuSprites.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -238,6 +239,7 @@ typedef enum {
     GAME_STATE_POKEBALL_CATCH = 9,
     GAME_STATE_BATTLE_WIN = 10,
     GAME_STATE_BATTLE_LOSE = 11,
+    GAME_STATE_MENU = 12,
 } GameState;
 
 typedef enum {
@@ -259,6 +261,10 @@ typedef enum {
 
 static inline bool isBattleMenuState(GameState state) {
     return state == GAME_STATE_WILD_BATTLE || state == GAME_STATE_TRAINER_BATTLE;
+}
+
+static inline bool isOverworldState(GameState state) {
+    return state == GAME_STATE_MAP || state == GAME_STATE_MENU;
 }
 
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
@@ -798,6 +804,7 @@ int main(void)
 
     textboxDone = 0;
     prevSpaceDown = false;
+    int menuCursor = 0; // 0..5 (2 columns x 3 rows)
 
     while (1) {
         update_keyboard();
@@ -813,14 +820,19 @@ int main(void)
                 } else if (ch == '3' && currentGameState == GAME_STATE_MAP) {
                     nextBattleType = BATTLE_TRAINER;
                     currentGameState = GAME_STATE_TRAINER_BATTLE;
+                } else if (ch == '4' && currentGameState == GAME_STATE_MAP) {
+                    currentGameState = GAME_STATE_MENU;
+                    menuCursor = 0;
+                } else if (ch == '4' && currentGameState == GAME_STATE_MENU) {
+                    currentGameState = GAME_STATE_MAP;
                 }
             }
         }
 
-        const bool wasMapMode = (previousGameState == GAME_STATE_MAP);
-        const bool isMapMode = (currentGameState == GAME_STATE_MAP);
-        if (wasMapMode != isMapMode) {
-            if (isMapMode) {
+        const bool wasOverworld = isOverworldState(previousGameState);
+        const bool isOverworld = isOverworldState(currentGameState);
+        if (wasOverworld != isOverworld) {
+            if (isOverworld) {
                 play_bgm(map_audio, map_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_GROUND);
@@ -862,6 +874,10 @@ int main(void)
         const bool escDown = is_key_escape_pressed();
         const bool escPressed = escDown && !prevEsc;
         prevEsc = escDown;
+
+        if (currentGameState == GAME_STATE_MENU && escPressed) {
+            currentGameState = GAME_STATE_MAP;
+        }
 
         if (isBattleMenuState(currentGameState) && escPressed) {
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
@@ -909,6 +925,59 @@ int main(void)
         prevRight = rightDown;
 
         switch (currentGameState) {
+        case GAME_STATE_MENU: {
+            
+            const int menuX = (SCREEN_WIDTH - MENU_PARTY_MENU_WIDTH) / 2;
+            const int menuY = (SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2;
+
+            if (menuCursor < 0) menuCursor = 0;
+            if (menuCursor > 5) menuCursor = 5;
+
+            const int row = menuCursor / 2;
+            const int col = menuCursor % 2;
+            int nextRow = row;
+            int nextCol = col;
+
+            if (upPressed && row > 0) nextRow--;
+            if (downPressed && row < 2) nextRow++;
+            if (leftPressed && col > 0) nextCol--;
+            if (rightPressed && col < 1) nextCol++;
+
+            const int nextCursor = nextRow * 2 + nextCol;
+            if (nextCursor != menuCursor) {
+                menuCursor = nextCursor;
+                play_sfx(plink_audio, plink_audio_len);
+            }
+
+            clear_screen();
+            draw_sprite_any(partyMenuSprite,
+                            MENU_PARTY_MENU_WIDTH, MENU_PARTY_MENU_HEIGHT,
+                            menuX, menuY,
+                            TRANSPARENT_COLOUR);
+
+            const int slotW = 128;
+            const int slotH = 49;
+            const int unselectedDx = (slotW - MENU_POKEMON_UNSELECTED_WIDTH) / 2;
+            const int unselectedDy = (slotH - MENU_POKEMON_UNSELECTED_HEIGHT) / 2;
+
+            for (int i = 0; i < 6; i++) {
+                const int slotX = menuX + (i % 2) * slotW;
+                const int slotY = menuY + (i / 2) * slotH;
+                if (i == menuCursor) {
+                    draw_sprite_any(pokemonSelectedSprite,
+                                    MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
+                                    slotX, slotY,
+                                    TRANSPARENT_COLOUR);
+                } else {
+                    draw_sprite_any(pokemonUnselectedSprite,
+                                    MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
+                                    slotX + unselectedDx, slotY + unselectedDy,
+                                    TRANSPARENT_COLOUR);
+                }
+            }
+
+            break;
+        }
         case GAME_STATE_WILD_BATTLE:
         case GAME_STATE_TRAINER_BATTLE: {
             activeBattleMenuState = currentGameState;
