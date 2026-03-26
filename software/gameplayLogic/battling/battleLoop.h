@@ -2,7 +2,7 @@
 #define BATTLE_LOOP_H
 
 #include "../entities/pokemonObject.h"
-#include "../entities/learnset.h"
+#include "../entities/learnSet.h"
 #include "../bag.h"
 #include "party.h"
 

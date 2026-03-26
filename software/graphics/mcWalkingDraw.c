@@ -49,8 +49,11 @@ static SpriteBounds computeSpriteBoundsNxN(const unsigned short* frame, int n) {
 static void updateMcBoundsFromFrameAt(const unsigned short* frame, int tileSize, int spriteX, int spriteY) {
     const SpriteBounds b = computeSpriteBoundsNxN(frame, tileSize);
     if (b.valid) {
+        // lower body has bbox
+        const int bbox_height = b.maxY - b.minY + 1;
+        const int lower_body_start = b.minY + (bbox_height / 2);
         g_mcBounds.x0 = spriteX + b.minX;
-        g_mcBounds.y0 = spriteY + b.minY;
+        g_mcBounds.y0 = spriteY + lower_body_start;
         g_mcBounds.x1 = spriteX + b.maxX;
         g_mcBounds.y1 = spriteY + b.maxY;
         g_mcBounds.valid = 1;
@@ -61,6 +64,16 @@ static void updateMcBoundsFromFrameAt(const unsigned short* frame, int tileSize,
         g_mcBounds.y1 = spriteY - 1;
         g_mcBounds.valid = 0;
     }
+}
+
+static void offsetMcBounds(int dx, int dy) {
+    if (!g_mcBounds.valid) {
+        return;
+    }
+    g_mcBounds.x0 += dx;
+    g_mcBounds.y0 += dy;
+    g_mcBounds.x1 += dx;
+    g_mcBounds.y1 += dy;
 }
 
 void initMCWalkingSprite(int startX, int startY, McFacing facing) {
@@ -127,18 +140,22 @@ McBounds getMCBounds(void) {
 
 void goUp(void) {
     mcWalkingSprite.y -= 1;
+    offsetMcBounds(0, -1);
 }
 
 void goDown(void) {
     mcWalkingSprite.y += 1;
+    offsetMcBounds(0, 1);
 }
 
 void goLeft(void) {
     mcWalkingSprite.x -= 1;
+    offsetMcBounds(-1, 0);
 }
 
 void goRight(void) {
     mcWalkingSprite.x += 1;
+    offsetMcBounds(1, 0);
 }
 
 void initMCWalkingEast(void) {

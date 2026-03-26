@@ -1,5 +1,5 @@
 #include "pokemonObject.h"
-#include "learnset.h"
+#include "learnSet.h"
 #include <stdio.h>
 
 
