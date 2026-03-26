@@ -1290,9 +1290,9 @@ int main(void)
  
             //shake effct for getting hit for your pokemon or opponents pokemon
             if (playerHitShakeFrame >= 0) {
-                draw_sprite_any(pokemonAreaFront,
-                                POKEMON_AREA_FRONT_WIDTH,
-                                POKEMON_AREA_FRONT_HEIGHT,
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
                                 AREA_BACK_X, AREA_BACK_Y,
                                 TRANSPARENT_COLOUR);
                 draw_sprite_any_shake(playerBackSprite.pixels,
@@ -1301,9 +1301,9 @@ int main(void)
                                       TRANSPARENT_COLOUR,
                                       playerHitShakeFrame);
             } else {
-                draw_sprite_any(pokemonAreaFront,
-                                POKEMON_AREA_FRONT_WIDTH,
-                                POKEMON_AREA_FRONT_HEIGHT,
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
                                 AREA_BACK_X, AREA_BACK_Y,
                                 TRANSPARENT_COLOUR);
                 draw_sprite_any_bob(playerBackSprite.pixels,
@@ -1756,6 +1756,16 @@ int main(void)
                 actionTextInterAttackPauseTimer--;
 
                 draw_map();
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_FRONT_X, AREA_FRONT_Y,
+                                TRANSPARENT_COLOUR);
 
                 if (playerHitShakeFrame >= 0) {
                     draw_sprite_any_shake(playerBackSprite.pixels,
@@ -1864,9 +1874,9 @@ int main(void)
             draw_map();
 
             if (playerHitShakeFrame >= 0) {
-                draw_sprite_any(pokemonAreaFront,
-                                POKEMON_AREA_FRONT_WIDTH,
-                                POKEMON_AREA_FRONT_HEIGHT,
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
                                 AREA_BACK_X, AREA_BACK_Y,
                                 TRANSPARENT_COLOUR);
                 draw_sprite_any_shake(playerBackSprite.pixels,
@@ -1875,9 +1885,9 @@ int main(void)
                                       TRANSPARENT_COLOUR,
                                       playerHitShakeFrame);
             } else {
-                draw_sprite_any(pokemonAreaFront,
-                                POKEMON_AREA_FRONT_WIDTH,
-                                POKEMON_AREA_FRONT_HEIGHT,
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
                                 AREA_BACK_X, AREA_BACK_Y,
                                 TRANSPARENT_COLOUR);
                 draw_sprite_any_bob(playerBackSprite.pixels,
