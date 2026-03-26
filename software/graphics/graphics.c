@@ -557,7 +557,7 @@ void hide_textbox(int x, int y)
 
     for (int ty = topTile; ty <= bottomTile; ty++) {
         for (int tx = leftTile; tx <= rightTile; tx++) {
-            drawTile(tx, ty, map[ty][tx]);
+            draw_map_cell(tx, ty);
         }
     }
 }

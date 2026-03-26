@@ -4,7 +4,14 @@
 #include "mcMoving.h"
 #include "../../../hardware/keyboard.h"
 #include "../../graphics/mcWalkingDraw.h"
+#include "../../graphics/map.h"
 #include "../../../hardware/audio.h"
+
+static bool mcCanMoveBy(int dx, int dy);
+static void tryMoveUp(void);
+static void tryMoveDown(void);
+static void tryMoveLeft(void);
+static void tryMoveRight(void);
 
 void mcMovingInit(int startX, int startY, McFacing facing) {
     initMCWalkingSprite(startX, startY, facing);
@@ -17,34 +24,70 @@ static void moveDiagonal(McDirection dir, unsigned int stepCounter) {
     switch (dir) {
         case MC_DIR_NE:
             if (even) {
-                goRight();
+                tryMoveRight();
             } else {
-                goUp();
+                tryMoveUp();
             }
             break;
         case MC_DIR_NW:
             if (even) {
-                goLeft();
+                tryMoveLeft();
             } else {
-                goUp();
+                tryMoveUp();
             }
             break;
         case MC_DIR_SE:
             if (even) {
-                goRight();
+                tryMoveRight();
             } else {
-                goDown();
+                tryMoveDown();
             }
             break;
         case MC_DIR_SW:
             if (even) {
-                goLeft();
+                tryMoveLeft();
             } else {
-                goDown();
+                tryMoveDown();
             }
             break;
         default:
             break;
+    }
+}
+
+static bool mcCanMoveBy(int dx, int dy) {
+    const McBounds bounds = getMCBounds();
+    if (!bounds.valid) {
+        return true;
+    }
+
+    return map_bounds_are_walkable(bounds.x0 + dx,
+                                   bounds.y0 + dy,
+                                   bounds.x1 + dx,
+                                   bounds.y1 + dy);
+}
+
+static void tryMoveUp(void) {
+    if (mcCanMoveBy(0, -1)) {
+        goUp();
+    }
+}
+
+static void tryMoveDown(void) {
+    if (mcCanMoveBy(0, 1)) {
+        goDown();
+    }
+}
+
+static void tryMoveLeft(void) {
+    if (mcCanMoveBy(-1, 0)) {
+        goLeft();
+    }
+}
+
+static void tryMoveRight(void) {
+    if (mcCanMoveBy(1, 0)) {
+        goRight();
     }
 }
 
@@ -80,16 +123,16 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
         }
         switch (dir) {
             case MC_DIR_N:
-                goUp();
+                tryMoveUp();
                 break;
             case MC_DIR_S:
-                goDown();
+                tryMoveDown();
                 break;
             case MC_DIR_W:
-                goLeft();
+                tryMoveLeft();
                 break;
             case MC_DIR_E:
-                goRight();
+                tryMoveRight();
                 break;
             case MC_DIR_NE:
             case MC_DIR_NW:

@@ -823,7 +823,8 @@ int main(void)
             if (isMapMode) {
                 play_bgm(map_audio, map_audio_len);
                 init_map();
-                load_map_preset(MAP_PRESET_ROUTE);
+                load_map_preset(MAP_PRESET_GROUND);
+                apply_map_decor();
                 mcMovingInit(80, 112, MC_FACING_S);
             } else {
                 play_bgm(battle_audio, battle_audio_len);
