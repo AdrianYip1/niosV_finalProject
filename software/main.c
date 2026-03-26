@@ -267,6 +267,20 @@ static inline bool isOverworldState(GameState state) {
     return state == GAME_STATE_MAP || state == GAME_STATE_MENU;
 }
 
+static inline int clamp_int(int v, int lo, int hi) {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+static inline int expBarWidthFor(const pokemonInBattle *pokemon) {
+    if (pokemon == NULL) return 0;
+    const int needed = expRequiredAtLevel(pokemon->level);
+    if (needed <= 0) return 0;
+    const int w = (EXP_WIDTH * pokemon->exp) / needed;
+    return clamp_int(w, 0, EXP_WIDTH);
+}
+
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
     if (!isBattleMenuState(state)) return ARROW_CTX_NONE;
     if (battleUi == BATTLE_UI_ATTACK_MENU) return ARROW_CTX_BATTLE_ATTACK;
@@ -932,10 +946,8 @@ int main(void)
 
         switch (currentGameState) {
         case GAME_STATE_MENU: {
-            
             const int menuX = (SCREEN_WIDTH - MENU_PARTY_MENU_WIDTH) / 2;
             const int menuY = (SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2;
-            const int menuY_right = menuY + 8;
 
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 5) menuCursor = 5;
@@ -970,15 +982,16 @@ int main(void)
             for (int i = 0; i < 6; i++) {
                 const int slotX = menuX + (i % 2) * slotW;
                 const int slotY = menuY + (i / 2) * slotH;
+                const int colYOffset = ((i % 2) == 1) ? 8 : 0;
                 if (i == menuCursor) {
                     draw_sprite_any(pokemonSelectedSprite,
                                     MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
-                                    slotX, slotY,
+                                    slotX, slotY + colYOffset,
                                     TRANSPARENT_COLOUR);
                 } else {
                     draw_sprite_any(pokemonUnselectedSprite,
                                     MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
-                                    slotX + unselectedDx, slotY + unselectedDy,
+                                    slotX + unselectedDx, slotY + unselectedDy + colYOffset,
                                     TRANSPARENT_COLOUR);
                 }
             }
@@ -1474,7 +1487,7 @@ int main(void)
             int offsetY = dy_pattern[bobFrame];
             //my hp bar
             draw_rect(myHP_X, myHP_Y + offsetY, (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth), HP_HEIGHT, playerHpBarColour);
-            draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
+            draw_rect(EXP_X, EXP_Y + offsetY, expBarWidthFor(playerActive), EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
 
@@ -1936,7 +1949,7 @@ int main(void)
                               (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth),
                               HP_HEIGHT,
                               playerHpBarColour);
-                    draw_rect(EXP_X, EXP_Y + offsetY, EXP_WIDTH, EXP_HEIGHT, TURQ);
+                    draw_rect(EXP_X, EXP_Y + offsetY, expBarWidthFor(playerActive), EXP_HEIGHT, TURQ);
                     draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
                     draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
                     draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
@@ -2005,8 +2018,7 @@ int main(void)
             const int playerHp = (playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0;
             const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
             const bool playerFainted = (playerActive != NULL) && (!playerActive->alive || playerHp <= 0);
-            const int playerCurrentExp = (playerActive != NULL) ? playerActive->exp : 0;
-            const int playerNeededExp = (playerActive != NULL) ? expRequiredAtLevel(playerActive->level) : 0;
+            const int playerExpBarWidth = expBarWidthFor(playerActive);
 
             
             if (playerFainted) {
@@ -2026,8 +2038,6 @@ int main(void)
 
             const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
             const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
-
-            const int playerExpBarWidth = (playerNeededExp > 0) ? (EXP_WIDTH * playerCurrentExp) / playerNeededExp : 0;
 
             const int enemyHpPct = (enemyMaxHp > 0) ? (enemyHp * 100) / enemyMaxHp : 0;
             const int playerHpPct = (playerMaxHp > 0) ? (playerHp * 100) / playerMaxHp : 0;
@@ -2055,7 +2065,7 @@ int main(void)
             0, -1, -1, 0, 0, 1, 1, 0 };
             int offsetY = dy_pattern[bobFrame];
             draw_rect(myHP_X, myHP_Y + offsetY, (playerHpBarWidth < 0) ? 0 : ((playerHpBarWidth > HP_WIDTH) ? HP_WIDTH : playerHpBarWidth), HP_HEIGHT, playerHpBarColour);
-            draw_rect(EXP_X, EXP_Y + offsetY, (playerExpBarWidth < 0) ? 0 : ((playerExpBarWidth > HP_WIDTH) ? EXP_WIDTH : playerExpBarWidth), EXP_HEIGHT, TURQ);
+            draw_rect(EXP_X, EXP_Y + offsetY, playerExpBarWidth, EXP_HEIGHT, TURQ);
             draw_string_f(myLVL_X, myLVL_Y + offsetY, myLvlBuf, BLACK, 1);
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
             draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
@@ -2698,9 +2708,6 @@ int main(void)
         //get money from trainer battle, exp from wild battle if win
         //exp calculations, levelup, evolution, learn moves
             draw_map();
-            pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
-            pokemonInBattle *opponentActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
-            gainExp(playerActive, opponentActive);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
             if (spacePressed) currentGameState = GAME_STATE_MAP;
 

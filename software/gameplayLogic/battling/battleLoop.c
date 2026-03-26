@@ -114,25 +114,50 @@ static void handleFaint(BattleState *state, Party *party, bool isPlayer) {
     if (next >= 0) party->activeIndex = next;
 }
 
+static void battlePushFaintedMessage(BattleState *state, const pokemonInBattle *pokemon, bool opposing) {
+    const char *name = (pokemon != NULL && pokemon->id.data != NULL && pokemon->id.data->name != NULL)
+                           ? pokemon->id.data->name
+                           : "???";
+    char buf[96];
+    if (opposing) {
+        snprintf(buf, sizeof(buf), "Opposing %s fainted!", name);
+    } else {
+        snprintf(buf, sizeof(buf), "%s fainted!", name);
+    }
+    battlePushMessage(state, buf);
+}
+
+static void awardExpForDefeat(BattleState *state, pokemonInBattle *player, pokemonInBattle *defeated, bool defeatedWasOpposing) {
+    if (state == NULL || player == NULL || defeated == NULL) return;
+    if (defeated->alive) return;
+
+    battlePushFaintedMessage(state, defeated, defeatedWasOpposing);
+    gainExp(player, defeated);
+}
+
 //add non damaging moves -> text indication, sound effects, stat changes/status updates
-static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
-    if (attacker == NULL || target == NULL) return;
-    if (!canAct(attacker)) return;
+static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
+    if (attacker == NULL || target == NULL) return false;
+    if (!canAct(attacker)) return false;
 
     const AttackData *move = (moveIndex >= 0 && moveIndex < 4) ? attacker->attacks[moveIndex] : NULL;
     const int usedMsgIndex = (state != NULL) ? state->messageCount : 0;
 
     if (move != NULL) battlePushUsedMessage(state, attacker, move, opposing, target);
 
+    const bool aliveBefore = target->alive;
     const int hpBefore = target->scaledStatsWithLevel[0];
     (void)useAttack(attacker, target, moveIndex);
     const int hpAfter = target->scaledStatsWithLevel[0];
     const int tookDamage = (hpBefore > hpAfter) ? 1 : 0;
+    const bool faintedNow = aliveBefore && (!target->alive);
 
     // check flag for damage in message 
     if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {
         state->messageFlags[usedMsgIndex] = (unsigned char)tookDamage;
     }
+
+    return faintedNow;
 }
 
 static void resolveSwitch(Party *party, int slot) {
@@ -271,6 +296,7 @@ static void resolveEnemyTurn(BattleState *state) {
     if (enemy == NULL || player == NULL) return;
 
     if (!enemy->alive) {
+        awardExpForDefeat(state, player, enemy, true);
         handleFaint(state, state->enemyParty, false);
         if (state->result != BATTLE_RESULT_ONGOING) return;
         enemy = getActivePokemon(state->enemyParty);
@@ -278,7 +304,7 @@ static void resolveEnemyTurn(BattleState *state) {
     }
 
     const int moveIndex = aiChooseMove(enemy);
-    resolveAttack(state, enemy, player, moveIndex, true);
+    (void)resolveAttack(state, enemy, player, moveIndex, true);
 }
 
 static void resolveTurn(BattleState *state, BattleAction playerAction, int playerParam) {
@@ -298,6 +324,8 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         if (player == NULL) return;
     }
     if (!enemy->alive) {
+        //status moves might have killed
+        awardExpForDefeat(state, player, enemy, true);
         handleFaint(state, state->enemyParty, false);
         if (state->result != BATTLE_RESULT_ONGOING) return;
         enemy = getActivePokemon(state->enemyParty);
@@ -312,24 +340,26 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         const int enemyMove = aiChooseMove(enemy);
         const int order = determineTurnOrder(player, enemy); // 1=player first, 2=enemy first
         if (order == 1) {
-            resolveAttack(state, player, enemy, playerParam, false);
-            if (!enemy->alive) {
+            const bool enemyFaintedNow = resolveAttack(state, player, enemy, playerParam, false);
+            if (enemyFaintedNow) {
+                awardExpForDefeat(state, player, enemy, true);
                 handleFaint(state, state->enemyParty, false);
             }
             if (state->result == BATTLE_RESULT_ONGOING && enemy->alive) {
-                resolveAttack(state, enemy, player, enemyMove, true);
+                (void)resolveAttack(state, enemy, player, enemyMove, true);
                 if (!player->alive) {
                     handleFaint(state, state->playerParty, true);
                 }
             }
         } else {
-            resolveAttack(state, enemy, player, enemyMove, true);
+            (void)resolveAttack(state, enemy, player, enemyMove, true);
             if (!player->alive) {
                 handleFaint(state, state->playerParty, true);
             }
             if (state->result == BATTLE_RESULT_ONGOING && player->alive) {
-                resolveAttack(state, player, enemy, playerParam, false);
-                if (!enemy->alive) {
+                const bool enemyFaintedNow = resolveAttack(state, player, enemy, playerParam, false);
+                if (enemyFaintedNow) {
+                    awardExpForDefeat(state, player, enemy, true);
                     handleFaint(state, state->enemyParty, false);
                 }
             }
@@ -349,8 +379,24 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
     if (state->result != BATTLE_RESULT_ONGOING) return;
     player = getActivePokemon(state->playerParty);
     enemy = getActivePokemon(state->enemyParty);
+    const bool playerAliveBeforeTick = (player != NULL) ? player->alive : false;
+    const bool enemyAliveBeforeTick = (enemy != NULL) ? enemy->alive : false;
     if (player != NULL) tickStatusEffect(player);
     if (enemy != NULL) tickStatusEffect(enemy);
+
+    // Award EXP immediately if the opposing Pokemon faints due to status at end of turn.
+    if (state->result != BATTLE_RESULT_ONGOING) return;
+    if (enemy != NULL && enemyAliveBeforeTick && !enemy->alive) {
+        awardExpForDefeat(state, player, enemy, true);
+        handleFaint(state, state->enemyParty, false);
+    }
+
+    // Keep behavior consistent: if player faints due to status, force a switch promptly.
+    if (state->result != BATTLE_RESULT_ONGOING) return;
+    if (player != NULL && playerAliveBeforeTick && !player->alive) {
+        battlePushFaintedMessage(state, player, false);
+        handleFaint(state, state->playerParty, true);
+    }
 }
 
 void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, Bag *playerBag, BattleType type) {
