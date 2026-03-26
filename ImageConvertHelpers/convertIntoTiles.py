@@ -89,7 +89,6 @@ if __name__ == "__main__":
 
     with open(OUTPUT_C_FILE, "w", encoding="utf-8") as out:
         out.write(f'#include "{OUTPUT_H_FILE.name}"\n\n')
-        out.write(f"#define TILE_SIZE {TILE_SIZE}\n\n")
 
         for tile_row in range(TILES_Y):
             for tile_col in range(TILES_X):
@@ -120,8 +119,11 @@ if __name__ == "__main__":
 
     with open(OUTPUT_H_FILE, "w", encoding="utf-8") as h:
         h.write("#pragma once\n\n")
-        h.write('#include "tiles.h"\n')
-        h.write('#include "map.h"\n\n')
+        h.write('#include "../tiles.h"\n')
+        h.write('#include "../map.h"\n\n')
+        h.write("#ifndef TILE_SIZE\n")
+        h.write(f"#define TILE_SIZE {TILE_SIZE}\n")
+        h.write("#endif\n\n")
         h.write(f"#define BACKDROP1_TILE_COUNT {TOTAL_TILES}\n\n")
         for i in range(TOTAL_TILES):
             h.write(f"extern const short {PREFIX}_tile_{i}[TILE_SIZE * TILE_SIZE];\n")

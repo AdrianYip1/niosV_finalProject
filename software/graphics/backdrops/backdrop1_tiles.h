@@ -3,6 +3,10 @@
 #include "../tiles.h"
 #include "../map.h"
 
+#ifndef TILE_SIZE
+#define TILE_SIZE 16
+#endif
+
 #define BACKDROP1_TILE_COUNT 300
 
 extern const short backdrop1_tile_0[TILE_SIZE * TILE_SIZE];
