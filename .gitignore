@@ -2,3 +2,4 @@
 *.elf
 *.map
 .DS_Store
+*.d

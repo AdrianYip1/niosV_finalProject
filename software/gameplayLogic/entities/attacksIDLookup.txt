@@ -18,3 +18,36 @@ ID 41 = Dragon Claw
 ID 50 = Wing Attack
 ID 51 = Air Slash
 
+ID 52 = Twister
+ID 53 = Ancient Power
+ID 54 = Dragon Dance
+ID 55 = Crunch
+ID 56 = Fly
+ID 57 = Rest
+
+ID 58 = Extreme Speed
+ID 59 = Outrage
+
+ID 60 = Hyperbeam
+
+ID 61 = Metal Claw
+ID 62 = Bone Rush
+ID 63 = Earthquake
+ID 64 = Water Gun
+ID 65 = Surf
+ID 66 = Hydro Pump
+ID 67 = Ice Beam
+ID 68 = Aura Sphere
+ID 69 = Close Combat
+ID 70 = Sludge Bomb
+ID 71 = Giga Drain
+ID 72 = Shadow Ball
+ID 73 = Dazzling Gleam
+ID 74 = Dark Pulse
+ID 75 = Poison Jab
+ID 76 = Leaf Storm
+ID 77 = Aqua Tail
+ID 78 = Sucker Punch
+
+
+

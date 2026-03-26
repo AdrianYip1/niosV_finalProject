@@ -1,15 +1,24 @@
 #include "battleLoop.h"
 #include "../entities/pokemonObject.h"
 #include "../bag.h"
+#include "../../../hardware/audio.h"
+#include "../../se/recover_audio.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+
+//TODO if move misses, have ban indication, also PP should still go down
+//also fullrestore should not restore pp
 
 static void battleClearMessages(BattleState *state) {
     if (state == NULL) return;
     state->messageCount = 0;
     state->messageReadIndex = 0;
-    for (int i = 0; i < BATTLE_MSG_MAX; i++) state->messages[i][0] = '\0';
+    for (int i = 0; i < BATTLE_MSG_MAX; i++) {
+        state->messages[i][0] = '\0';
+        state->messageFlags[i] = 0;
+    }
 }
 
 static void battlePushMessage(BattleState *state, const char *msg) {
@@ -105,13 +114,25 @@ static void handleFaint(BattleState *state, Party *party, bool isPlayer) {
     if (next >= 0) party->activeIndex = next;
 }
 
+//add non damaging moves -> text indication, sound effects, stat changes/status updates
 static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
     if (attacker == NULL || target == NULL) return;
     if (!canAct(attacker)) return;
 
     const AttackData *move = (moveIndex >= 0 && moveIndex < 4) ? attacker->attacks[moveIndex] : NULL;
+    const int usedMsgIndex = (state != NULL) ? state->messageCount : 0;
+
     if (move != NULL) battlePushUsedMessage(state, attacker, move, opposing, target);
+
+    const int hpBefore = target->scaledStatsWithLevel[0];
     (void)useAttack(attacker, target, moveIndex);
+    const int hpAfter = target->scaledStatsWithLevel[0];
+    const int tookDamage = (hpBefore > hpAfter) ? 1 : 0;
+
+    // check flag for damage in message 
+    if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {
+        state->messageFlags[usedMsgIndex] = (unsigned char)tookDamage;
+    }
 }
 
 static void resolveSwitch(Party *party, int slot) {
@@ -191,20 +212,20 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     break;
                 }
 
-                // Consume item (except "blocked" trainer-ball case above).
                 (void)bagRemove(state->playerBag, item, 1);
 
                 snprintf(buf, sizeof(buf), "Used %s!", name);
                 battlePushMessage(state, buf);
 
                 if (itemIsHealing(item)) {
+                    play_sfx(recover_audio, recover_audio_len);
                     int heal = 0;
                     if (item == ITEM_POTION) heal = 20;
-                    else if (item == ITEM_SUPER_POTION) heal = 50;
-                    else if (item == ITEM_HYPER_POTION) heal = 200;
+                    else if (item == ITEM_SUPER_POTION) heal = 60;
+                    else if (item == ITEM_HYPER_POTION) heal = 120;
 
                     if (item == ITEM_FULL_RESTORE) {
-                        fullHeal(player);
+                        fullRestore(player);
                         battlePushMessage(state, "Restored health!");
                     } else {
                         healPokemon(player, heal);

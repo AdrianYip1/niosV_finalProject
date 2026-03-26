@@ -49,6 +49,7 @@ static SpriteBounds computeSpriteBoundsNxN(const unsigned short* frame, int n) {
 static void updateMcBoundsFromFrameAt(const unsigned short* frame, int tileSize, int spriteX, int spriteY) {
     const SpriteBounds b = computeSpriteBoundsNxN(frame, tileSize);
     if (b.valid) {
+        // lower body has bbox
         const int bbox_height = b.maxY - b.minY + 1;
         const int lower_body_start = b.minY + (bbox_height / 2);
         g_mcBounds.x0 = spriteX + b.minX;
