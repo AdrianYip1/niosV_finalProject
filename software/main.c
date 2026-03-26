@@ -217,8 +217,10 @@
 #define RESTORE_ITEM_X ITEM_X - 6
 #define RESTORE_ITEM_Y ITEM_Y - 5
 
-#define AREA_FRONT_X 150
-#define AREA_FRONT_Y 40
+#define AREA_FRONT_X 160
+#define AREA_FRONT_Y 65
+#define AREA_BACK_X 0
+#define AREA_BACK_Y 130
 
 // Game States
 typedef enum {
@@ -1288,12 +1290,22 @@ int main(void)
  
             //shake effct for getting hit for your pokemon or opponents pokemon
             if (playerHitShakeFrame >= 0) {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any_shake(playerBackSprite.pixels,
                                       playerBackSprite.width, playerBackSprite.height,
                                       playerBackSprite.x, playerBackSprite.y,
                                       TRANSPARENT_COLOUR,
                                       playerHitShakeFrame);
             } else {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any_bob(playerBackSprite.pixels,
                                     playerBackSprite.width, playerBackSprite.height,
                                     playerBackSprite.x, playerBackSprite.y,
@@ -1302,12 +1314,22 @@ int main(void)
             }
 
             if (enemyHitShakeFrame >= 0) {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_FRONT_X, AREA_FRONT_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any_shake(enemyFrontSprite.pixels,
                                       enemyFrontSprite.width, enemyFrontSprite.height,
                                       enemyFrontSprite.x, enemyFrontSprite.y,
                                       TRANSPARENT_COLOUR,
                                       enemyHitShakeFrame);
             } else {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_FRONT_X, AREA_FRONT_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
                                 enemyFrontSprite.x, enemyFrontSprite.y,
@@ -1842,12 +1864,22 @@ int main(void)
             draw_map();
 
             if (playerHitShakeFrame >= 0) {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any_shake(playerBackSprite.pixels,
                                       playerBackSprite.width, playerBackSprite.height,
                                       playerBackSprite.x, playerBackSprite.y,
                                       TRANSPARENT_COLOUR,
                                       playerHitShakeFrame);
             } else {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any_bob(playerBackSprite.pixels,
                                     playerBackSprite.width, playerBackSprite.height,
                                     playerBackSprite.x, playerBackSprite.y,
@@ -1856,12 +1888,22 @@ int main(void)
             }
 
             if (enemyHitShakeFrame >= 0) {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_FRONT_X, AREA_FRONT_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any_shake(enemyFrontSprite.pixels,
                                       enemyFrontSprite.width, enemyFrontSprite.height,
                                       enemyFrontSprite.x, enemyFrontSprite.y,
                                       TRANSPARENT_COLOUR,
                                       enemyHitShakeFrame);
             } else {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_FRONT_X, AREA_FRONT_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
                                 enemyFrontSprite.x, enemyFrontSprite.y,
@@ -2250,12 +2292,22 @@ int main(void)
 
             // Draw sprites under the battle UI background 
             if (pokeballThrown && playerBackSprite.pixels != NULL) {
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(playerBackSprite.pixels,
                                 playerBackSprite.width, playerBackSprite.height,
                                 playerBackSprite.x, playerBackSprite.y,
                                 TRANSPARENT_COLOUR);
             }
             if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                AREA_FRONT_X, AREA_FRONT_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
                                 enemyFrontSprite.x, enemyFrontSprite.y,
@@ -2390,12 +2442,22 @@ int main(void)
 
             // Draw base battle sprites.
             if (playerBackSprite.pixels != NULL) {
+                draw_sprite_any(pokemonAreaBack,
+                                POKEMON_AREA_BACK_WIDTH,
+                                POKEMON_AREA_BACK_HEIGHT,
+                                AREA_BACK_X, AREA_BACK_Y,
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(playerBackSprite.pixels,
                                 playerBackSprite.width, playerBackSprite.height,
                                 playerBackSprite.x, playerBackSprite.y,
                                 TRANSPARENT_COLOUR);
             }
             if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(pokemonAreaFront, 
+                                POKEMON_AREA_FRONT_WIDTH, 
+                                POKEMON_AREA_FRONT_HEIGHT, 
+                                AREA_FRONT_X, AREA_FRONT_Y, 
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
                                 enemyFrontSprite.x, enemyFrontSprite.y,
