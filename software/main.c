@@ -773,7 +773,10 @@ int main(void)
         const bool spacePressed = (spaceDown && !prevSpaceDown);
         prevSpaceDown = spaceDown;
 
-        if (textboxDone && spacePressed) break;
+        if (textboxDone && spacePressed) {
+            play_sfx(plink_audio, plink_audio_len);
+            break;
+        }
         wait_for_vsync();
     }
 
@@ -788,7 +791,10 @@ int main(void)
         const bool spacePressed = (spaceDown && !prevSpaceDown);
         prevSpaceDown = spaceDown;
 
-        if (textboxDone && spacePressed) break;
+        if (textboxDone && spacePressed) {
+            play_sfx(plink_audio, plink_audio_len);
+            break;
+        }
         wait_for_vsync();
     }
     stop_bgm();
