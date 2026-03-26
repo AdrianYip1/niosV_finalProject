@@ -6,6 +6,15 @@
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 int map_overlay[MAP_HEIGHT][MAP_WIDTH];
 
+typedef struct {
+    TileId tile;
+    int x;
+    int y;
+} DecorEntry;
+
+static DecorEntry g_decor_entries[MAP_WIDTH * MAP_HEIGHT * 2];
+static int g_decor_entry_count = 0;
+
 static bool is_decor_transparent(unsigned short colour) {
     const int r5 = (colour >> 11) & 31;
     const int g6 = (colour >> 5) & 63;
@@ -76,6 +85,47 @@ static bool tile_collision_rect(TileId tile, int tile_x, int tile_y,
     }
 
     return false;
+}
+
+static void clear_decor_entries(void) {
+    g_decor_entry_count = 0;
+}
+
+static void add_decor_entry(TileId tile, int x, int y) {
+    if (g_decor_entry_count >= (int)(sizeof(g_decor_entries) / sizeof(g_decor_entries[0]))) {
+        return;
+    }
+    g_decor_entries[g_decor_entry_count].tile = tile;
+    g_decor_entries[g_decor_entry_count].x = x;
+    g_decor_entries[g_decor_entry_count].y = y;
+    g_decor_entry_count++;
+}
+
+static void draw_overlay_tile(TileId tile, int x, int y) {
+    const short *overlay_tile = tiles[tile];
+    const int screen_x = x * TILE_SIZE;
+    const int screen_y = y * TILE_SIZE;
+
+    for (int tile_y = 0; tile_y < TILE_SIZE; tile_y++) {
+        for (int tile_x = 0; tile_x < TILE_SIZE; tile_x++) {
+            const unsigned short colour = overlay_tile[tile_y * TILE_SIZE + tile_x];
+            if (is_decor_transparent(colour)) {
+                continue;
+            }
+            draw_pixel(screen_x + tile_x, screen_y + tile_y, colour);
+        }
+    }
+}
+
+static void draw_all_decor(void) {
+    for (int row = 0; row < MAP_HEIGHT; row++) {
+        for (int i = 0; i < g_decor_entry_count; i++) {
+            if (g_decor_entries[i].y != row) {
+                continue;
+            }
+            draw_overlay_tile(g_decor_entries[i].tile, g_decor_entries[i].x, g_decor_entries[i].y);
+        }
+    }
 }
 
 void apply_map_decor(void) {
@@ -161,6 +211,7 @@ void load_map_preset(MapPresetId preset) {
             map_overlay[row][col] = -1;
         }
     }
+    clear_decor_entries();
 
     if (preset == MAP_PRESET_ROUTE) {
         apply_map_decor();
@@ -182,6 +233,8 @@ bool map_place_tree_xy(int x, int y) {
 
     map_overlay[y][x] = TILE_TREE_TOP;
     map_overlay[y + 1][x] = TILE_TREE_BOTTOM;
+    add_decor_entry(TILE_TREE_TOP, x, y);
+    add_decor_entry(TILE_TREE_BOTTOM, x, y + 1);
     return true;
 }
 
@@ -191,6 +244,7 @@ bool map_set_overlay_tile_xy(int x, int y, TileId tile) {
     }
 
     map_overlay[y][x] = tile;
+    add_decor_entry(tile, x, y);
     return true;
 }
 
@@ -248,19 +302,7 @@ void draw_map_cell(int x, int y) {
 
     drawTile(x, y, map[y][x]);
     if (map_overlay[y][x] >= 0) {
-        const short *overlay_tile = tiles[map_overlay[y][x]];
-        const int screen_x = x * TILE_SIZE;
-        const int screen_y = y * TILE_SIZE;
-
-        for (int tile_y = 0; tile_y < TILE_SIZE; tile_y++) {
-            for (int tile_x = 0; tile_x < TILE_SIZE; tile_x++) {
-                const unsigned short colour = overlay_tile[tile_y * TILE_SIZE + tile_x];
-                if (is_decor_transparent(colour)) {
-                    continue;
-                }
-                draw_pixel(screen_x + tile_x, screen_y + tile_y, colour);
-            }
-        }
+        draw_overlay_tile((TileId)map_overlay[y][x], x, y);
     }
 }
 
@@ -271,7 +313,8 @@ void init_map(void) {
 void draw_map(void) {
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
-            draw_map_cell(col, row);
+            drawTile(col, row, map[row][col]);
         }
     }
+    draw_all_decor();
 }
