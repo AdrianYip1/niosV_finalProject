@@ -1887,8 +1887,15 @@ int main(void)
         }
 
         case GAME_STATE_TRAINER_BATTLE_TRANSITION: {
-            // Trainer battle transition (placeholder): blank screen + textbox prompt.
+  
             draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+
+            draw_sprite_any(vsCynthiaSprite,
+                            VS_CYNTHIA_WIDTH,
+                            VS_CYNTHIA_HEIGHT,
+                            (SCREEN_WIDTH - VS_CYNTHIA_WIDTH) / 2,
+                            0,
+                            TRANSPARENT_COLOUR);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
 
             if (spacePressed) {
@@ -1947,7 +1954,12 @@ int main(void)
         case GAME_STATE_TRAINER_BATTLE_INTRO_TEXT: {
             // Placeholder trainer intro: black screen + textbox prompt.
             draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
-            draw_sprite_any(vsCynthiaSprite,VS_CYNTHIA_WIDTH,VS_CYNTHIA_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
+            draw_sprite_any(vsCynthiaSprite,
+                            VS_CYNTHIA_WIDTH,
+                            VS_CYNTHIA_HEIGHT,
+                            (SCREEN_WIDTH - VS_CYNTHIA_WIDTH) / 2,
+                            0,
+                            TRANSPARENT_COLOUR);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
 
             if (spacePressed) {
