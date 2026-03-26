@@ -79,6 +79,7 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaFront.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
+        software/gameplayLogic/worldMap.c \
         software/se/opening_audio.c \
         software/se/introduction_audio.c \
         software/se/battle_audio.c \
