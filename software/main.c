@@ -26,6 +26,8 @@
 #include "../software/se/caught_pokemon_audio.h"
 #include "../software/se/hit_normal_audio.h"
 #include "../software/se/recover_audio.h"
+#include "../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h"
+#include "../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h"
 #include "textinput/getTextFromUser.h"
 #include "graphics/textbox/small_spacebar.h"
 #include "graphics/sprites/battleicons/battle_icons.h"
@@ -214,6 +216,9 @@
 //restore items are a bit differnt in dimensions compared to pokeballs (like a bit higher and to the left)
 #define RESTORE_ITEM_X ITEM_X - 6
 #define RESTORE_ITEM_Y ITEM_Y - 5
+
+#define AREA_FRONT_X 150
+#define AREA_FRONT_Y 40
 
 // Game States
 typedef enum {
@@ -2006,6 +2011,8 @@ int main(void)
         }
 
         case GAME_STATE_WILD_BATTLE_TRANSITION: {
+
+            int transition_moving_X =  -158 - AREA_FRONT_X; //start compeltely out of screen on the left side
             // Precompute center
             const int centerX = SCREEN_WIDTH / 2;
             const int centerY = SCREEN_HEIGHT / 2;
@@ -2020,9 +2027,14 @@ int main(void)
 
             // Draw the opponent sprite underneath 
             if (enemyFrontSprite.pixels != NULL) {
+                                draw_sprite_any(pokemonAreaFront, 
+                                POKEMON_AREA_FRONT_WIDTH, 
+                                POKEMON_AREA_FRONT_HEIGHT, 
+                                (AREA_FRONT_X + transition_moving_X * transitionFrame) / transition_moving_X, AREA_FRONT_Y, 
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
-                                enemyFrontSprite.x, enemyFrontSprite.y,
+                                (enemyFrontSprite.x + transition_moving_X * transitionFrame) / transition_moving_X, enemyFrontSprite.y,
                                 TRANSPARENT_COLOUR);
             }
 
@@ -2102,6 +2114,11 @@ int main(void)
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
             if (enemyFrontSprite.pixels != NULL) {
+                draw_sprite_any(pokemonAreaFront, 
+                                POKEMON_AREA_FRONT_WIDTH, 
+                                POKEMON_AREA_FRONT_HEIGHT, 
+                                AREA_FRONT_X, AREA_FRONT_Y, 
+                                TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
                                 enemyFrontSprite.x, enemyFrontSprite.y,

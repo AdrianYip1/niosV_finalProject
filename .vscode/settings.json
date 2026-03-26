@@ -58,6 +58,7 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "sleep.h": "c",
-    "frozen.h": "c"
+    "frozen.h": "c",
+    "recover_audio.h": "c"
   }
 }
