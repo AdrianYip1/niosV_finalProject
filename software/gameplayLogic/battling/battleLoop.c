@@ -127,12 +127,22 @@ static void battlePushFaintedMessage(BattleState *state, const pokemonInBattle *
     battlePushMessage(state, buf);
 }
 
+static void battlePushExpMessage(BattleState *state, int expGained) {
+    if (state == NULL) return;
+    if (expGained <= 0) return;
+    char buf[96];
+    snprintf(buf, sizeof(buf), "Gained %d EXP!", expGained);
+    battlePushMessage(state, buf);
+}
+
 static void awardExpForDefeat(BattleState *state, pokemonInBattle *player, pokemonInBattle *defeated, bool defeatedWasOpposing) {
     if (state == NULL || player == NULL || defeated == NULL) return;
     if (defeated->alive) return;
 
     battlePushFaintedMessage(state, defeated, defeatedWasOpposing);
+    const int expGained = experienceGained(player->level, defeated->level);
     gainExp(player, defeated);
+    battlePushExpMessage(state, expGained);
 }
 
 //add non damaging moves -> text indication, sound effects, stat changes/status updates
@@ -296,7 +306,6 @@ static void resolveEnemyTurn(BattleState *state) {
     if (enemy == NULL || player == NULL) return;
 
     if (!enemy->alive) {
-        awardExpForDefeat(state, player, enemy, true);
         handleFaint(state, state->enemyParty, false);
         if (state->result != BATTLE_RESULT_ONGOING) return;
         enemy = getActivePokemon(state->enemyParty);
@@ -324,8 +333,6 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         if (player == NULL) return;
     }
     if (!enemy->alive) {
-        //status moves might have killed
-        awardExpForDefeat(state, player, enemy, true);
         handleFaint(state, state->enemyParty, false);
         if (state->result != BATTLE_RESULT_ONGOING) return;
         enemy = getActivePokemon(state->enemyParty);

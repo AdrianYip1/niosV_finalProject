@@ -966,7 +966,7 @@ int main(void)
                 play_sfx(plink_audio, plink_audio_len);
             }
 
-            clear_screen();
+            draw_map();
             draw_sprite_any(partyMenuSprite,
                             MENU_PARTY_MENU_WIDTH, MENU_PARTY_MENU_HEIGHT,
                             menuX, menuY,
