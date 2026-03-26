@@ -202,8 +202,8 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     play_sfx(recover_audio, recover_audio_len);
                     int heal = 0;
                     if (item == ITEM_POTION) heal = 20;
-                    else if (item == ITEM_SUPER_POTION) heal = 50;
-                    else if (item == ITEM_HYPER_POTION) heal = 200;
+                    else if (item == ITEM_SUPER_POTION) heal = 60;
+                    else if (item == ITEM_HYPER_POTION) heal = 120;
 
                     if (item == ITEM_FULL_RESTORE) {
                         fullHeal(player);

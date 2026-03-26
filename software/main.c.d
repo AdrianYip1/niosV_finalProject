@@ -8,7 +8,9 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/gameplayLogic/map_movement/mcMoving.h \
  software/gameplayLogic/map_movement/../../graphics/mcWalkingDraw.h \
  software/graphics/tiles.h software/graphics/predefined_graphics.h \
- software/graphics/map.h software/graphics/titleScreen/titleScreenDraw.h \
+ software/graphics/map.h \
+ software/graphics/sprites/vsCynthia/vsCynthiaSprite.h \
+ software/graphics/titleScreen/titleScreenDraw.h \
  software/graphics/textbox/textBoxSprite.h \
  software/graphics/textbox/textMessages.h \
  software/graphics/sprites/spacebar/spacebar_frames.h \
@@ -73,6 +75,7 @@ software/gameplayLogic/map_movement/../../graphics/mcWalkingDraw.h:
 software/graphics/tiles.h:
 software/graphics/predefined_graphics.h:
 software/graphics/map.h:
+software/graphics/sprites/vsCynthia/vsCynthiaSprite.h:
 software/graphics/titleScreen/titleScreenDraw.h:
 software/graphics/textbox/textBoxSprite.h:
 software/graphics/textbox/textMessages.h:

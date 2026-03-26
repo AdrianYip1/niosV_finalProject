@@ -8,6 +8,7 @@
 #include "gameplayLogic/map_movement/mcMoving.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
+#include "graphics/sprites/vsCynthia/vsCynthiaSprite.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
 #include "graphics/textbox/textBoxSprite.h"
 #include "graphics/textbox/textMessages.h"
@@ -1942,6 +1943,7 @@ int main(void)
         case GAME_STATE_TRAINER_BATTLE_INTRO_TEXT: {
             // Placeholder trainer intro: black screen + textbox prompt.
             draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+            draw_sprite_any(vsCynthiaSprite,VS_CYNTHIA_WIDTH,VS_CYNTHIA_HEIGHT, 100, 100, TRANSPARENT_COLOUR);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
 
             if (spacePressed) {
@@ -2315,14 +2317,17 @@ int main(void)
         //exp calculations, levelup, evolution, learn moves
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
-            currentGameState = GAME_STATE_MAP;
+            if (is_key_space_pressed) currentGameState = GAME_STATE_MAP;
+
             break;
 
         case GAME_STATE_BATTLE_LOSE:
 
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "LOSE", BLACK);
+             if (is_key_space_pressed) currentGameState = GAME_STATE_MAP;
             currentGameState = GAME_STATE_MAP;
+            
             break;
 
         case GAME_STATE_MAP:
