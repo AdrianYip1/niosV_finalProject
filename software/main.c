@@ -791,7 +791,7 @@ int main(void)
     currentGameState = GAME_STATE_MAP;
     previousGameState = GAME_STATE_MAP;
     init_map();
-    load_map_preset(MAP_PRESET_ROUTE);
+    load_map_preset(MAP_PRESET);
     mcMovingInit(80, 112, MC_FACING_S);
     play_bgm(map_audio, map_audio_len);
     wait_for_vsync();

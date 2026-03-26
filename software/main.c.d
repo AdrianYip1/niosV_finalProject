@@ -52,7 +52,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/gameplayLogic/battling/battleLoop.h \
  software/gameplayLogic/battling/../entities/pokemonObject.h \
  software/gameplayLogic/battling/../entities/pokemonDataBase.h \
- software/gameplayLogic/battling/../entities/learnset.h \
+ software/gameplayLogic/battling/../entities/learnSet.h \
  software/gameplayLogic/battling/../bag.h \
  software/gameplayLogic/battling/party.h \
  software/gameplayLogic/itemDatabase.h \
@@ -121,7 +121,7 @@ software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h:
 software/gameplayLogic/battling/battleLoop.h:
 software/gameplayLogic/battling/../entities/pokemonObject.h:
 software/gameplayLogic/battling/../entities/pokemonDataBase.h:
-software/gameplayLogic/battling/../entities/learnset.h:
+software/gameplayLogic/battling/../entities/learnSet.h:
 software/gameplayLogic/battling/../bag.h:
 software/gameplayLogic/battling/party.h:
 software/gameplayLogic/itemDatabase.h:
