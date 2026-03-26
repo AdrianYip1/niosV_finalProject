@@ -178,7 +178,7 @@
 #define EXP_Y MY_HP_EMPTY_Y + 38
 
 #define EXP_WIDTH 88
-#define EXP_HEIGHT 2
+#define EXP_HEIGHT 8
 
 #define TOTAL_HPNUM_X MY_HP_EMPTY_X + 65
 
@@ -278,8 +278,12 @@ static inline int expBarWidthFor(const pokemonInBattle *pokemon) {
     if (pokemon == NULL) return 0;
     const int needed = expRequiredAtLevel(pokemon->level);
     if (needed <= 0) return 0;
-    const int w = (EXP_WIDTH * pokemon->exp) / needed;
-    return clamp_int(w, 0, EXP_WIDTH);
+    if (pokemon->exp <= 0) return 0;
+
+    // Use ceil so small EXP gains still show at least 1 pixel at high levels.
+    const int numer = (EXP_WIDTH * pokemon->exp);
+    const int w = (numer + needed - 1) / needed;
+    return clamp_int(w, 1, EXP_WIDTH);
 }
 
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
@@ -1169,13 +1173,16 @@ int main(void)
                     } else {
                         battleApplyPlayerAction(&battleState, ACTION_ATTACK, moveIndex);
                         play_sfx(plink_audio, plink_audio_len);
-                        if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
-                            currentGameState = GAME_STATE_BATTLE_WIN;
-                        }
-                        if (battleState.result == BATTLE_RESULT_PLAYER_LOSE) {
-                            currentGameState = GAME_STATE_BATTLE_LOSE;
-                        }
                         syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+
+                        // Show attack + faint + EXP messages 
+                        actionTextReturnUi = BATTLE_UI_MENU;
+                        actionTextReturnCursor = 0;
+                        actionTextReturnGameState = activeBattleMenuState;
+                        currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                        actionTextAwaitSpaceRelease = true;
+
                         battleUi = BATTLE_UI_MENU;
                         battleCursor = 0;
                     }
@@ -2133,7 +2140,14 @@ int main(void)
                     actionTextLastMsgIndex = -1;
 
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
-                        currentGameState = GAME_STATE_MAP;
+                        if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
+                            currentGameState = GAME_STATE_BATTLE_WIN;
+                        } else if (battleState.result == BATTLE_RESULT_PLAYER_LOSE) {
+                            currentGameState = GAME_STATE_BATTLE_LOSE;
+                        } else {
+                            // Fled / caught results return to map.
+                            currentGameState = GAME_STATE_MAP;
+                        }
                     } else {
                         battleUi = actionTextReturnUi;
                         battleCursor = actionTextReturnCursor;

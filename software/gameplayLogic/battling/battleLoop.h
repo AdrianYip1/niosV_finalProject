@@ -35,7 +35,7 @@ typedef struct {
     int fleeAttempts;
 
 #ifndef BATTLE_MSG_MAX
-#define BATTLE_MSG_MAX 4
+#define BATTLE_MSG_MAX 8
 #endif
     char messages[BATTLE_MSG_MAX][96];
     unsigned char messageFlags[BATTLE_MSG_MAX];  // 1 if this message displays a damaging hit (exclude no effect)
