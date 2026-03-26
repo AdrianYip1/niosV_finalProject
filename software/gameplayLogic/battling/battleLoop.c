@@ -193,7 +193,6 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     break;
                 }
 
-                // Consume item (except "blocked" trainer-ball case above).
                 (void)bagRemove(state->playerBag, item, 1);
 
                 snprintf(buf, sizeof(buf), "Used %s!", name);
