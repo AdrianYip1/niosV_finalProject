@@ -7,14 +7,14 @@ import re
 from PIL import Image
 
 
-SRC_DIR = Path("ImageConvertHelpers/96x96Sprites")
-OUT_DIR = Path("software/graphics/sprites/pokemon")
+SRC_DIR = Path("ImageConvertHelpers/cynthia192x192")
+OUT_DIR = Path("software/graphics/sprites/cynthiaFront")
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
 
-EXPECTED_W = 96
-EXPECTED_H = 96
+EXPECTED_W = 192
+EXPECTED_H = 192
 
 
 def rgb_to_565(r: int, g: int, b: int) -> int:
