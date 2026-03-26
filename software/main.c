@@ -779,14 +779,13 @@ int main(void)
     }
     stop_bgm();
 
-    // Initial state setup 1 for battle, 2 for map
+    // Initial state setup: start in the walkable map.
+    currentGameState = GAME_STATE_MAP;
+    previousGameState = GAME_STATE_MAP;
     init_map();
-    load_map_preset(MAP_PRESET_BACKDROP1);
-    if (isBattleMenuState(currentGameState)) {
-        play_bgm(battle_audio, battle_audio_len);
-    } else {
-        play_bgm(map_audio, map_audio_len);
-    }
+    load_map_preset(MAP_PRESET_ROUTE);
+    mcMovingInit(80, 112, MC_FACING_S);
+    play_bgm(map_audio, map_audio_len);
     wait_for_vsync();
 
     textboxDone = 0;
@@ -1860,7 +1859,8 @@ int main(void)
             if (shouldAdvance) {
                 actionTextAutoTimer = 0;
                 battleState.messageReadIndex++;
-                actionTextLastMsgIndex = battleState.messageReadIndex;
+                // treat the new index as new by forcing the nextb frame so SFX/shake can trigger for the 2nd pokemon
+                actionTextLastMsgIndex = -1;
 
                 if (battleState.messageReadIndex >= battleState.messageCount) {
                     battleState.messageReadIndex = 0;
