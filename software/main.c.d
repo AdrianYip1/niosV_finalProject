@@ -19,6 +19,11 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/../software/se/battle_audio.h \
  software/../software/se/map_audio.h \
  software/../software/se/plink_audio.h \
+ software/../software/se/pokeball_audio.h \
+ software/../software/se/pokeball_shaking_audio.h \
+ software/../software/se/caught_pokemon_audio.h \
+ software/../software/se/hit_normal_audio.h \
+ software/../software/se/recover_audio.h \
  software/textinput/getTextFromUser.h \
  software/graphics/textbox/small_spacebar.h \
  software/graphics/sprites/battleicons/battle_icons.h \
@@ -80,6 +85,11 @@ software/../software/se/introduction_audio.h:
 software/../software/se/battle_audio.h:
 software/../software/se/map_audio.h:
 software/../software/se/plink_audio.h:
+software/../software/se/pokeball_audio.h:
+software/../software/se/pokeball_shaking_audio.h:
+software/../software/se/caught_pokemon_audio.h:
+software/../software/se/hit_normal_audio.h:
+software/../software/se/recover_audio.h:
 software/textinput/getTextFromUser.h:
 software/graphics/textbox/small_spacebar.h:
 software/graphics/sprites/battleicons/battle_icons.h:
