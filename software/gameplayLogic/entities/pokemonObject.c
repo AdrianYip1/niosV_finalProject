@@ -31,6 +31,7 @@ void scaleStatsWithLevel(pokemonInBattle *pokemon) {
     }
 }
 
+//add exp share later maybe
 void gainExp(pokemonInBattle *pokemon, pokemonInBattle *defeatedPokemon) {
     int expGained = experienceGained(pokemon->level, defeatedPokemon->level);
     if (expGained == 0) return;
@@ -185,9 +186,16 @@ void restoreAllPP(pokemonInBattle *pokemon) {
     for (int i = 0; i < 4; i++) restorePP(pokemon, i);
 }
 
-void fullHeal(pokemonInBattle *pokemon) {
+void fullRestore(pokemonInBattle *pokemon) {
     healPokemon(pokemon, pokemon->maxHp);
-    restoreAllPP(pokemon);
+    //restoreAllPP(pokemon);
+    pokemon->status = STATUS_NONE;
+    pokemon->sleepTurnsRemaining = 0;
+}
+
+void fullHeal(pokemonInBattle *pokemon) {
+    //healPokemon(pokemon, pokemon->maxHp);
+    //restoreAllPP(pokemon);
     pokemon->status = STATUS_NONE;
     pokemon->sleepTurnsRemaining = 0;
 }

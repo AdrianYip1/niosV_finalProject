@@ -82,6 +82,7 @@ bool canAct(pokemonInBattle *pokemon);
 void healPokemon(pokemonInBattle *pokemon, int amount);
 void restorePP(pokemonInBattle *pokemon, int attackIndex);
 void restoreAllPP(pokemonInBattle *pokemon);
+void fullRestore(pokemonInBattle *pokemon);
 void fullHeal(pokemonInBattle *pokemon);
 
 // catch

@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+//TODO if move misses, have ban indication, also PP should still go down
+//also fullrestore should not restore pp
+
 static void battleClearMessages(BattleState *state) {
     if (state == NULL) return;
     state->messageCount = 0;
@@ -220,7 +224,7 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     else if (item == ITEM_HYPER_POTION) heal = 120;
 
                     if (item == ITEM_FULL_RESTORE) {
-                        fullHeal(player);
+                        fullRestore(player);
                         battlePushMessage(state, "Restored health!");
                     } else {
                         healPokemon(player, heal);

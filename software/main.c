@@ -218,9 +218,9 @@
 #define RESTORE_ITEM_Y ITEM_Y - 5
 
 #define AREA_FRONT_X 160
-#define AREA_FRONT_Y 65
+#define AREA_FRONT_Y 70
 #define AREA_BACK_X 0
-#define AREA_BACK_Y 130
+#define AREA_BACK_Y 120
 
 // Game States
 typedef enum {
@@ -647,11 +647,11 @@ int main(void)
     // Temporary team 
     const int playerTeamSpriteIds[6] = {
         POKEMON_ID_RAYQUAZA,
-        POKEMON_ID_CHARMANDER,
-        POKEMON_ID_CHARMELEON,
         POKEMON_ID_CHARIZARD,
-        POKEMON_ID_CHARMANDER,
-        POKEMON_ID_CHARMELEON,
+        POKEMON_ID_GARCHOMP,
+        POKEMON_ID_CHARIZARD,
+        POKEMON_ID_LUCARIO,
+        POKEMON_ID_MILOTIC,
     };
     StaticSprite partyBoxSprites[6];
     initPokemonBoxSprite(&partyBoxSprites[0], playerTeamSpriteIds[0], PARTY_1_X, PARTY_1_Y);
@@ -681,7 +681,7 @@ int main(void)
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
         int ownedIndex = -1;
-        if (species != NULL && pcAdd(&playerPc, species, 50 + i, &ownedIndex)) {
+        if (species != NULL && pcAdd(&playerPc, species, 60 + i, &ownedIndex)) {
             addPokemonToParty(&playerParty, pcGet(&playerPc, ownedIndex));
         }
     }
@@ -2622,6 +2622,9 @@ int main(void)
         //get money from trainer battle, exp from wild battle if win
         //exp calculations, levelup, evolution, learn moves
             draw_map();
+            pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+            pokemonInBattle *opponentActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+            gainExp(playerActive, opponentActive);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
             if (spacePressed) currentGameState = GAME_STATE_MAP;
 
