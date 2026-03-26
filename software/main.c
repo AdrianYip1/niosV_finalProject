@@ -178,7 +178,7 @@
 #define EXP_Y MY_HP_EMPTY_Y + 38
 
 #define EXP_WIDTH 88
-#define EXP_HEIGHT 8
+#define EXP_HEIGHT 2
 
 #define TOTAL_HPNUM_X MY_HP_EMPTY_X + 65
 
