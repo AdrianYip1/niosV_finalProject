@@ -12,6 +12,13 @@ typedef struct {
     int y;
 } DecorEntry;
 
+typedef struct {
+    const MapTilePosition *grass_patch_positions;
+    unsigned int grass_patch_count;
+    const MapTilePosition *tree_positions;
+    unsigned int tree_count;
+} MapDecorDefinition;
+
 static DecorEntry g_decor_entries[MAP_WIDTH * MAP_HEIGHT * 2];
 static int g_decor_entry_count = 0;
 
@@ -128,28 +135,69 @@ static void draw_all_decor(void) {
     }
 }
 
-void apply_map_decor(void) {
-    static const MapTilePosition grass_patch_positions[] = {
-        {6, 2}, {7, 2}, {6, 3}, {7, 3},
-        {1, 6}, {2, 6}, {3, 6},
-        {1, 7}, {2, 7},
-        {12, 9}, {13, 9}, {12, 10},
-        {16, 12}, {17, 12}, {16, 13}
+void apply_map_decor_layout(MapDecorLayout layout) {
+    static const MapTilePosition route_a_grass_patch_positions[] = {
+        {7,4}, {8,4}, {9,4}, {10,4}, {11,4}, {12,4},
+        {7,5}, {8,5}, {9,5}, {10,5}, {11,5}, {12,5},
+        {7,6}, {8,6}, {9,6}, {10,6}, {11,6}, {12,6},
+        {7,7}, {8,7}, {9,7}, {10,7}, {11,7}, {12,7},
+        {7,8}, {8,8}, {9,8}, {10,8}, {11,8}, {12,8},
+        {7,9}, {8,9}, {9,9}, {10,9}, {11,9}, {12,9},
     };
-    static const MapTilePosition tree_positions[] = {
+    static const MapTilePosition route_a_tree_positions[] = {
         {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4},
         {0, 10}, {0, 11}, {0, 12}, {0, 13},
         {19, 0}, {19, 1}, {19, 2}, {19, 3}, {19, 4}, {19, 5}, {19, 6},
         {19, 7}, {19, 8}, {19, 9}, {19, 10}, {19, 11}, {19, 12}, {19, 13}
     };
 
-    for (unsigned int i = 0; i < sizeof(grass_patch_positions) / sizeof(grass_patch_positions[0]); i++) {
-        map_set_overlay_tile_xy(grass_patch_positions[i].x, grass_patch_positions[i].y, TILE_GRASS_PATCH);
+    static const MapTilePosition route_b_grass_patch_positions[] = {
+        {7,4}, {8,4}, {9,4}, {10,4}, {11,4}, {12,4},
+        {7,5}, {8,5}, {9,5}, {10,5}, {11,5}, {12,5},
+        {7,6}, {8,6}, {9,6}, {10,6}, {11,6}, {12,6},
+        {7,7}, {8,7}, {9,7}, {10,7}, {11,7}, {12,7},
+        {7,8}, {8,8}, {9,8}, {10,8}, {11,8}, {12,8},
+        {7,9}, {8,9}, {9,9}, {10,9}, {11,9}, {12,9},
+    };
+    static const MapTilePosition route_b_tree_positions[] = {
+        {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6},
+        {0, 7}, {0, 8}, {0, 9}, {0, 10}, {0, 11}, {0, 12}, {0, 13}
+        {19, 0}, {19, 1}, {19, 2}, {19, 3}, {19, 4},
+        {19, 10}, {19, 11}, {19, 12}, {19, 13},
+    };
+    static const MapDecorDefinition route_a_decor = {
+        route_a_grass_patch_positions,
+        sizeof(route_a_grass_patch_positions) / sizeof(route_a_grass_patch_positions[0]),
+        route_a_tree_positions,
+        sizeof(route_a_tree_positions) / sizeof(route_a_tree_positions[0]),
+    };
+    static const MapDecorDefinition route_b_decor = {
+        route_b_grass_patch_positions,
+        sizeof(route_b_grass_patch_positions) / sizeof(route_b_grass_patch_positions[0]),
+        route_b_tree_positions,
+        sizeof(route_b_tree_positions) / sizeof(route_b_tree_positions[0]),
+    };
+    const MapDecorDefinition *decor = &route_a_decor;
+
+    switch (layout) {
+        case MAP_DECOR_ROUTE_B:
+            decor = &route_b_decor;
+            break;
+        case MAP_DECOR_ROUTE_A:
+        default:
+            break;
     }
 
-    for (unsigned int i = 0; i < sizeof(tree_positions) / sizeof(tree_positions[0]); i++) {
-        map_place_tree_xy(tree_positions[i].x, tree_positions[i].y);
+    for (unsigned int i = 0; i < decor->grass_patch_count; i++) {
+        map_set_overlay_tile_xy(decor->grass_patch_positions[i].x, decor->grass_patch_positions[i].y, TILE_GRASS_PATCH);
     }
+    for (unsigned int i = 0; i < decor->tree_count; i++) {
+        map_place_tree_xy(decor->tree_positions[i].x, decor->tree_positions[i].y);
+    }
+}
+
+void apply_map_decor(void) {
+    apply_map_decor_layout(MAP_DECOR_ROUTE_A);
 }
 
 // Predefined layouts.

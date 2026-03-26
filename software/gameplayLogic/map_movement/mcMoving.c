@@ -13,6 +13,7 @@ static bool tryMoveUp(void);
 static bool tryMoveDown(void);
 static bool tryMoveLeft(void);
 static bool tryMoveRight(void);
+static McMoveResult mcEdgeExitResult(McDirection dir);
 
 void mcMovingInit(int startX, int startY, McFacing facing) {
     initMCWalkingSprite(startX, startY, facing);
@@ -97,7 +98,7 @@ static bool tryMoveRight(void) {
 }
 
 //connect to keyboard polling
-void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
+McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     static McDirection lastDir = MC_DIR_NONE;
     static unsigned int stepCounter = 0;
     static bool bumpLatch = false;
@@ -166,4 +167,36 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     } else if (dir != MC_DIR_INVALID) {
         drawMCWalkingAnimation();
     }
+
+    if (!movedThisTick) {
+        return mcEdgeExitResult(dir);
+    }
+    return MC_MOVE_OK;
+}
+
+static McMoveResult mcEdgeExitResult(McDirection dir) {
+    const McBounds bounds = getMCBounds();
+    if (!bounds.valid) {
+        return MC_MOVE_OK;
+    }
+
+    if ((dir == MC_DIR_W || dir == MC_DIR_NW || dir == MC_DIR_SW) && bounds.x0 <= 0) {
+        return MC_MOVE_EXIT_LEFT;
+    }
+
+    if ((dir == MC_DIR_E || dir == MC_DIR_NE || dir == MC_DIR_SE) &&
+        bounds.x1 >= (MAP_WIDTH * TILE_SIZE) - 1) {
+        return MC_MOVE_EXIT_RIGHT;
+    }
+
+    if ((dir == MC_DIR_N || dir == MC_DIR_NE || dir == MC_DIR_NW) && bounds.y0 <= 0) {
+        return MC_MOVE_EXIT_UP;
+    }
+
+    if ((dir == MC_DIR_S || dir == MC_DIR_SE || dir == MC_DIR_SW) &&
+        bounds.y1 >= (MAP_HEIGHT * TILE_SIZE) - 1) {
+        return MC_MOVE_EXIT_DOWN;
+    }
+
+    return MC_MOVE_OK;
 }
