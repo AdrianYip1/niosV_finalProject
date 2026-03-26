@@ -2249,6 +2249,7 @@ int main(void)
 
         case GAME_STATE_POKEBALL_CATCH: {
             // Throw a ball at the opponent and play the cshake frames sequence.
+            //use Bézier curve for the ball's path
             if (!pokeballCatchInit) {
                 play_sfx(pokeball_audio, pokeball_audio_len);
                 pokeballCatchInit = true;
