@@ -2011,8 +2011,6 @@ int main(void)
         }
 
         case GAME_STATE_WILD_BATTLE_TRANSITION: {
-
-            int transition_moving_X =  -158 - AREA_FRONT_X; //start compeltely out of screen on the left side
             // Precompute center
             const int centerX = SCREEN_WIDTH / 2;
             const int centerY = SCREEN_HEIGHT / 2;
@@ -2027,14 +2025,33 @@ int main(void)
 
             // Draw the opponent sprite underneath 
             if (enemyFrontSprite.pixels != NULL) {
-                                draw_sprite_any(pokemonAreaFront, 
-                                POKEMON_AREA_FRONT_WIDTH, 
-                                POKEMON_AREA_FRONT_HEIGHT, 
-                                (AREA_FRONT_X + transition_moving_X * transitionFrame) / transition_moving_X, AREA_FRONT_Y, 
+                // Slide area and  opponent sprite in from off-screen left.
+                const int growWPerFrame = 12;
+                const int growHPerFrame = 8;
+                const int framesToFullW = ((SCREEN_WIDTH / 2) + growWPerFrame - 1) / growWPerFrame;
+                const int framesToFullH = ((SCREEN_HEIGHT / 2) + growHPerFrame - 1) / growHPerFrame;
+                const int slideFrames = (framesToFullW > framesToFullH) ? framesToFullW : framesToFullH;
+
+                int t = transitionFrame;
+                if (t < 0) t = 0;
+                if (t > slideFrames) t = slideFrames;
+
+                const int areaStartX = -POKEMON_AREA_FRONT_WIDTH;
+                const int areaEndX = AREA_FRONT_X;
+                const int areaX = areaStartX + ((areaEndX - areaStartX) * t) / slideFrames;
+
+                const int enemyStartX = -enemyFrontSprite.width;
+                const int enemyEndX = enemyFrontSprite.x;
+                const int enemyX = enemyStartX + ((enemyEndX - enemyStartX) * t) / slideFrames;
+
+                draw_sprite_any(pokemonAreaFront,
+                                POKEMON_AREA_FRONT_WIDTH,
+                                POKEMON_AREA_FRONT_HEIGHT,
+                                areaX, AREA_FRONT_Y,
                                 TRANSPARENT_COLOUR);
                 draw_sprite_any(enemyFrontSprite.pixels,
                                 enemyFrontSprite.width, enemyFrontSprite.height,
-                                (enemyFrontSprite.x + transition_moving_X * transitionFrame) / transition_moving_X, enemyFrontSprite.y,
+                                enemyX, enemyFrontSprite.y,
                                 TRANSPARENT_COLOUR);
             }
 
