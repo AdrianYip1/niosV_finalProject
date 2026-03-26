@@ -2648,7 +2648,7 @@ int main(void)
                 int spawnY;
                 McFacing spawnFacing;
                 if (resolve_map_transition(currentMapId, moveResult,
-                                           upPressed, downPressed, leftPressed, rightPressed,
+                                           upDown, downDown, leftDown, rightDown,
                                            &targetMap, &spawnX, &spawnY, &spawnFacing)) {
                     currentMapId = targetMap;
                     load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
