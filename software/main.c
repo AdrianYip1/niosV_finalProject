@@ -620,6 +620,7 @@ int main(void)
     int actionTextReturnCursor = 0;
     GameState actionTextReturnGameState = GAME_STATE_WILD_BATTLE;
     int actionTextAutoTimer = 0;
+    int actionTextInterAttackPauseTimer = 5;
     int actionTextLastMsgIndex = -1;
 
     // Battle logic 
@@ -1723,6 +1724,46 @@ int main(void)
                 bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
             }
 
+            // between attacks pause
+            if (actionTextInterAttackPauseTimer > 0) {
+                actionTextInterAttackPauseTimer--;
+
+                draw_map();
+
+                if (playerHitShakeFrame >= 0) {
+                    draw_sprite_any_shake(playerBackSprite.pixels,
+                                          playerBackSprite.width, playerBackSprite.height,
+                                          playerBackSprite.x, playerBackSprite.y,
+                                          TRANSPARENT_COLOUR,
+                                          playerHitShakeFrame);
+                } else {
+                    draw_sprite_any_bob(playerBackSprite.pixels,
+                                        playerBackSprite.width, playerBackSprite.height,
+                                        playerBackSprite.x, playerBackSprite.y,
+                                        TRANSPARENT_COLOUR,
+                                        bobFrame);
+                }
+
+                if (enemyHitShakeFrame >= 0) {
+                    draw_sprite_any_shake(enemyFrontSprite.pixels,
+                                          enemyFrontSprite.width, enemyFrontSprite.height,
+                                          enemyFrontSprite.x, enemyFrontSprite.y,
+                                          TRANSPARENT_COLOUR,
+                                          enemyHitShakeFrame);
+                } else {
+                    draw_sprite_any(enemyFrontSprite.pixels,
+                                    enemyFrontSprite.width, enemyFrontSprite.height,
+                                    enemyFrontSprite.x, enemyFrontSprite.y,
+                                    TRANSPARENT_COLOUR);
+                }
+
+                draw_sprite_any(battleUIBackgroundSprite,
+                                BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT,
+                                0, battleBackdropY,
+                                TRANSPARENT_COLOUR);
+                break;
+            }
+
             // Draw the normal battle base.
             draw_map();
 
@@ -1861,6 +1902,14 @@ int main(void)
                 battleState.messageReadIndex++;
                 // treat the new index as new by forcing the nextb frame so SFX/shake can trigger for the 2nd pokemon
                 actionTextLastMsgIndex = -1;
+
+                //short pause before showing the next message
+                if (battleState.messageReadIndex >= 0 && battleState.messageReadIndex < battleState.messageCount) {
+                    const char *nextMsg = battleState.messages[battleState.messageReadIndex];
+                    if (nextMsg != NULL && strstr(nextMsg, " used ") != NULL) {
+                        actionTextInterAttackPauseTimer = 10;
+                    }
+                }
 
                 if (battleState.messageReadIndex >= battleState.messageCount) {
                     battleState.messageReadIndex = 0;
