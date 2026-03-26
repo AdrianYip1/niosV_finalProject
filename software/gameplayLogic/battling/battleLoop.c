@@ -114,6 +114,7 @@ static void handleFaint(BattleState *state, Party *party, bool isPlayer) {
     if (next >= 0) party->activeIndex = next;
 }
 
+//add non damaging moves -> text indication, sound effects, stat changes/status updates
 static void resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
     if (attacker == NULL || target == NULL) return;
     if (!canAct(attacker)) return;

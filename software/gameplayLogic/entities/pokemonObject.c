@@ -2,6 +2,8 @@
 #include "learnset.h"
 #include <stdio.h>
 
+
+//pokedex stuff to determine caught/seen -> grayscale the caughtIcon 
 void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, int level) {
     pokemon->id.data = template;
     pokemon->id.frontFrame_ID = template->id;
