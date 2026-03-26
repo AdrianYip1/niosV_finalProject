@@ -81,11 +81,13 @@ SRCS := software/main.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
+        software/gameplayLogic/worldMap.c \
         software/se/opening_audio.c \
         software/se/introduction_audio.c \
         software/se/battle_audio.c \
         software/se/map_audio.c \
         software/se/plink_audio.c \
+        software/se/wallbump_audio.c \
         software/se/pokeball_audio.c \
         software/se/pokeball_shaking_audio.c \
         software/se/caught_pokemon_audio.c \

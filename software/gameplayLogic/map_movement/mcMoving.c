@@ -6,52 +6,50 @@
 #include "../../graphics/mcWalkingDraw.h"
 #include "../../graphics/map.h"
 #include "../../../hardware/audio.h"
+#include "../../se/wallbump_audio.h"
 
 static bool mcCanMoveBy(int dx, int dy);
-static void tryMoveUp(void);
-static void tryMoveDown(void);
-static void tryMoveLeft(void);
-static void tryMoveRight(void);
+static bool tryMoveUp(void);
+static bool tryMoveDown(void);
+static bool tryMoveLeft(void);
+static bool tryMoveRight(void);
+static McMoveResult mcEdgeExitResult(McDirection dir);
 
 void mcMovingInit(int startX, int startY, McFacing facing) {
     initMCWalkingSprite(startX, startY, facing);
     drawMCWalkingAnimation(); // show MC on frame 0
 }
 
-static void moveDiagonal(McDirection dir, unsigned int stepCounter) {
+static bool moveDiagonal(McDirection dir, unsigned int stepCounter) {
     const bool even = ((stepCounter & 1u) == 0u);
 
     switch (dir) {
         case MC_DIR_NE:
             if (even) {
-                tryMoveRight();
+                return tryMoveRight();
             } else {
-                tryMoveUp();
+                return tryMoveUp();
             }
-            break;
         case MC_DIR_NW:
             if (even) {
-                tryMoveLeft();
+                return tryMoveLeft();
             } else {
-                tryMoveUp();
+                return tryMoveUp();
             }
-            break;
         case MC_DIR_SE:
             if (even) {
-                tryMoveRight();
+                return tryMoveRight();
             } else {
-                tryMoveDown();
+                return tryMoveDown();
             }
-            break;
         case MC_DIR_SW:
             if (even) {
-                tryMoveLeft();
+                return tryMoveLeft();
             } else {
-                tryMoveDown();
+                return tryMoveDown();
             }
-            break;
         default:
-            break;
+            return false;
     }
 }
 
@@ -67,34 +65,43 @@ static bool mcCanMoveBy(int dx, int dy) {
                                    bounds.y1 + dy);
 }
 
-static void tryMoveUp(void) {
+static bool tryMoveUp(void) {
     if (mcCanMoveBy(0, -1)) {
         goUp();
+        return true;
     }
+    return false;
 }
 
-static void tryMoveDown(void) {
+static bool tryMoveDown(void) {
     if (mcCanMoveBy(0, 1)) {
         goDown();
+        return true;
     }
+    return false;
 }
 
-static void tryMoveLeft(void) {
+static bool tryMoveLeft(void) {
     if (mcCanMoveBy(-1, 0)) {
         goLeft();
+        return true;
     }
+    return false;
 }
 
-static void tryMoveRight(void) {
+static bool tryMoveRight(void) {
     if (mcCanMoveBy(1, 0)) {
         goRight();
+        return true;
     }
+    return false;
 }
 
 //connect to keyboard polling
-void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
+McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     static McDirection lastDir = MC_DIR_NONE;
     static unsigned int stepCounter = 0;
+    static bool bumpLatch = false;
 
     const McDirection dir = mcPickDirection(up, down, left, right);
 
@@ -115,6 +122,7 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     }
 
     int speed_multiplier = shift ? 2 : 1;
+    bool movedThisTick = false;
     for (int i = 0; i < speed_multiplier; i++) {
         stepCounter++;
         // only when mc is walking
@@ -123,26 +131,35 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
         }
         switch (dir) {
             case MC_DIR_N:
-                tryMoveUp();
+                movedThisTick = tryMoveUp() || movedThisTick;
                 break;
             case MC_DIR_S:
-                tryMoveDown();
+                movedThisTick = tryMoveDown() || movedThisTick;
                 break;
             case MC_DIR_W:
-                tryMoveLeft();
+                movedThisTick = tryMoveLeft() || movedThisTick;
                 break;
             case MC_DIR_E:
-                tryMoveRight();
+                movedThisTick = tryMoveRight() || movedThisTick;
                 break;
             case MC_DIR_NE:
             case MC_DIR_NW:
             case MC_DIR_SE:
             case MC_DIR_SW:
-                moveDiagonal(dir, stepCounter);
+                movedThisTick = moveDiagonal(dir, stepCounter) || movedThisTick;
                 break;
             default:
                 break;
         }
+    }
+
+    if (dir == MC_DIR_NONE || dir == MC_DIR_INVALID) {
+        bumpLatch = false;
+    } else if (movedThisTick) {
+        bumpLatch = false;
+    } else if (!bumpLatch) {
+        play_sfx(wallbump_audio, wallbump_audio_len);
+        bumpLatch = true;
     }
 
     if (dir == MC_DIR_NONE) {
@@ -150,4 +167,36 @@ void mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
     } else if (dir != MC_DIR_INVALID) {
         drawMCWalkingAnimation();
     }
+
+    if (!movedThisTick) {
+        return mcEdgeExitResult(dir);
+    }
+    return MC_MOVE_OK;
+}
+
+static McMoveResult mcEdgeExitResult(McDirection dir) {
+    const McBounds bounds = getMCBounds();
+    if (!bounds.valid) {
+        return MC_MOVE_OK;
+    }
+
+    if ((dir == MC_DIR_W || dir == MC_DIR_NW || dir == MC_DIR_SW) && bounds.x0 <= 0) {
+        return MC_MOVE_EXIT_LEFT;
+    }
+
+    if ((dir == MC_DIR_E || dir == MC_DIR_NE || dir == MC_DIR_SE) &&
+        bounds.x1 >= (MAP_WIDTH * TILE_SIZE) - 1) {
+        return MC_MOVE_EXIT_RIGHT;
+    }
+
+    if ((dir == MC_DIR_N || dir == MC_DIR_NE || dir == MC_DIR_NW) && bounds.y0 <= 0) {
+        return MC_MOVE_EXIT_UP;
+    }
+
+    if ((dir == MC_DIR_S || dir == MC_DIR_SE || dir == MC_DIR_SW) &&
+        bounds.y1 >= (MAP_HEIGHT * TILE_SIZE) - 1) {
+        return MC_MOVE_EXIT_DOWN;
+    }
+
+    return MC_MOVE_OK;
 }

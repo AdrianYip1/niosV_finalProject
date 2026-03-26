@@ -17,6 +17,11 @@ typedef struct {
 } MapTilePosition;
 
 typedef enum {
+    MAP_DECOR_ROUTE_A = 0,
+    MAP_DECOR_ROUTE_B = 1,
+} MapDecorLayout;
+
+typedef enum {
     MAP_PRESET_ROUTE,
     MAP_PRESET_BLACK,
     MAP_PRESET_BACKDROP1,
@@ -34,6 +39,7 @@ bool map_is_walkable_tile(TileId tile);
 bool map_is_walkable_at_xy(int x, int y);
 bool map_bounds_are_walkable(int x0, int y0, int x1, int y1);
 void apply_map_decor(void);
+void apply_map_decor_layout(MapDecorLayout layout);
 void draw_map_cell(int x, int y);
 
 void init_map(void); 
