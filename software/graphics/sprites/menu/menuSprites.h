@@ -1,0 +1,27 @@
+#pragma once
+
+#include <stdint.h>
+
+#define MENU_SPRITE_COUNT  3
+
+typedef enum {
+    MENU_SPRITE_PARTY_MENU = 0,
+    MENU_SPRITE_POKEMON_SELECTED = 1,
+    MENU_SPRITE_POKEMON_UNSELECTED = 2,
+} MenuSpriteId;
+
+#define MENU_PARTY_MENU_WIDTH  256
+#define MENU_PARTY_MENU_HEIGHT 192
+extern const unsigned short partyMenuSprite[MENU_PARTY_MENU_WIDTH * MENU_PARTY_MENU_HEIGHT];
+
+#define MENU_POKEMON_SELECTED_WIDTH  128
+#define MENU_POKEMON_SELECTED_HEIGHT 49
+extern const unsigned short pokemonSelectedSprite[MENU_POKEMON_SELECTED_WIDTH * MENU_POKEMON_SELECTED_HEIGHT];
+
+#define MENU_POKEMON_UNSELECTED_WIDTH  126
+#define MENU_POKEMON_UNSELECTED_HEIGHT 45
+extern const unsigned short pokemonUnselectedSprite[MENU_POKEMON_UNSELECTED_WIDTH * MENU_POKEMON_UNSELECTED_HEIGHT];
+
+extern const unsigned short* const menuSprites[MENU_SPRITE_COUNT];
+extern const uint16_t menuSpriteWidths[MENU_SPRITE_COUNT];
+extern const uint16_t menuSpriteHeights[MENU_SPRITE_COUNT];
