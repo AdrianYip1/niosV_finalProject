@@ -87,7 +87,10 @@ void apply_map_decor(void) {
         {16, 12}, {17, 12}, {16, 13}
     };
     static const MapTilePosition tree_positions[] = {
-        {8, 1}, {12, 1}, {16, 4}, {10, 8}, {14, 11}
+        {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4},
+        {0, 10}, {0, 11}, {0, 12}, {0, 13},
+        {19, 0}, {19, 1}, {19, 2}, {19, 3}, {19, 4}, {19, 5}, {19, 6},
+        {19, 7}, {19, 8}, {19, 9}, {19, 10}, {19, 11}, {19, 12}, {19, 13}
     };
 
     for (unsigned int i = 0; i < sizeof(grass_patch_positions) / sizeof(grass_patch_positions[0]); i++) {
