@@ -7,6 +7,8 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/sprites/pokemon/../staticSprite.h \
  software/gameplayLogic/map_movement/mcMoving.h \
  software/gameplayLogic/map_movement/../../graphics/mcWalkingDraw.h \
+ software/gameplayLogic/worldMap.h \
+ software/gameplayLogic/../graphics/mcWalkingDraw.h \
  software/graphics/tiles.h software/graphics/predefined_graphics.h \
  software/graphics/map.h \
  software/graphics/sprites/vsCynthia/vsCynthiaSprite.h \
@@ -64,6 +66,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/sprites/battleItemsUI/pokeballIcons.h \
  software/graphics/sprites/battleItemsUI/healingItemIcons.h \
  software/graphics/sprites/menu/menuSprites.h \
+ software/graphics/sprites/menuPokemon/menuPokemonSprites.h \
  software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h
 software/graphics/graphics.h:
 software/graphics/predefined_graphics.h:
@@ -75,6 +78,8 @@ software/graphics/sprites/pokemon/pokemonSpriteInit.h:
 software/graphics/sprites/pokemon/../staticSprite.h:
 software/gameplayLogic/map_movement/mcMoving.h:
 software/gameplayLogic/map_movement/../../graphics/mcWalkingDraw.h:
+software/gameplayLogic/worldMap.h:
+software/gameplayLogic/../graphics/mcWalkingDraw.h:
 software/graphics/tiles.h:
 software/graphics/predefined_graphics.h:
 software/graphics/map.h:
@@ -134,4 +139,5 @@ software/graphics/sprites/battleItemsUI/itemDescription.h:
 software/graphics/sprites/battleItemsUI/pokeballIcons.h:
 software/graphics/sprites/battleItemsUI/healingItemIcons.h:
 software/graphics/sprites/menu/menuSprites.h:
+software/graphics/sprites/menuPokemon/menuPokemonSprites.h:
 software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h:
