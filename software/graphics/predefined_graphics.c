@@ -5,6 +5,7 @@
 #include "backdrops/decor_tiles.h"
 #include "backdrops/ground_tiles.h"
 #include "backdrops/pokemon_center_interior_tiles.h"
+#include "backdrops/poke_mart_interior_tiles.h"
 
 #include <string.h>
 
@@ -30,6 +31,15 @@ void init_predefined_graphics(void)
     memcpy(tiles[TILE_POKEMON_CENTER_BOTTOM_LEFT], pokemon_center_bottom_left_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_POKEMON_CENTER_BOTTOM_MIDDLE], pokemon_center_bottom_middle_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_POKEMON_CENTER_BOTTOM_RIGHT], pokemon_center_bottom_right_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_TOP_LEFT], poke_mart_top_left_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_TOP_MIDDLE], poke_mart_top_middle_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_TOP_RIGHT], poke_mart_top_right_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_MIDDLE_LEFT], poke_mart_middle_left_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_MIDDLE_MIDDLE], poke_mart_middle_middle_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_MIDDLE_RIGHT], poke_mart_middle_right_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_BOTTOM_LEFT], poke_mart_bottom_left_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_BOTTOM_MIDDLE], poke_mart_bottom_middle_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_POKE_MART_BOTTOM_RIGHT], poke_mart_bottom_right_tile, sizeof(tiles[0]));
 
     for (int i = 0; i < BACKDROP1_TILE_COUNT; i++) {
         memcpy(tiles[TILE_BACKDROP1_START + i], backdrop1_tiles[i], sizeof(tiles[0]));
@@ -41,6 +51,9 @@ void init_predefined_graphics(void)
 
     for (int i = 0; i < POKEMON_CENTER_INTERIOR_TILE_COUNT; i++) {
         memcpy(tiles[TILE_POKEMON_CENTER_INTERIOR_START + i], pokemon_center_interior_tiles[i], sizeof(tiles[0]));
+    }
+    for (int i = 0; i < POKE_MART_INTERIOR_TILE_COUNT; i++) {
+        memcpy(tiles[TILE_POKE_MART_INTERIOR_START + i], poke_mart_interior_tiles[i], sizeof(tiles[0]));
     }
 
 }

@@ -1,8 +1,12 @@
 #include "map.h"
+#include "graphics.h"
 #include "tiles.h"
 #include "backdrops/backdrop1_tiles.h"
 #include "backdrops/ground_tiles.h"
 #include "backdrops/pokemon_center_interior_tiles.h"
+#include "backdrops/poke_mart_interior_tiles.h"
+#include "sprites/pokemonCenter/pokemonCenterDeskSprite.h"
+#include "sprites/pokemonCenter/pokemonCenterNurseSprite.h"
 
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 int map_overlay[MAP_HEIGHT][MAP_WIDTH];
@@ -22,6 +26,51 @@ typedef struct {
 
 static DecorEntry g_decor_entries[MAP_WIDTH * MAP_HEIGHT * 2];
 static int g_decor_entry_count = 0;
+static MapPresetId g_current_preset = MAP_PRESET_ROUTE;
+
+static bool is_within_interior_walkable_rect(int x0, int y0, int x1, int y1) {
+    const int min_x = 10;
+    const int max_x = 310;
+    const int min_y = 10;
+    const int max_y = 220;
+    const int doorway_min_x = 145;
+    const int doorway_max_x = 175;
+    const int doorway_max_y = (MAP_HEIGHT * TILE_SIZE) - 1;
+
+    if (x0 < min_x || x1 > max_x || y0 < min_y) {
+        return false;
+    }
+    if (y1 <= max_y) {
+        return true;
+    }
+
+    return x0 >= doorway_min_x && x1 <= doorway_max_x && y1 <= doorway_max_y;
+}
+
+static bool is_within_poke_mart_walkable_area(int x0, int y0, int x1, int y1) {
+    const int min_x = 12;
+    const int max_x = 280;
+    const int min_y = 80;
+    const int max_y = 230;
+    const int doorway_min_x = 129;
+    const int doorway_max_x = 159;
+    const int doorway_max_y = (MAP_HEIGHT * TILE_SIZE) - 1;
+
+    if (x0 < min_x || x1 > max_x || y0 < min_y) {
+        return false;
+    }
+    if (y1 > max_y) {
+        if (!(x0 >= doorway_min_x && x1 <= doorway_max_x && y1 <= doorway_max_y)) {
+            return false;
+        }
+    }
+
+    if (!(x1 < 172 || (172 + 54 - 1) < x0 || y1 < 120 || (120 + 80 - 1) < y0)) {
+        return false;
+    }
+
+    return true;
+}
 
 static bool is_decor_transparent(unsigned short colour) {
     const int r5 = (colour >> 11) & 31;
@@ -172,6 +221,9 @@ void apply_map_decor_layout(MapDecorLayout layout) {
     static const MapTilePosition route_a_pokemon_centers[] = {
         {8, 1},
     };
+    static const MapTilePosition route_a_poke_marts[] = {
+        {12, 1},
+    };
 
     static const MapTilePosition route_b_grass_patch_positions[] = {
         {7,4}, {8,4}, {9,4}, {10,4}, {11,4}, {12,4},
@@ -221,6 +273,9 @@ void apply_map_decor_layout(MapDecorLayout layout) {
     if (layout == MAP_DECOR_ROUTE_A) {
         for (unsigned int i = 0; i < sizeof(route_a_pokemon_centers) / sizeof(route_a_pokemon_centers[0]); i++) {
             map_place_pokemon_center_xy(route_a_pokemon_centers[i].x, route_a_pokemon_centers[i].y);
+        }
+        for (unsigned int i = 0; i < sizeof(route_a_poke_marts) / sizeof(route_a_poke_marts[0]); i++) {
+            map_place_poke_mart_xy(route_a_poke_marts[i].x, route_a_poke_marts[i].y);
         }
     }
 }
@@ -273,6 +328,7 @@ static const TileId *const preset_ptrs[] = {
     (const TileId *)preset_backdrop1,
     (const TileId *)preset_ground,
     (const TileId *)preset_pokemon_center_interior,
+    (const TileId *)preset_poke_mart_interior,
 };
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
@@ -282,6 +338,7 @@ _Static_assert((sizeof(preset_ptrs) / sizeof(preset_ptrs[0])) == MAP_PRESET_COUN
 
 void load_map_preset(MapPresetId preset) {
     if (preset >= MAP_PRESET_COUNT) return;
+    g_current_preset = preset;
     const TileId *preset_layout = preset_ptrs[preset];
     for (int row = 0; row < MAP_HEIGHT; row++) {
         for (int col = 0; col < MAP_WIDTH; col++) {
@@ -325,6 +382,15 @@ bool map_place_pokemon_center_xy(int x, int y) {
     return map_place_overlay_rect(x, y, 3, 3, pokemon_center_tiles);
 }
 
+bool map_place_poke_mart_xy(int x, int y) {
+    static const TileId poke_mart_tiles[3 * 3] = {
+        TILE_POKE_MART_TOP_LEFT, TILE_POKE_MART_TOP_MIDDLE, TILE_POKE_MART_TOP_RIGHT,
+        TILE_POKE_MART_MIDDLE_LEFT, TILE_POKE_MART_MIDDLE_MIDDLE, TILE_POKE_MART_MIDDLE_RIGHT,
+        TILE_POKE_MART_BOTTOM_LEFT, TILE_POKE_MART_BOTTOM_MIDDLE, TILE_POKE_MART_BOTTOM_RIGHT,
+    };
+    return map_place_overlay_rect(x, y, 3, 3, poke_mart_tiles);
+}
+
 bool map_set_overlay_tile_xy(int x, int y, TileId tile) {
     if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) {
         return false;
@@ -345,7 +411,15 @@ bool map_is_walkable_tile(TileId tile) {
            tile != TILE_POKEMON_CENTER_MIDDLE_MIDDLE &&
            tile != TILE_POKEMON_CENTER_MIDDLE_RIGHT &&
            tile != TILE_POKEMON_CENTER_BOTTOM_LEFT &&
-           tile != TILE_POKEMON_CENTER_BOTTOM_RIGHT;
+           tile != TILE_POKEMON_CENTER_BOTTOM_RIGHT &&
+           tile != TILE_POKE_MART_TOP_LEFT &&
+           tile != TILE_POKE_MART_TOP_MIDDLE &&
+           tile != TILE_POKE_MART_TOP_RIGHT &&
+           tile != TILE_POKE_MART_MIDDLE_LEFT &&
+           tile != TILE_POKE_MART_MIDDLE_MIDDLE &&
+           tile != TILE_POKE_MART_MIDDLE_RIGHT &&
+           tile != TILE_POKE_MART_BOTTOM_LEFT &&
+           tile != TILE_POKE_MART_BOTTOM_RIGHT;
 }
 
 bool map_is_walkable_at_xy(int x, int y) {
@@ -360,6 +434,14 @@ bool map_is_walkable_at_xy(int x, int y) {
 
 bool map_bounds_are_walkable(int x0, int y0, int x1, int y1) {
     if (x0 < 0 || y0 < 0 || x1 >= MAP_WIDTH * TILE_SIZE || y1 >= MAP_HEIGHT * TILE_SIZE) {
+        return false;
+    }
+    if (g_current_preset == MAP_PRESET_POKEMON_CENTER_INTERIOR &&
+        !is_within_interior_walkable_rect(x0, y0, x1, y1)) {
+        return false;
+    }
+    if (g_current_preset == MAP_PRESET_POKE_MART_INTERIOR &&
+        !is_within_poke_mart_walkable_area(x0, y0, x1, y1)) {
         return false;
     }
 
@@ -413,4 +495,14 @@ void draw_map(void) {
         }
     }
     draw_all_decor();
+    if (g_current_preset == MAP_PRESET_POKEMON_CENTER_INTERIOR) {
+        draw_sprite_any(pokemonCenterNurseSprite,
+                        POKEMON_CENTER_NURSE_WIDTH, POKEMON_CENTER_NURSE_HEIGHT,
+                        142, 60,
+                        TRANSPARENT_COLOUR);
+        draw_sprite_any(pokemonCenterDeskSprite,
+                        POKEMON_CENTER_DESK_WIDTH, POKEMON_CENTER_DESK_HEIGHT,
+                        45, 47,
+                        TRANSPARENT_COLOUR);
+    }
 }

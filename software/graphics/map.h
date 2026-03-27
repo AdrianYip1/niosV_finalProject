@@ -28,6 +28,7 @@ typedef enum {
     MAP_PRESET_BACKDROP1,
     MAP_PRESET_GROUND,
     MAP_PRESET_POKEMON_CENTER_INTERIOR,
+    MAP_PRESET_POKE_MART_INTERIOR,
     MAP_PRESET_COUNT,
 } MapPresetId;
 
@@ -37,6 +38,7 @@ void load_map_preset(MapPresetId preset);
 bool map_set_tile_xy(int x, int y, TileId tile);
 bool map_place_tree_xy(int x, int y);
 bool map_place_pokemon_center_xy(int x, int y);
+bool map_place_poke_mart_xy(int x, int y);
 bool map_set_overlay_tile_xy(int x, int y, TileId tile);
 bool map_is_walkable_tile(TileId tile);
 bool map_is_walkable_at_xy(int x, int y);
