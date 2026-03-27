@@ -246,8 +246,8 @@
 #define continue_x 201
 #define continue_y 165
 // Cancel button (replaces ESC-to-exit in the menu)
-#define CANCEL_X continue_x
-#define CANCEL_Y continue_y
+#define CANCEL_X (continue_x - 1)
+#define CANCEL_Y (continue_y - 1)
 
 #define NON_SELECTED_POKEMON_STATUS_X 32
 #define NON_SELECTED_POKEMON_STATUS_Y 23
@@ -891,7 +891,6 @@ int main(void)
     prevSpaceDown = false;
     int menuCursor = 0; // 0..5 (2 columns x 3 rows)
     int menuSwapIndex = -1; // first-picked index for swapping in the party menu
-    GameState lastFrameState = currentGameState;
     char battleEndMsg[96] = "WIN";
 
     while (1) {
@@ -915,30 +914,6 @@ int main(void)
                 } else if (ch == '4' && currentGameState == GAME_STATE_MENU) {
                     currentGameState = GAME_STATE_MAP;
                     menuSwapIndex = -1;
-                }
-            }
-        }
-
-        // money changes
-        if (currentGameState != lastFrameState) {
-            if (currentGameState == GAME_STATE_BATTLE_WIN) {
-                int delta = 0;
-                if (battleState.type == BATTLE_TRAINER) {
-                    delta = computeTrainerPayout(&enemyParty);
-                    playerMoney += delta;
-                }
-                if (delta > 0) {
-                    snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN! +$%d", delta);
-                } else {
-                    snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN");
-                }
-            } else if (currentGameState == GAME_STATE_BATTLE_LOSE) {
-                const int penalty = computeLossPenalty(playerMoney);
-                playerMoney -= penalty;
-                if (penalty > 0) {
-                    snprintf(battleEndMsg, sizeof(battleEndMsg), "LOSE! -$%d", penalty);
-                } else {
-                    snprintf(battleEndMsg, sizeof(battleEndMsg), "LOSE");
                 }
             }
         }
@@ -1050,24 +1025,29 @@ int main(void)
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 6) menuCursor = 6;
 
-            const bool cursorOnCancel = (menuCursor == 6);
-            const int row = cursorOnCancel ? 2 : (menuCursor / 2);
-            const int col = cursorOnCancel ? 1 : (menuCursor % 2);
-            int nextRow = row;
-            int nextCol = col;
+            // Navigation: slots 0..5 plus Cancel (6). Cancel is reached from the bottom-right slot (5).
+            const int prevCursor = menuCursor;
+            if (menuCursor == 6) {
+                if (leftPressed || upPressed) menuCursor = 5;
+            } else {
+                const int row = menuCursor / 2;
+                const int col = menuCursor % 2;
+                int nextRow = row;
+                int nextCol = col;
+                if (upPressed && row > 0) nextRow--;
+                if (downPressed && row < 2) nextRow++;
+                if (leftPressed && col > 0) nextCol--;
+                if (rightPressed && col < 1) nextCol++;
 
-            if (upPressed && row > 0) nextRow--;
-            if (downPressed && row < 2) nextRow++;
-            if (leftPressed && col > 0) nextCol--;
-            if (rightPressed && col < 1) nextCol++;
+                menuCursor = nextRow * 2 + nextCol;
+                if (menuCursor < 0) menuCursor = 0;
+                if (menuCursor > 5) menuCursor = 5;
 
-            int nextCursor = nextRow * 2 + nextCol;
-            // Bottom-right cell maps to the Cancel button (index 6) instead of slot 5.
-            if (nextRow == 2 && nextCol == 1) nextCursor = 6;
-            if (nextCursor != menuCursor) {
-                menuCursor = nextCursor;
-                play_sfx(plink_audio, plink_audio_len);
+                if (prevCursor == 5 && (rightPressed || downPressed)) {
+                    menuCursor = 6;
+                }
             }
+            if (menuCursor != prevCursor) play_sfx(plink_audio, plink_audio_len);
 
             // Animate selected pokemon bob in the menu.
             bobTimer++;
@@ -1085,11 +1065,11 @@ int main(void)
             const int slotW = 128;
             const int slotH = 49;
             const int unselectedDx = NON_SELECTED_POKEMON_X;
-            const int unselectedDy = NON_SELECTED_POKEMON_Y;
+            const int unselectedDy = NON_SELECTED_POKEMON_Y - 2;
             const int leaderSelectedDx = NON_SELECTED_POKEMON_X;
             const int leaderSelectedDy = NON_SELECTED_POKEMON_Y;
             const int leaderUnselectedDx = NON_SELECTED_POKEMON_X;
-            const int leaderUnselectedDy = NON_SELECTED_POKEMON_Y;
+            const int leaderUnselectedDy = NON_SELECTED_POKEMON_Y - 2;
 
             for (int i = 0; i < 6; i++) {
                 const int slotX = menuX + (i % 2) * slotW;
@@ -1129,8 +1109,8 @@ int main(void)
                 const int slotYOffsetForSelection = isSelected ? SELECTED_POKEMON_DIFFERENCE_Y : 0;
 
                 // HP bar inside the slot.
-                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X;
-                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForSelection;
+                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X + 1;
+                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForSelection + 1;
                 const int hpBarW = NON_SELECTED_POKEMON_HP_WIDTH;
                 const int hpBarH = NON_SELECTED_POKEMON_HP_HEIGHT;
 
@@ -1162,8 +1142,8 @@ int main(void)
 
                 // Pokemon sprite + name/level (text drawn after sprite).
                 const unsigned short *pokeSprite = menuPokemonSpriteForId(p->id.frontFrame_ID);
-                const int pokeX = slotX + NON_SELECTED_POKEMON_X + 12;
-                const int pokeY = slotY + NON_SELECTED_POKEMON_Y + 14 + colYOffset + slotYOffsetForSelection;
+                const int pokeX = slotX + NON_SELECTED_POKEMON_X + 12 - 20;
+                const int pokeY = slotY + NON_SELECTED_POKEMON_Y + 14 + colYOffset + slotYOffsetForSelection - 20;
                 if (pokeSprite != NULL) {
                     if (isSelected) {
                         draw_sprite_any_bob(pokeSprite,
@@ -2415,8 +2395,25 @@ int main(void)
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
                         if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
                             currentGameState = GAME_STATE_BATTLE_WIN;
+                            int delta = 0;
+                            if (battleState.type == BATTLE_TRAINER) {
+                                delta = computeTrainerPayout(&enemyParty);
+                                playerMoney += delta;
+                            }
+                            if (delta > 0) {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN! +$%d", delta);
+                            } else {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN");
+                            }
                         } else if (battleState.result == BATTLE_RESULT_PLAYER_LOSE) {
                             currentGameState = GAME_STATE_BATTLE_LOSE;
+                            const int penalty = computeLossPenalty(playerMoney);
+                            playerMoney -= penalty;
+                            if (penalty > 0) {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "LOSE! -$%d", penalty);
+                            } else {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "LOSE");
+                            }
                         } else {
                             // Fled / caught results return to map.
                             currentGameState = GAME_STATE_MAP;
@@ -3026,7 +3023,6 @@ int main(void)
             break;
         }
 
-        lastFrameState = currentGameState;
         wait_for_vsync();
     }
 
