@@ -62,6 +62,7 @@
 #include "graphics/sprites/battleItemsUI/pokeballIcons.h"
 #include "graphics/sprites/battleItemsUI/healingItemIcons.h"
 #include "graphics/sprites/menu/menuSprites.h"
+#include "graphics/sprites/menu/cancelSprite.h"
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
@@ -244,6 +245,9 @@
 //location from partyMenu
 #define continue_x 201
 #define continue_y 165
+// Cancel button (replaces ESC-to-exit in the menu)
+#define CANCEL_X continue_x
+#define CANCEL_Y continue_y
 
 #define NON_SELECTED_POKEMON_STATUS_X 32
 #define NON_SELECTED_POKEMON_STATUS_Y 23
@@ -990,7 +994,6 @@ int main(void)
         prevEsc = escDown;
 
         if (currentGameState == GAME_STATE_MENU && escPressed) {
-            currentGameState = GAME_STATE_MAP;
             menuSwapIndex = -1;
         }
 
@@ -1045,10 +1048,11 @@ int main(void)
             const int menuY = (SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2;
 
             if (menuCursor < 0) menuCursor = 0;
-            if (menuCursor > 5) menuCursor = 5;
+            if (menuCursor > 6) menuCursor = 6;
 
-            const int row = menuCursor / 2;
-            const int col = menuCursor % 2;
+            const bool cursorOnCancel = (menuCursor == 6);
+            const int row = cursorOnCancel ? 2 : (menuCursor / 2);
+            const int col = cursorOnCancel ? 1 : (menuCursor % 2);
             int nextRow = row;
             int nextCol = col;
 
@@ -1057,7 +1061,9 @@ int main(void)
             if (leftPressed && col > 0) nextCol--;
             if (rightPressed && col < 1) nextCol++;
 
-            const int nextCursor = nextRow * 2 + nextCol;
+            int nextCursor = nextRow * 2 + nextCol;
+            // Bottom-right cell maps to the Cancel button (index 6) instead of slot 5.
+            if (nextRow == 2 && nextCol == 1) nextCursor = 6;
             if (nextCursor != menuCursor) {
                 menuCursor = nextCursor;
                 play_sfx(plink_audio, plink_audio_len);
@@ -1078,12 +1084,12 @@ int main(void)
 
             const int slotW = 128;
             const int slotH = 49;
-            const int unselectedDx = (slotW - MENU_POKEMON_UNSELECTED_WIDTH) / 2;
-            const int unselectedDy = (slotH - MENU_POKEMON_UNSELECTED_HEIGHT) / 2;
-            const int leaderSelectedDx = (slotW - MENU_PARTY_LEADER_SELECTED_WIDTH) / 2;
-            const int leaderSelectedDy = (slotH - MENU_PARTY_LEADER_SELECTED_HEIGHT) / 2;
-            const int leaderUnselectedDx = (slotW - MENU_PARTY_LEADER_UNSELECTED_WIDTH) / 2;
-            const int leaderUnselectedDy = (slotH - MENU_PARTY_LEADER_UNSELECTED_HEIGHT) / 2;
+            const int unselectedDx = NON_SELECTED_POKEMON_X;
+            const int unselectedDy = NON_SELECTED_POKEMON_Y;
+            const int leaderSelectedDx = NON_SELECTED_POKEMON_X;
+            const int leaderSelectedDy = NON_SELECTED_POKEMON_Y;
+            const int leaderUnselectedDx = NON_SELECTED_POKEMON_X;
+            const int leaderUnselectedDy = NON_SELECTED_POKEMON_Y;
 
             for (int i = 0; i < 6; i++) {
                 const int slotX = menuX + (i % 2) * slotW;
@@ -1120,11 +1126,13 @@ int main(void)
                 pokemonInBattle *p = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
                 if (p == NULL) continue;
 
+                const int slotYOffsetForSelection = isSelected ? SELECTED_POKEMON_DIFFERENCE_Y : 0;
+
                 // HP bar inside the slot.
-                const int hpBarX = slotX + 40;
-                const int hpBarY = slotY + 14 + colYOffset;
-                const int hpBarW = 70;
-                const int hpBarH = 3;
+                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X;
+                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForSelection;
+                const int hpBarW = NON_SELECTED_POKEMON_HP_WIDTH;
+                const int hpBarH = NON_SELECTED_POKEMON_HP_HEIGHT;
 
                 const int curHp = p->scaledStatsWithLevel[0];
                 const int maxHp = (p->maxHp > 0) ? p->maxHp : 1;
@@ -1145,13 +1153,17 @@ int main(void)
                     default: break;
                 }
                 if (statusSprite != NULL) {
-                    draw_sprite_any(statusSprite, statusW, statusH, slotX + 104, slotY + 33 + colYOffset, TRANSPARENT_COLOUR);
+                    draw_sprite_any(statusSprite,
+                                    statusW, statusH,
+                                    slotX + NON_SELECTED_POKEMON_STATUS_X,
+                                    slotY + NON_SELECTED_POKEMON_STATUS_Y + colYOffset + slotYOffsetForSelection,
+                                    TRANSPARENT_COLOUR);
                 }
 
                 // Pokemon sprite + name/level (text drawn after sprite).
                 const unsigned short *pokeSprite = menuPokemonSpriteForId(p->id.frontFrame_ID);
-                const int pokeX = slotX + 16;
-                const int pokeY = slotY + 16 + colYOffset;
+                const int pokeX = slotX + NON_SELECTED_POKEMON_X + 12;
+                const int pokeY = slotY + NON_SELECTED_POKEMON_Y + 14 + colYOffset + slotYOffsetForSelection;
                 if (pokeSprite != NULL) {
                     if (isSelected) {
                         draw_sprite_any_bob(pokeSprite,
@@ -1168,18 +1180,52 @@ int main(void)
                 }
 
                 char lvlBuf[8];
+                char hpCurBuf[8];
+                char hpMaxBuf[8];
                 snprintf(lvlBuf, sizeof(lvlBuf), "%d", p->level);
+                snprintf(hpCurBuf, sizeof(hpCurBuf), "%d", curHp);
+                snprintf(hpMaxBuf, sizeof(hpMaxBuf), "%d", maxHp);
 
-                const int textX = pokeX + MENU_POKEMON_SPRITE_WIDTH + 4;
-                draw_string_f(textX, slotY + 6 + colYOffset, (p->id.data != NULL && p->id.data->name != NULL) ? p->id.data->name : "???", BLACK, 1);
-                draw_string_f(textX, slotY + 30 + colYOffset, lvlBuf, BLACK, 1);
+                draw_string_f(slotX + POKEMON_TEXT_MENU_X,
+                              slotY + POKEMON_TEXT_MENU_Y + colYOffset + slotYOffsetForSelection,
+                              (p->id.data != NULL && p->id.data->name != NULL) ? p->id.data->name : "???",
+                              BLACK,
+                              1);
+
+                draw_string_f(slotX + NON_SELECTED_POKEMON_LEVEL_TEXT_X,
+                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForSelection,
+                              lvlBuf,
+                              BLACK,
+                              1);
+
+                draw_string_f(slotX + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X,
+                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForSelection,
+                              hpCurBuf,
+                              BLACK,
+                              1);
+                draw_string_f(slotX + NON_SELECTED_POKEMON_MAX_HP_TEXT_X,
+                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForSelection,
+                              hpMaxBuf,
+                              BLACK,
+                              1);
             }
 
-            // Continue prompt.
-            const int contX = menuX + MENU_PARTY_MENU_WIDTH - SMALL_SPACEBAR_TILE_SIZE - 6;
-            const int contY = menuY + MENU_PARTY_MENU_HEIGHT - SMALL_SPACEBAR_TILE_SIZE - 6;
-            draw_sprite_any(small_spacebar, SMALL_SPACEBAR_TILE_SIZE, SMALL_SPACEBAR_TILE_SIZE, contX, contY, TRANSPARENT_COLOUR);
-            draw_string_f(contX - 58, contY + 4, "Continue", BLACK, 1);
+            // Cancel button (replaces ESC-to-exit).
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            const int cancelX = menuX + CANCEL_X;
+            const int cancelY = menuY + CANCEL_Y;
+            if (menuCursor == 6) {
+                draw_sprite_any_shade_pulse(cancelSprite,
+                                            CANCEL_SPRITE_WIDTH, CANCEL_SPRITE_HEIGHT,
+                                            cancelX, cancelY,
+                                            TRANSPARENT_COLOUR,
+                                            shadePulseFrame);
+            } else {
+                draw_sprite_any(cancelSprite,
+                                CANCEL_SPRITE_WIDTH, CANCEL_SPRITE_HEIGHT,
+                                cancelX, cancelY,
+                                TRANSPARENT_COLOUR);
+            }
 
             {
                 char moneyBuf[32];
@@ -1189,6 +1235,11 @@ int main(void)
 
             // Space selects a pokemon to swap; pressing Space on another swaps the two.
             if (spacePressed) {
+                if (menuCursor == 6) {
+                    currentGameState = GAME_STATE_MAP;
+                    menuSwapIndex = -1;
+                    break;
+                }
                 if (menuCursor >= 0 && menuCursor < playerParty.count && playerParty.slots[menuCursor] != NULL) {
                     if (menuSwapIndex < 0) {
                         menuSwapIndex = menuCursor;

@@ -78,6 +78,7 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaBack.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaFront.c \
         software/graphics/sprites/menu/menuSprites.c \
+        software/graphics/sprites/menu/cancelSprite.c \
         software/graphics/sprites/menuPokemon/menuPokemonSprites.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
