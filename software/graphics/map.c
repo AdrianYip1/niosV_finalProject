@@ -7,7 +7,7 @@
 #include "backdrops/poke_mart_interior_tiles.h"
 #include "sprites/pokemonCenter/pokemonCenterDeskSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterNurseSprite.h"
-#include "sprites/cynthia192x192/cynthiaFrontSprite.h"
+#include "sprites/trainerSprites/cynthiaFrontMapSprite.h"
 
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 int map_overlay[MAP_HEIGHT][MAP_WIDTH];
@@ -30,16 +30,12 @@ static int g_decor_entry_count = 0;
 static MapPresetId g_current_preset = MAP_PRESET_ROUTE;
 static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
 
-#define ROUTE_B_CYNTHIA_SRC_X 52
-#define ROUTE_B_CYNTHIA_SRC_Y 40
-#define ROUTE_B_CYNTHIA_DRAW_W 88
-#define ROUTE_B_CYNTHIA_DRAW_H 120
 #define ROUTE_B_CYNTHIA_X 116
-#define ROUTE_B_CYNTHIA_Y 10
-#define ROUTE_B_CYNTHIA_BBOX_X 136
-#define ROUTE_B_CYNTHIA_BBOX_Y 58
-#define ROUTE_B_CYNTHIA_BBOX_W 36
-#define ROUTE_B_CYNTHIA_BBOX_H 54
+#define ROUTE_B_CYNTHIA_Y 18
+#define ROUTE_B_CYNTHIA_BBOX_X 122
+#define ROUTE_B_CYNTHIA_BBOX_Y 30
+#define ROUTE_B_CYNTHIA_BBOX_W 20
+#define ROUTE_B_CYNTHIA_BBOX_H 28
 #define POKEMON_CENTER_DESK_BBOX_X 58
 #define POKEMON_CENTER_DESK_BBOX_Y 47
 #define POKEMON_CENTER_DESK_BBOX_W POKEMON_CENTER_DESK_WIDTH
@@ -524,12 +520,10 @@ void draw_map(void) {
     }
     draw_all_decor();
     if (g_current_preset == MAP_PRESET_GROUND && g_current_decor_layout == MAP_DECOR_ROUTE_B) {
-        draw_sprite_any_region(cynthiaFrontSprite,
-                               CYNTHIA_FRONT_WIDTH, CYNTHIA_FRONT_HEIGHT,
-                               ROUTE_B_CYNTHIA_SRC_X, ROUTE_B_CYNTHIA_SRC_Y,
-                               ROUTE_B_CYNTHIA_DRAW_W, ROUTE_B_CYNTHIA_DRAW_H,
-                               ROUTE_B_CYNTHIA_X, ROUTE_B_CYNTHIA_Y,
-                               TRANSPARENT_COLOUR);
+        draw_sprite_any(cynthiaFrontMapSprite,
+                        CYNTHIA_FRONT_MAP_WIDTH, CYNTHIA_FRONT_MAP_HEIGHT,
+                        ROUTE_B_CYNTHIA_X, ROUTE_B_CYNTHIA_Y,
+                        TRANSPARENT_COLOUR);
     }
     if (g_current_preset == MAP_PRESET_POKEMON_CENTER_INTERIOR) {
         draw_sprite_any(pokemonCenterNurseSprite,

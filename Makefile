@@ -77,6 +77,7 @@ SRCS := software/main.c \
         software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterDeskSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.c \
+        software/graphics/sprites/trainerSprites/cynthiaFrontMapSprite.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaBack.c \
