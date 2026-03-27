@@ -7,7 +7,7 @@
 #include "pokemonDataBase.h"
 
 #define BASE_EXP_GAINED 50
-#define EXP_MULTIPLIER 10
+#define EXP_MULTIPLIER 100
 #ifndef NUM_TYPES
 #define NUM_TYPES 19
 #endif

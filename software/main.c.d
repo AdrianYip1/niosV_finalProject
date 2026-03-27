@@ -66,6 +66,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/sprites/battleItemsUI/pokeballIcons.h \
  software/graphics/sprites/battleItemsUI/healingItemIcons.h \
  software/graphics/sprites/menu/menuSprites.h \
+ software/graphics/sprites/menu/cancelSprite.h \
  software/graphics/sprites/menuPokemon/menuPokemonSprites.h \
  software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h
 software/graphics/graphics.h:
@@ -139,5 +140,6 @@ software/graphics/sprites/battleItemsUI/itemDescription.h:
 software/graphics/sprites/battleItemsUI/pokeballIcons.h:
 software/graphics/sprites/battleItemsUI/healingItemIcons.h:
 software/graphics/sprites/menu/menuSprites.h:
+software/graphics/sprites/menu/cancelSprite.h:
 software/graphics/sprites/menuPokemon/menuPokemonSprites.h:
 software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h:
