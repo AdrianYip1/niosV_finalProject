@@ -5,6 +5,7 @@
 #include "backdrops/ground_tiles.h"
 #include "backdrops/pokemon_center_interior_tiles.h"
 #include "backdrops/poke_mart_interior_tiles.h"
+#include "sprites/pokemonCenter/pokemonCenterClerkSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterDeskSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterNurseSprite.h"
 #include "sprites/trainerSprites/cynthiaFrontMapSprite.h"
@@ -71,17 +72,9 @@ static bool is_within_poke_mart_walkable_area(int x0, int y0, int x1, int y1) {
     const int max_x = 280;
     const int min_y = 80;
     const int max_y = 230;
-    const int doorway_min_x = 80;
-    const int doorway_max_x = 132;
-    const int doorway_max_y = (MAP_HEIGHT * TILE_SIZE) - 1;
 
-    if (x0 < min_x || x1 > max_x || y0 < min_y) {
+    if (x0 < min_x || x1 > max_x || y0 < min_y || y1 > max_y) {
         return false;
-    }
-    if (y1 > max_y) {
-        if (!(x0 >= doorway_min_x && x1 <= doorway_max_x && y1 <= doorway_max_y)) {
-            return false;
-        }
     }
 
     if (!(x1 < 0 || 80 < x0 || y1 < 0 || 150 < y0)) {
@@ -529,6 +522,10 @@ void draw_map(void) {
         draw_sprite_any(pokemonCenterNurseSprite,
                         POKEMON_CENTER_NURSE_WIDTH, POKEMON_CENTER_NURSE_HEIGHT,
                         142, 60,
+                        TRANSPARENT_COLOUR);
+        draw_sprite_any(pokemonCenterClerkSprite,
+                        POKEMON_CENTER_CLERK_WIDTH, POKEMON_CENTER_CLERK_HEIGHT,
+                        39, 99,
                         TRANSPARENT_COLOUR);
         draw_sprite_any(pokemonCenterDeskSprite,
                         POKEMON_CENTER_DESK_WIDTH, POKEMON_CENTER_DESK_HEIGHT,
