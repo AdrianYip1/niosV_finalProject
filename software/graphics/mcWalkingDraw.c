@@ -13,6 +13,8 @@
 
 Sprite mcWalkingSprite;
 static McBounds g_mcBounds = {0, 0, -1, -1, 0}; //the stored bounding box
+static int g_mc_scale_num = 1;
+static int g_mc_scale_den = 1;
 
 typedef struct {
     int minX;
@@ -46,22 +48,26 @@ static SpriteBounds computeSpriteBoundsNxN(const unsigned short* frame, int n) {
     return b;
 }
 
-static void updateMcBoundsFromFrameAt(const unsigned short* frame, int tileSize, int spriteX, int spriteY) {
+static void updateMcBoundsFromFrameAt(const unsigned short* frame, int tileSize,
+                                      int drawX, int drawY) {
     const SpriteBounds b = computeSpriteBoundsNxN(frame, tileSize);
     if (b.valid) {
-        // lower body has bbox
-        const int bbox_height = b.maxY - b.minY + 1;
-        const int lower_body_start = b.minY + (bbox_height / 2);
-        g_mcBounds.x0 = spriteX + b.minX;
-        g_mcBounds.y0 = spriteY + lower_body_start;
-        g_mcBounds.x1 = spriteX + b.maxX;
-        g_mcBounds.y1 = spriteY + b.maxY;
+        const int scaled_min_x = drawX + (b.minX * g_mc_scale_num) / g_mc_scale_den;
+        const int scaled_min_y = drawY + (b.minY * g_mc_scale_num) / g_mc_scale_den;
+        const int scaled_max_x = drawX + (((b.maxX + 1) * g_mc_scale_num + g_mc_scale_den - 1) / g_mc_scale_den) - 1;
+        const int scaled_max_y = drawY + (((b.maxY + 1) * g_mc_scale_num + g_mc_scale_den - 1) / g_mc_scale_den) - 1;
+        const int bbox_height = scaled_max_y - scaled_min_y + 1;
+        const int lower_body_start = scaled_min_y + (bbox_height / 2);
+        g_mcBounds.x0 = scaled_min_x;
+        g_mcBounds.y0 = lower_body_start;
+        g_mcBounds.x1 = scaled_max_x;
+        g_mcBounds.y1 = scaled_max_y;
         g_mcBounds.valid = 1;
     } else {
-        g_mcBounds.x0 = spriteX;
-        g_mcBounds.y0 = spriteY;
-        g_mcBounds.x1 = spriteX - 1;
-        g_mcBounds.y1 = spriteY - 1;
+        g_mcBounds.x0 = drawX;
+        g_mcBounds.y0 = drawY;
+        g_mcBounds.x1 = drawX - 1;
+        g_mcBounds.y1 = drawY - 1;
         g_mcBounds.valid = 0;
     }
 }
@@ -112,15 +118,22 @@ void initMCIdle(void) {
 void drawMCAnimation(void) {
     Sprite* MCsprite = &mcWalkingSprite;
     const unsigned short* frame = MCsprite->frames[MCsprite->frameIndex];
-    for (int y = 0; y < MCsprite->tileSize; y++) {
-        for (int x = 0; x < MCsprite->tileSize; x++) {
-            unsigned short color = frame[y * MCsprite->tileSize + x];
+    const int scaled_width = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
+    const int scaled_height = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
+    const int draw_x = MCsprite->x - ((scaled_width - MCsprite->tileSize) / 2);
+    const int draw_y = MCsprite->y - (scaled_height - MCsprite->tileSize);
+
+    for (int y = 0; y < scaled_height; y++) {
+        const int src_y = (y * g_mc_scale_den) / g_mc_scale_num;
+        for (int x = 0; x < scaled_width; x++) {
+            const int src_x = (x * g_mc_scale_den) / g_mc_scale_num;
+            unsigned short color = frame[src_y * MCsprite->tileSize + src_x];
             if (color == TRANSPARENT_COLOUR) continue;
-            draw_pixel(MCsprite->x + x, MCsprite->y + y, color);
+            draw_pixel(draw_x + x, draw_y + y, color);
         }
     }
 
-    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, MCsprite->x, MCsprite->y);
+    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, draw_x, draw_y);
 
     MCsprite->frameTimer++;
     if (MCsprite->frameTimer >= MCsprite->frameDelay) {
@@ -136,6 +149,25 @@ void drawMCWalkingAnimation(void) { drawMCAnimation(); }
 
 McBounds getMCBounds(void) {
     return g_mcBounds;
+}
+
+void getMCPosition(int *x, int *y) {
+    if (x != 0) {
+        *x = mcWalkingSprite.x;
+    }
+    if (y != 0) {
+        *y = mcWalkingSprite.y;
+    }
+}
+
+void setMCScale(int numerator, int denominator) {
+    if (numerator <= 0 || denominator <= 0) {
+        g_mc_scale_num = 1;
+        g_mc_scale_den = 1;
+        return;
+    }
+    g_mc_scale_num = numerator;
+    g_mc_scale_den = denominator;
 }
 
 void goUp(void) {

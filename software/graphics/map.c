@@ -7,6 +7,7 @@
 #include "backdrops/poke_mart_interior_tiles.h"
 #include "sprites/pokemonCenter/pokemonCenterDeskSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterNurseSprite.h"
+#include "sprites/cynthia192x192/cynthiaFrontSprite.h"
 
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 int map_overlay[MAP_HEIGHT][MAP_WIDTH];
@@ -27,11 +28,27 @@ typedef struct {
 static DecorEntry g_decor_entries[MAP_WIDTH * MAP_HEIGHT * 2];
 static int g_decor_entry_count = 0;
 static MapPresetId g_current_preset = MAP_PRESET_ROUTE;
+static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
+
+#define ROUTE_B_CYNTHIA_SRC_X 52
+#define ROUTE_B_CYNTHIA_SRC_Y 40
+#define ROUTE_B_CYNTHIA_DRAW_W 88
+#define ROUTE_B_CYNTHIA_DRAW_H 120
+#define ROUTE_B_CYNTHIA_X 116
+#define ROUTE_B_CYNTHIA_Y 10
+#define ROUTE_B_CYNTHIA_BBOX_X 136
+#define ROUTE_B_CYNTHIA_BBOX_Y 58
+#define ROUTE_B_CYNTHIA_BBOX_W 36
+#define ROUTE_B_CYNTHIA_BBOX_H 54
+#define POKEMON_CENTER_DESK_BBOX_X 58
+#define POKEMON_CENTER_DESK_BBOX_Y 47
+#define POKEMON_CENTER_DESK_BBOX_W POKEMON_CENTER_DESK_WIDTH
+#define POKEMON_CENTER_DESK_BBOX_H POKEMON_CENTER_DESK_HEIGHT
 
 static bool is_within_interior_walkable_rect(int x0, int y0, int x1, int y1) {
     const int min_x = 10;
     const int max_x = 310;
-    const int min_y = 10;
+    const int min_y = 80;
     const int max_y = 220;
     const int doorway_min_x = 145;
     const int doorway_max_x = 175;
@@ -41,6 +58,12 @@ static bool is_within_interior_walkable_rect(int x0, int y0, int x1, int y1) {
         return false;
     }
     if (y1 <= max_y) {
+        if (!(x1 < POKEMON_CENTER_DESK_BBOX_X ||
+              (POKEMON_CENTER_DESK_BBOX_X + POKEMON_CENTER_DESK_BBOX_W - 1) < x0 ||
+              y1 < POKEMON_CENTER_DESK_BBOX_Y ||
+              (POKEMON_CENTER_DESK_BBOX_Y + POKEMON_CENTER_DESK_BBOX_H - 1) < y0)) {
+            return false;
+        }
         return true;
     }
 
@@ -52,8 +75,8 @@ static bool is_within_poke_mart_walkable_area(int x0, int y0, int x1, int y1) {
     const int max_x = 280;
     const int min_y = 80;
     const int max_y = 230;
-    const int doorway_min_x = 129;
-    const int doorway_max_x = 159;
+    const int doorway_min_x = 80;
+    const int doorway_max_x = 132;
     const int doorway_max_y = (MAP_HEIGHT * TILE_SIZE) - 1;
 
     if (x0 < min_x || x1 > max_x || y0 < min_y) {
@@ -63,6 +86,10 @@ static bool is_within_poke_mart_walkable_area(int x0, int y0, int x1, int y1) {
         if (!(x0 >= doorway_min_x && x1 <= doorway_max_x && y1 <= doorway_max_y)) {
             return false;
         }
+    }
+
+    if (!(x1 < 0 || 80 < x0 || y1 < 0 || 150 < y0)) {
+        return false;
     }
 
     if (!(x1 < 172 || (172 + 54 - 1) < x0 || y1 < 120 || (120 + 80 - 1) < y0)) {
@@ -204,14 +231,6 @@ static void draw_all_decor(void) {
 }
 
 void apply_map_decor_layout(MapDecorLayout layout) {
-    static const MapTilePosition route_a_grass_patch_positions[] = {
-        {7,4}, {8,4}, {9,4}, {10,4}, {11,4}, {12,4},
-        {7,5}, {8,5}, {9,5}, {10,5}, {11,5}, {12,5},
-        {7,6}, {8,6}, {9,6}, {10,6}, {11,6}, {12,6},
-        {7,7}, {8,7}, {9,7}, {10,7}, {11,7}, {12,7},
-        {7,8}, {8,8}, {9,8}, {10,8}, {11,8}, {12,8},
-        {7,9}, {8,9}, {9,9}, {10,9}, {11,9}, {12,9},
-    };
     static const MapTilePosition route_a_tree_positions[] = {
         {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4},
         {0, 10}, {0, 11}, {0, 12}, {0, 13},
@@ -226,12 +245,12 @@ void apply_map_decor_layout(MapDecorLayout layout) {
     };
 
     static const MapTilePosition route_b_grass_patch_positions[] = {
-        {7,4}, {8,4}, {9,4}, {10,4}, {11,4}, {12,4},
-        {7,5}, {8,5}, {9,5}, {10,5}, {11,5}, {12,5},
-        {7,6}, {8,6}, {9,6}, {10,6}, {11,6}, {12,6},
         {7,7}, {8,7}, {9,7}, {10,7}, {11,7}, {12,7},
         {7,8}, {8,8}, {9,8}, {10,8}, {11,8}, {12,8},
         {7,9}, {8,9}, {9,9}, {10,9}, {11,9}, {12,9},
+        {7,10}, {8,10}, {9,10}, {10,10}, {11,10}, {12,10},
+        {7,11}, {8,11}, {9,11}, {10,11}, {11,11}, {12,11},
+        {7,12}, {8,12}, {9,12}, {10,12}, {11,12}, {12,12},
     };
     static const MapTilePosition route_b_tree_positions[] = {
         {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6},
@@ -240,8 +259,8 @@ void apply_map_decor_layout(MapDecorLayout layout) {
         {19, 10}, {19, 11}, {19, 12}, {19, 13},
     };
     static const MapDecorDefinition route_a_decor = {
-        route_a_grass_patch_positions,
-        sizeof(route_a_grass_patch_positions) / sizeof(route_a_grass_patch_positions[0]),
+        0,
+        0,
         route_a_tree_positions,
         sizeof(route_a_tree_positions) / sizeof(route_a_tree_positions[0]),
     };
@@ -252,6 +271,7 @@ void apply_map_decor_layout(MapDecorLayout layout) {
         sizeof(route_b_tree_positions) / sizeof(route_b_tree_positions[0]),
     };
     const MapDecorDefinition *decor = &route_a_decor;
+    g_current_decor_layout = layout;
 
     switch (layout) {
         case MAP_DECOR_NONE:
@@ -444,6 +464,14 @@ bool map_bounds_are_walkable(int x0, int y0, int x1, int y1) {
         !is_within_poke_mart_walkable_area(x0, y0, x1, y1)) {
         return false;
     }
+    if (g_current_preset == MAP_PRESET_GROUND &&
+        g_current_decor_layout == MAP_DECOR_ROUTE_B &&
+        !(x1 < ROUTE_B_CYNTHIA_BBOX_X ||
+          (ROUTE_B_CYNTHIA_BBOX_X + ROUTE_B_CYNTHIA_BBOX_W - 1) < x0 ||
+          y1 < ROUTE_B_CYNTHIA_BBOX_Y ||
+          (ROUTE_B_CYNTHIA_BBOX_Y + ROUTE_B_CYNTHIA_BBOX_H - 1) < y0)) {
+        return false;
+    }
 
     const int left_tile = x0 / TILE_SIZE;
     const int right_tile = x1 / TILE_SIZE;
@@ -495,6 +523,14 @@ void draw_map(void) {
         }
     }
     draw_all_decor();
+    if (g_current_preset == MAP_PRESET_GROUND && g_current_decor_layout == MAP_DECOR_ROUTE_B) {
+        draw_sprite_any_region(cynthiaFrontSprite,
+                               CYNTHIA_FRONT_WIDTH, CYNTHIA_FRONT_HEIGHT,
+                               ROUTE_B_CYNTHIA_SRC_X, ROUTE_B_CYNTHIA_SRC_Y,
+                               ROUTE_B_CYNTHIA_DRAW_W, ROUTE_B_CYNTHIA_DRAW_H,
+                               ROUTE_B_CYNTHIA_X, ROUTE_B_CYNTHIA_Y,
+                               TRANSPARENT_COLOUR);
+    }
     if (g_current_preset == MAP_PRESET_POKEMON_CENTER_INTERIOR) {
         draw_sprite_any(pokemonCenterNurseSprite,
                         POKEMON_CENTER_NURSE_WIDTH, POKEMON_CENTER_NURSE_HEIGHT,
@@ -502,7 +538,23 @@ void draw_map(void) {
                         TRANSPARENT_COLOUR);
         draw_sprite_any(pokemonCenterDeskSprite,
                         POKEMON_CENTER_DESK_WIDTH, POKEMON_CENTER_DESK_HEIGHT,
-                        45, 47,
+                        95, 47,
                         TRANSPARENT_COLOUR);
     }
+}
+
+bool map_can_talk_to_route_b_cynthia(const McBounds *bounds) {
+    const int interaction_margin = 18;
+
+    if (bounds == 0 || !bounds->valid) {
+        return false;
+    }
+    if (g_current_preset != MAP_PRESET_GROUND || g_current_decor_layout != MAP_DECOR_ROUTE_B) {
+        return false;
+    }
+
+    return !(bounds->x1 < (ROUTE_B_CYNTHIA_BBOX_X - interaction_margin) ||
+             (ROUTE_B_CYNTHIA_BBOX_X + ROUTE_B_CYNTHIA_BBOX_W - 1 + interaction_margin) < bounds->x0 ||
+             bounds->y1 < (ROUTE_B_CYNTHIA_BBOX_Y - interaction_margin) ||
+             (ROUTE_B_CYNTHIA_BBOX_Y + ROUTE_B_CYNTHIA_BBOX_H - 1 + interaction_margin) < bounds->y0);
 }

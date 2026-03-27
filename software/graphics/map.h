@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include "predefined_graphics.h"
+#include "mcWalkingDraw.h"
 
 // Map size in tiles (320x240 = 20x15 tiles)
 #define MAP_WIDTH  20
@@ -46,6 +47,7 @@ bool map_bounds_are_walkable(int x0, int y0, int x1, int y1);
 void apply_map_decor(void);
 void apply_map_decor_layout(MapDecorLayout layout);
 void draw_map_cell(int x, int y);
+bool map_can_talk_to_route_b_cynthia(const McBounds *bounds);
 
 void init_map(void); 
 void draw_map(void);

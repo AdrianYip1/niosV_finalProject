@@ -639,6 +639,8 @@ int main(void)
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
     WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
+    int mapReturnX = 80;
+    int mapReturnY = 112;
     GameState activeBattleMenuState = GAME_STATE_WILD_BATTLE;
     int battleCursor = 0;
 
@@ -866,8 +868,9 @@ int main(void)
         if (wasOverworld != isOverworld) {
             if (isOverworld) {
                 play_bgm(map_audio, map_audio_len);
-                load_world_map(currentMapId, 80, 112, MC_FACING_S);
+                load_world_map(currentMapId, mapReturnX, mapReturnY, MC_FACING_S);
             } else {
+                getMCPosition(&mapReturnX, &mapReturnY);
                 play_bgm(battle_audio, battle_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_BACKDROP1);
@@ -2743,6 +2746,7 @@ int main(void)
             {
                 draw_map();
                 const McMoveResult moveResult = mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
+                const McBounds mcBounds = getMCBounds();
                 WorldMapId targetMap;
                 int spawnX;
                 int spawnY;
@@ -2753,6 +2757,11 @@ int main(void)
                     currentMapId = targetMap;
                     load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
                     draw_map();
+                } else if (currentMapId == WORLD_MAP_ROUTE_B &&
+                           spacePressed &&
+                           map_can_talk_to_route_b_cynthia(&mcBounds)) {
+                    nextBattleType = BATTLE_TRAINER;
+                    currentGameState = GAME_STATE_TRAINER_BATTLE;
                 } else if (moveResult == MC_MOVE_OK && should_trigger_grass_battle(upPressed, downPressed, leftPressed, rightPressed)) {
                     nextBattleType = BATTLE_WILD;
                     currentGameState = GAME_STATE_WILD_BATTLE;
