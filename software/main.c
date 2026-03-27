@@ -62,6 +62,7 @@
 #include "graphics/sprites/battleItemsUI/pokeballIcons.h"
 #include "graphics/sprites/battleItemsUI/healingItemIcons.h"
 #include "graphics/sprites/menu/menuSprites.h"
+#include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -224,6 +225,33 @@
 #define AREA_BACK_X 0
 #define AREA_BACK_Y 120
 
+//non selected pokemon location 
+#define NON_SELECTED_POKEMON_X 3
+#define NON_SELECTED_POKEMON_Y 2
+#define NON_SELECTED_POKEMON_HP_X 63
+#define NON_SELECTED_POKEMON_HP_Y 24
+#define NON_SELECTED_POKEMON_HP_WIDTH 48
+#define NON_SELECTED_POKEMON_HP_HEIGHT 4
+#define NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X 67
+#define NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y 39
+#define NON_SELECTED_POKEMON_MAX_HP_TEXT_X 93
+#define NON_SELECTED_POKEMON_MAX_HP_TEXT_Y 39
+#define NON_SELECTED_POKEMON_LEVEL_TEXT_X 23
+#define NON_SELECTED_POKEMON_LEVEL_TEXT_Y 39
+#define POKEMON_TEXT_MENU_X 42
+#define POKEMON_TEXT_MENU_Y 16
+
+//location from partyMenu
+#define continue_x 201
+#define continue_y 165
+
+#define NON_SELECTED_POKEMON_STATUS_X 32
+#define NON_SELECTED_POKEMON_STATUS_Y 23
+
+#define SELECTED_POKEMON_DIFFERENCE_Y 1 //1 down from nonselected
+
+
+
 // Game States
 typedef enum {
     GAME_STATE_MAP = 0,
@@ -284,6 +312,33 @@ static inline int expBarWidthFor(const pokemonInBattle *pokemon) {
     const int numer = (EXP_WIDTH * pokemon->exp);
     const int w = (numer + needed - 1) / needed;
     return clamp_int(w, 1, EXP_WIDTH);
+}
+
+// Money system (simple, persistent per program run).
+#define STARTING_MONEY 3000
+#define TRAINER_WIN_MONEY_BASE 200
+#define TRAINER_WIN_MONEY_PER_LEVEL 25
+#define BATTLE_LOSS_PENALTY_MIN 50
+#define BATTLE_LOSS_PENALTY_MAX 500
+#define BATTLE_LOSS_PENALTY_DIV 10  // lose ~10% (clamped)
+
+static inline int computeTrainerPayout(const Party *enemyParty) {
+    if (enemyParty == NULL) return TRAINER_WIN_MONEY_BASE;
+    int maxLevel = 1;
+    for (int i = 0; i < enemyParty->count; i++) {
+        const pokemonInBattle *p = enemyParty->slots[i];
+        if (p != NULL && p->level > maxLevel) maxLevel = p->level;
+    }
+    return TRAINER_WIN_MONEY_BASE + (maxLevel * TRAINER_WIN_MONEY_PER_LEVEL);
+}
+
+static inline int computeLossPenalty(int money) {
+    if (money <= 0) return 0;
+    int penalty = money / BATTLE_LOSS_PENALTY_DIV;
+    if (penalty < BATTLE_LOSS_PENALTY_MIN) penalty = BATTLE_LOSS_PENALTY_MIN;
+    if (penalty > BATTLE_LOSS_PENALTY_MAX) penalty = BATTLE_LOSS_PENALTY_MAX;
+    if (penalty > money) penalty = money;
+    return penalty;
 }
 
 static ArrowContext getArrowContext(GameState state, BattleUiState battleUi) {
@@ -690,6 +745,7 @@ int main(void)
     // init the roster and party (persistent).
     pcInit(&playerPc);
     initParty(&playerParty);
+    int playerMoney = STARTING_MONEY;
 
     bagInit(&playerBag);
     // Starter bag 
@@ -707,7 +763,7 @@ int main(void)
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
         int ownedIndex = -1;
-        if (species != NULL && pcAdd(&playerPc, species, 60 + i, &ownedIndex)) {
+        if (species != NULL && pcAdd(&playerPc, species, 80 + i, &ownedIndex)) {
             addPokemonToParty(&playerParty, pcGet(&playerPc, ownedIndex));
         }
     }
@@ -830,6 +886,9 @@ int main(void)
     textboxDone = 0;
     prevSpaceDown = false;
     int menuCursor = 0; // 0..5 (2 columns x 3 rows)
+    int menuSwapIndex = -1; // first-picked index for swapping in the party menu
+    GameState lastFrameState = currentGameState;
+    char battleEndMsg[96] = "WIN";
 
     while (1) {
         update_keyboard();
@@ -848,8 +907,34 @@ int main(void)
                 } else if (ch == '4' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_MENU;
                     menuCursor = 0;
+                    menuSwapIndex = -1;
                 } else if (ch == '4' && currentGameState == GAME_STATE_MENU) {
                     currentGameState = GAME_STATE_MAP;
+                    menuSwapIndex = -1;
+                }
+            }
+        }
+
+        // money changes
+        if (currentGameState != lastFrameState) {
+            if (currentGameState == GAME_STATE_BATTLE_WIN) {
+                int delta = 0;
+                if (battleState.type == BATTLE_TRAINER) {
+                    delta = computeTrainerPayout(&enemyParty);
+                    playerMoney += delta;
+                }
+                if (delta > 0) {
+                    snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN! +$%d", delta);
+                } else {
+                    snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN");
+                }
+            } else if (currentGameState == GAME_STATE_BATTLE_LOSE) {
+                const int penalty = computeLossPenalty(playerMoney);
+                playerMoney -= penalty;
+                if (penalty > 0) {
+                    snprintf(battleEndMsg, sizeof(battleEndMsg), "LOSE! -$%d", penalty);
+                } else {
+                    snprintf(battleEndMsg, sizeof(battleEndMsg), "LOSE");
                 }
             }
         }
@@ -877,6 +962,13 @@ int main(void)
                     //battle type is BATTLE_TRAINER
                     setupCynthiaTrainerParty(&enemyParty, cynthiaTeam);
                 }
+
+                // Ensure the party leader (slot 0) gets sent out first.
+                playerParty.activeIndex = 0;
+                if (playerParty.slots[0] == NULL || !playerParty.slots[0]->alive) {
+                    const int firstAlive = getFirstAlivePokemon(&playerParty);
+                    if (firstAlive >= 0) playerParty.activeIndex = firstAlive;
+                }
                 initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, nextBattleType);
 
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
@@ -899,6 +991,7 @@ int main(void)
 
         if (currentGameState == GAME_STATE_MENU && escPressed) {
             currentGameState = GAME_STATE_MAP;
+            menuSwapIndex = -1;
         }
 
         if (isBattleMenuState(currentGameState) && escPressed) {
@@ -970,6 +1063,13 @@ int main(void)
                 play_sfx(plink_audio, plink_audio_len);
             }
 
+            // Animate selected pokemon bob in the menu.
+            bobTimer++;
+            if (bobTimer >= bobSpeedFrames) {
+                bobTimer = 0;
+                bobFrame = (bobFrame + 1) % BOB_SPRITE_FRAME_COUNT;
+            }
+
             draw_map();
             draw_sprite_any(partyMenuSprite,
                             MENU_PARTY_MENU_WIDTH, MENU_PARTY_MENU_HEIGHT,
@@ -980,21 +1080,143 @@ int main(void)
             const int slotH = 49;
             const int unselectedDx = (slotW - MENU_POKEMON_UNSELECTED_WIDTH) / 2;
             const int unselectedDy = (slotH - MENU_POKEMON_UNSELECTED_HEIGHT) / 2;
+            const int leaderSelectedDx = (slotW - MENU_PARTY_LEADER_SELECTED_WIDTH) / 2;
+            const int leaderSelectedDy = (slotH - MENU_PARTY_LEADER_SELECTED_HEIGHT) / 2;
+            const int leaderUnselectedDx = (slotW - MENU_PARTY_LEADER_UNSELECTED_WIDTH) / 2;
+            const int leaderUnselectedDy = (slotH - MENU_PARTY_LEADER_UNSELECTED_HEIGHT) / 2;
 
             for (int i = 0; i < 6; i++) {
                 const int slotX = menuX + (i % 2) * slotW;
                 const int slotY = menuY + (i / 2) * slotH;
                 const int colYOffset = ((i % 2) == 1) ? 8 : 0;
-                if (i == menuCursor) {
-                    draw_sprite_any(pokemonSelectedSprite,
-                                    MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
-                                    slotX, slotY + colYOffset,
-                                    TRANSPARENT_COLOUR);
+                const bool isSelected = (i == menuCursor) || (i == menuSwapIndex);
+                const bool isLeaderSlot = (i == 0);
+                if (isLeaderSlot) {
+                    if (isSelected) {
+                        draw_sprite_any(partyLeaderSelectedSprite,
+                                        MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
+                                        slotX + leaderSelectedDx, slotY + leaderSelectedDy + colYOffset,
+                                        TRANSPARENT_COLOUR);
+                    } else {
+                        draw_sprite_any(partyLeaderUnselectedSprite,
+                                        MENU_PARTY_LEADER_UNSELECTED_WIDTH, MENU_PARTY_LEADER_UNSELECTED_HEIGHT,
+                                        slotX + leaderUnselectedDx, slotY + leaderUnselectedDy + colYOffset,
+                                        TRANSPARENT_COLOUR);
+                    }
                 } else {
-                    draw_sprite_any(pokemonUnselectedSprite,
-                                    MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
-                                    slotX + unselectedDx, slotY + unselectedDy + colYOffset,
-                                    TRANSPARENT_COLOUR);
+                    if (isSelected) {
+                        draw_sprite_any(pokemonSelectedSprite,
+                                        MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
+                                        slotX, slotY + colYOffset,
+                                        TRANSPARENT_COLOUR);
+                    } else {
+                        draw_sprite_any(pokemonUnselectedSprite,
+                                        MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
+                                        slotX + unselectedDx, slotY + unselectedDy + colYOffset,
+                                        TRANSPARENT_COLOUR);
+                    }
+                }
+
+                pokemonInBattle *p = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
+                if (p == NULL) continue;
+
+                // HP bar inside the slot.
+                const int hpBarX = slotX + 40;
+                const int hpBarY = slotY + 14 + colYOffset;
+                const int hpBarW = 70;
+                const int hpBarH = 3;
+
+                const int curHp = p->scaledStatsWithLevel[0];
+                const int maxHp = (p->maxHp > 0) ? p->maxHp : 1;
+                const int hpWidth = (hpBarW * curHp) / maxHp;
+                const int hpPct = (curHp * 100) / maxHp;
+                const short hpColour = (hpPct < 15) ? RED : ((hpPct < 50) ? ORANGE : GREEN);
+                draw_rect(hpBarX, hpBarY, (hpWidth < 0) ? 0 : ((hpWidth > hpBarW) ? hpBarW : hpWidth), hpBarH, hpColour);
+
+                // Status icon.
+                const unsigned short *statusSprite = NULL;
+                int statusW = 0, statusH = 0;
+                switch (p->status) {
+                    case STATUS_BURN: statusSprite = burned; statusW = BURNED_WIDTH; statusH = BURNED_HEIGHT; break;
+                    case STATUS_POISON: statusSprite = poison; statusW = POISON_WIDTH; statusH = POISON_HEIGHT; break;
+                    case STATUS_PARALYSIS: statusSprite = para; statusW = PARA_WIDTH; statusH = PARA_HEIGHT; break;
+                    case STATUS_SLEEP: statusSprite = sleep; statusW = SLEEP_WIDTH; statusH = SLEEP_HEIGHT; break;
+                    case STATUS_FREEZE: statusSprite = frozen; statusW = FROZEN_WIDTH; statusH = FROZEN_HEIGHT; break;
+                    default: break;
+                }
+                if (statusSprite != NULL) {
+                    draw_sprite_any(statusSprite, statusW, statusH, slotX + 104, slotY + 33 + colYOffset, TRANSPARENT_COLOUR);
+                }
+
+                // Pokemon sprite + name/level (text drawn after sprite).
+                const unsigned short *pokeSprite = menuPokemonSpriteForId(p->id.frontFrame_ID);
+                const int pokeX = slotX + 16;
+                const int pokeY = slotY + 16 + colYOffset;
+                if (pokeSprite != NULL) {
+                    if (isSelected) {
+                        draw_sprite_any_bob(pokeSprite,
+                                            MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                            pokeX, pokeY,
+                                            TRANSPARENT_COLOUR,
+                                            bobFrame);
+                    } else {
+                        draw_sprite_any(pokeSprite,
+                                        MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                        pokeX, pokeY,
+                                        TRANSPARENT_COLOUR);
+                    }
+                }
+
+                char lvlBuf[8];
+                snprintf(lvlBuf, sizeof(lvlBuf), "%d", p->level);
+
+                const int textX = pokeX + MENU_POKEMON_SPRITE_WIDTH + 4;
+                draw_string_f(textX, slotY + 6 + colYOffset, (p->id.data != NULL && p->id.data->name != NULL) ? p->id.data->name : "???", BLACK, 1);
+                draw_string_f(textX, slotY + 30 + colYOffset, lvlBuf, BLACK, 1);
+            }
+
+            // Continue prompt.
+            const int contX = menuX + MENU_PARTY_MENU_WIDTH - SMALL_SPACEBAR_TILE_SIZE - 6;
+            const int contY = menuY + MENU_PARTY_MENU_HEIGHT - SMALL_SPACEBAR_TILE_SIZE - 6;
+            draw_sprite_any(small_spacebar, SMALL_SPACEBAR_TILE_SIZE, SMALL_SPACEBAR_TILE_SIZE, contX, contY, TRANSPARENT_COLOUR);
+            draw_string_f(contX - 58, contY + 4, "Continue", BLACK, 1);
+
+            {
+                char moneyBuf[32];
+                snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
+                draw_string_f(menuX + 8, menuY + MENU_PARTY_MENU_HEIGHT - 12, moneyBuf, BLACK, 1);
+            }
+
+            // Space selects a pokemon to swap; pressing Space on another swaps the two.
+            if (spacePressed) {
+                if (menuCursor >= 0 && menuCursor < playerParty.count && playerParty.slots[menuCursor] != NULL) {
+                    if (menuSwapIndex < 0) {
+                        menuSwapIndex = menuCursor;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (menuSwapIndex == menuCursor) {
+                        menuSwapIndex = -1; // cancel selection
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else {
+                        const int a = menuSwapIndex;
+                        const int b = menuCursor;
+
+                        pokemonInBattle *tmp = playerParty.slots[a];
+                        playerParty.slots[a] = playerParty.slots[b];
+                        playerParty.slots[b] = tmp;
+
+                        if (playerParty.activeIndex == a) playerParty.activeIndex = b;
+                        else if (playerParty.activeIndex == b) playerParty.activeIndex = a;
+
+                        // Keep battle party box sprites consistent with the party order.
+                        for (int k = 0; k < 6; k++) {
+                            const pokemonInBattle *slotPokemon = (k >= 0 && k < playerParty.count) ? playerParty.slots[k] : NULL;
+                            const int spriteId = (slotPokemon != NULL) ? slotPokemon->id.frontFrame_ID : 0;
+                            setPokemonBoxSpriteId(&partyBoxSprites[k], spriteId);
+                        }
+
+                        menuSwapIndex = -1;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
                 }
             }
             break;
@@ -2720,7 +2942,7 @@ int main(void)
         //get money from trainer battle, exp from wild battle if win
         //exp calculations, levelup, evolution, learn moves
             draw_map();
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "WIN", BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleEndMsg, BLACK);
             if (spacePressed) currentGameState = GAME_STATE_MAP;
 
             break;
@@ -2728,9 +2950,8 @@ int main(void)
         case GAME_STATE_BATTLE_LOSE:
 
             draw_map();
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "LOSE", BLACK);
-             if (spacePressed) currentGameState = GAME_STATE_MAP;
-            currentGameState = GAME_STATE_MAP;
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleEndMsg, BLACK);
+            if (spacePressed) currentGameState = GAME_STATE_MAP;
             
             break;
 
@@ -2754,6 +2975,7 @@ int main(void)
             break;
         }
 
+        lastFrameState = currentGameState;
         wait_for_vsync();
     }
 

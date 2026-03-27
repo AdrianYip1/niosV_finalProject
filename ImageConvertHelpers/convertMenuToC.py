@@ -76,6 +76,13 @@ def main() -> None:
         stem = STEM_REMAP.get(p.stem, p.stem)
         sprites.append((f"{stem}Sprite", p))
 
+    # Ensure the leader slot sprites exist (needed by the menu UI). If they're missing, fail loudly.
+    needed = {"partyLeaderSelected.png", "partyLeaderUnselected.png"}
+    present = {p.name for p in pngs}
+    missing = sorted(needed - present)
+    if missing:
+        raise RuntimeError(f"Missing menu sprite(s) in {SRC_DIR}: {', '.join(missing)}")
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Header
@@ -152,4 +159,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
