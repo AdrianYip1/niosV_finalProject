@@ -36,19 +36,6 @@ static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *att
     const char *moveName = (move != NULL && move->name != NULL) ? move->name : "???";
     char buf[96];
 
-    const float eff = (move != NULL) ? getTypeEffectiveness(move->type, target->type1, target->type2) : 1.0f;
-    const bool hasEffectivenessMsg = (eff == 0.0f) || (eff < 0.99f) || (eff > 1.01f);
-    char effectivenessBuf[96];
-    if (hasEffectivenessMsg) {
-        if (eff == 0.0f) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It had no effect!");
-        } else if (eff < 1.0f) {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's not very effective...");
-        } else {
-            snprintf(effectivenessBuf, sizeof(effectivenessBuf), "It's super effective!");
-        }
-    }
-
     if (opposing) {
         snprintf(buf, sizeof(buf), "Opposing %s used %s!", attackerName, moveName);
     }
@@ -57,9 +44,25 @@ static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *att
     }
 
     battlePushMessage(state, buf);
-    if (hasEffectivenessMsg) {
-        battlePushMessage(state, effectivenessBuf);
+}
+
+static void battlePushEffectivenessMessage(BattleState *state, float eff) {
+    if (state == NULL) return;
+    const bool hasEffectivenessMsg = (eff == 0.0f) || (eff < 0.99f) || (eff > 1.01f);
+    if (!hasEffectivenessMsg) return;
+
+    if (eff == 0.0f) {
+        battlePushMessage(state, "It had no effect!");
+    } else if (eff < 1.0f) {
+        battlePushMessage(state, "It's not very effective...");
+    } else {
+        battlePushMessage(state, "It's super effective!");
     }
+}
+
+static void battlePushMissMessage(BattleState *state) {
+    if (state == NULL) return;
+    battlePushMessage(state, "But it missed!");
 }
 
 static int aiChooseMove(pokemonInBattle *pokemon) {
@@ -157,10 +160,23 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
 
     const bool aliveBefore = target->alive;
     const int hpBefore = target->scaledStatsWithLevel[0];
-    (void)useAttack(attacker, target, moveIndex);
+    const int ppBefore = (moveIndex >= 0 && moveIndex < 4) ? attacker->currentPP[moveIndex] : 0;
+    const bool hit = useAttack(attacker, target, moveIndex);
+    const int ppAfter = (moveIndex >= 0 && moveIndex < 4) ? attacker->currentPP[moveIndex] : 0;
     const int hpAfter = target->scaledStatsWithLevel[0];
     const int tookDamage = (hpBefore > hpAfter) ? 1 : 0;
     const bool faintedNow = aliveBefore && (!target->alive);
+
+    // Miss message (PP is still consumed).
+    if (!hit && move != NULL && ppBefore > 0 && ppAfter == ppBefore - 1) {
+        battlePushMissMessage(state);
+    }
+
+    // Effectiveness message only when the move actually hits and is damaging.
+    if (hit && move != NULL && move->category != ATTACK_STATUS) {
+        const float eff = getTypeEffectiveness(move->type, target->type1, target->type2);
+        battlePushEffectivenessMessage(state, eff);
+    }
 
     // check flag for damage in message 
     if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {

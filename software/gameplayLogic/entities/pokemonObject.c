@@ -159,8 +159,9 @@ bool useAttack(pokemonInBattle *attacker, pokemonInBattle *target, int attackInd
     if (attacker->attacks[attackIndex] == NULL) return false;
     const AttackData *move = attacker->attacks[attackIndex];
     if (attacker->currentPP[attackIndex] <= 0) return false;
-    if ((rand() % 100) >= move->accuracy) return false;
+    // PP is consumed even if the move misses.
     attacker->currentPP[attackIndex]--;
+    if ((rand() % 100) >= move->accuracy) return false;
     if (move->category != ATTACK_STATUS) {
         dealDamage(attacker, target, move->power, move->category, move->type);
     }
