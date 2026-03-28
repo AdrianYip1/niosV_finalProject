@@ -9,6 +9,7 @@
 #include "gameplayLogic/worldMap.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
+#include "graphics/sprites/pcMenu/pcMenuSprites.h"
 #include "graphics/sprites/vsCynthia/vsCynthiaSprite.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
 #include "graphics/textbox/textBoxSprite.h"
@@ -498,6 +499,56 @@ static int navBattleMenu9(int index, NavDir dir) {
 
     const int next = (int)nav[index][d];
     if (next < 0 || next > 8) return index;
+    return next;
+}
+
+static int navPCMenu33(int index, NavDir dir) {
+    static const signed char nav[33][4] = {
+         /* up left down right */
+        /*0 left arrow*/ {0, 0, 2, 1},
+        /*1 right arrow */ {1, 0, 6, 27},
+        /*2 top left */ {1, 2, 7, 3},
+        /*3 */ {3, 2, 8, 4},
+        /*4  */ {4, 3, 9, 5},
+        /*5  */ {5, 4, 10, 6},
+        /*6 top right */ {3, 5, 11, 27},
+        /*7  */ {4, 7, 12, 8},
+        /*8  */ {5, 7, 13, 9},
+        /*9 */ {0, 8, 14, 10},
+        /*10  */ {1, 9, 15, 11},
+        /*11  */ {1, 10, 16, 28},
+        /*12 */ {3, 12, 17, 13},
+        /* 13*/ {4, 12, 18, 14},
+        /*14  */ {5, 13, 19, 15},
+        /*15  */ {3, 14, 20, 16},
+        /*16  */ {4, 15, 21, 29},
+        /*17 */ {5, 17, 22, 18},
+        /*18*/ {0, 17, 23, 19},
+        /*19 */ {1, 18, 24, 20},
+        /*20 */ {1, 19, 25, 21},
+        /*21 */ {3, 20, 26, 31},
+        /*22 bottom left*/ {4, 22, 22, 23},
+        /*23 */ {5, 22, 23, 24},
+        /*24 */ {3, 23, 24, 25},
+        /*25 */ {4, 24, 25, 26},
+        /*26 : bottom right*/ {5, 25, 26, 31},
+        /*27: p1 */ {5, 6, 29, 28},
+        /*28 : p2*/ {0, 27, 30, 28},
+        /*29 : p3*/ {1, 11, 31, 30},
+        /*30 : p4*/ {1, 29, 32, 30},
+        /*31 : p5*/ {3, 16, 31, 32},
+        /*32 : p6*/ {4, 31, 32, 32},
+    };
+
+    if (index < 0) index = 0;
+    if (index > 32) index = 32;
+
+    int d = (int)dir;
+    if (d < 0) d = 0;
+    if (d > 3) d = 3;
+
+    const int next = (int)nav[index][d];
+    if (next < 0 || next > 32) return index;
     return next;
 }
 
@@ -999,9 +1050,12 @@ int main(void)
     textboxDone = 0;
     prevSpaceDown = false;
     int menuCursor = 0; // 0..5 (2 columns x 3 rows)
-    int menuSwapIndex = -1; // first-picked index for swapping in the party menu
+    int menuSwapIndex = -1; // first picked index for swapping in the party menu
     char battleEndMsg[96] = "WIN";
 
+    int pcCursor = 0; // 6 + 2 + max storage in pc
+    int pcCursorAmount = 6 + 2 + PC_MAX;
+    int pcSwapIndex = -1; //first picked index for swapping in pc
     // Learn-move flow state (UI scaffolding).
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
@@ -1039,7 +1093,7 @@ int main(void)
                     menuSwapIndex = -1;
                 } else if (ch == '5' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_PC_MENU;
-
+                    pcCursor = 0;
                 }
             }
         }
@@ -3673,6 +3727,21 @@ int main(void)
         }
 
         case GAME_STATE_PC_MENU:
+
+        draw_sprite_any(pcBoxBlueSprite,PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT, 340 - PC_MENU_PC_BOX_BLUE_WIDTH, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT/2)), TRANSPARENT_COLOUR );
+        draw_sprite_any(pcBoxBackgroundSprite, PC_MENU_PARTY_BOX_WIDTH,PC_MENU_PARTY_BOX_HEIGHT, 0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)), TRANSPARENT_COLOUR );
+        draw_sprite_any(leftArrowSprite, PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT, 0, 20, TRANSPARENT_COLOUR);
+        draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 20, 20, TRANSPARENT_COLOUR);
+        draw_sprite_any(pcLabelSprite, PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT, 30, 20, TRANSPARENT_COLOUR );
+        draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, 200, 120 - (PC_MENU_PARTY_BOX_HEIGHT / 2), TRANSPARENT_COLOUR);
+        bool didMovePcCursor = false;
+        
+        const int oldPcIndex = pcCursor;
+        if (upPressed) pcCursor = navPCMenu33(pcCursor, DIR_UP);
+        if (leftPressed) pcCursor = navPCMenu33(pcCursor, DIR_LEFT);
+        if (downDown) pcCursor = navPCMenu33(pcCursor, DIR_DOWN);
+        if (rightPressed) pcCursor = navPCMenu33(pcCursor, DIR_RIGHT);
+        didMovePcCursor = (pcCursor != oldPcIndex);
         
         if (escPressed) {
             currentGameState = GAME_STATE_MAP;

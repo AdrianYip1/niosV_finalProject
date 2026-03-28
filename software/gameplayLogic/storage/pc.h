@@ -6,7 +6,7 @@
 
 //max is 30 pokmeon in pc
 #ifndef PC_MAX
-#define PC_MAX 30
+#define PC_MAX 25
 #endif
 
 typedef struct {
