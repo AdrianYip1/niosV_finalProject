@@ -276,6 +276,8 @@ typedef enum {
 
     // Forced switch after player's Pokemon faints.
     GAME_STATE_BATTLE_FORCE_SWITCH = 17,
+
+    GAME_STATE_PC_MENU = 18,
 } GameState;
 
 typedef enum {
@@ -1035,6 +1037,9 @@ int main(void)
                 } else if (ch == '4' && currentGameState == GAME_STATE_MENU) {
                     currentGameState = GAME_STATE_MAP;
                     menuSwapIndex = -1;
+                } else if (ch == '5' && currentGameState == GAME_STATE_MAP) {
+                    currentGameState = GAME_STATE_PC_MENU;
+
                 }
             }
         }
@@ -1203,7 +1208,7 @@ int main(void)
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
                                         MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
-                                        slotX + leaderSelectedDx - 4, slotY + leaderSelectedDy + colYOffset + 8,
+                                        slotX + leaderSelectedDx - 4, slotY + leaderSelectedDy + colYOffset -8,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(partyLeaderUnselectedSprite,
@@ -3602,6 +3607,14 @@ int main(void)
 
             break;
         }
+
+        case GAME_STATE_PC_MENU:
+        
+        if (escPressed) {
+            currentGameState = GAME_STATE_MAP;
+            break;
+        }
+            break;
         case GAME_STATE_BATTLE_WIN:
         //check win/lose
         //get money from trainer battle, exp from wild battle if win
