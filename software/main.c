@@ -1509,13 +1509,19 @@ int main(void)
                             actionTextAwaitSpaceRelease = true;
                             play_sfx(plink_audio, plink_audio_len);
                         } else {
-                            // animate hits.
-                            pokemonInBattle *pActive = getActivePokemon(&playerParty);
-                            pokemonInBattle *eActive = getActivePokemon(&enemyParty);
-                            actionTextShownPlayerHp = (pActive != NULL) ? pActive->scaledStatsWithLevel[0] : -1;
-                            actionTextShownEnemyHp = (eActive != NULL) ? eActive->scaledStatsWithLevel[0] : -1;
-                            actionTextTargetPlayerHp = actionTextShownPlayerHp;
-                            actionTextTargetEnemyHp = actionTextShownEnemyHp;
+                            // Switching should immediately show the new active Pokemon's HUD values.
+                            // Reset the action-text snapshots so they re-initialize from the displayed Pokemon.
+                            actionTextShownPlayerHp = -1;
+                            actionTextShownEnemyHp = -1;
+                            actionTextTargetPlayerHp = -1;
+                            actionTextTargetEnemyHp = -1;
+                            actionTextDisplayPlayerIndex = -1;
+                            actionTextDisplayEnemyIndex = -1;
+                            actionTextShownLevel = -1;
+                            actionTextShownExp = -1;
+                            actionTextTargetLevel = -1;
+                            actionTextTargetExp = -1;
+                            actionTextExpAnimating = false;
 
                             battleApplyPlayerAction(&battleState, ACTION_SWITCH, slot);
                             play_sfx(plink_audio, plink_audio_len);
@@ -2978,13 +2984,9 @@ int main(void)
             }
 
             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
-            if (forcedSwitchIndex >= p->count) forcedSwitchIndex = p->count - 1;
-            if (p->slots[forcedSwitchIndex] == NULL || !p->slots[forcedSwitchIndex]->alive) {
-                const int firstAlive = getFirstAlivePokemon(p);
-                if (firstAlive >= 0) forcedSwitchIndex = firstAlive;
-            }
+            if (forcedSwitchIndex > 5) forcedSwitchIndex = 5;
 
-            // Simple 2x3 navigation across slots 0..5.
+            // Simple 2x3 navigation across slots 0..5 (do not skip invalid slots).
             const int prev = forcedSwitchIndex;
             int row = forcedSwitchIndex / 2;
             int col = forcedSwitchIndex % 2;
@@ -2995,26 +2997,81 @@ int main(void)
             int next = row * 2 + col;
             if (next < 0) next = 0;
             if (next > 5) next = 5;
-            // Skip dead/empty slots by scanning a few steps.
-            if (p->slots[next] == NULL || !p->slots[next]->alive) {
-                int scan = next;
-                for (int i = 0; i < 6; i++) {
-                    scan = (scan + 1) % 6;
-                    if (scan < p->count && p->slots[scan] != NULL && p->slots[scan]->alive) {
-                        next = scan;
-                        break;
-                    }
-                }
-            }
             forcedSwitchIndex = next;
             if (forcedSwitchIndex != prev) play_sfx(plink_audio, plink_audio_len);
 
-            // You will replace this with your own UI; for now just show a textbox.
             draw_map();
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Choose a Pokemon to send out!", BLACK);
 
+            // Party slot background + box sprites (same layout as the battle menu party selector).
+            {
+                const unsigned short *partyBg = battlePartySlotSprites[forcedSwitchIndex + 1];
+                draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
+
+                for (int i = 0; i < 6; i++) {
+                    const pokemonInBattle *slotPokemon = (battleState.playerParty != NULL && i < battleState.playerParty->count) ? battleState.playerParty->slots[i] : NULL;
+                    const int slotHp = (slotPokemon != NULL) ? slotPokemon->scaledStatsWithLevel[0] : 0;
+                    const bool slotFainted = (slotPokemon != NULL) && (!slotPokemon->alive || slotHp <= 0);
+
+                    if (i == forcedSwitchIndex) {
+                        if (slotFainted || slotPokemon == NULL) {
+                            draw_sprite_any_bob_party_greyscale(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobPartyFrame
+                            );
+                        } else {
+                            draw_sprite_any_bob_party(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobPartyFrame
+                            );
+                        }
+                    } else {
+                        if (slotFainted || slotPokemon == NULL) {
+                            draw_sprite_any_greyscale(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR
+                            );
+                        } else {
+                            drawStaticSprite(&partyBoxSprites[i]);
+                        }
+                    }
+                }
+            }
+
             if (spacePressed) {
+                const bool valid =
+                    (battleState.playerParty != NULL) &&
+                    (forcedSwitchIndex >= 0) &&
+                    (forcedSwitchIndex < battleState.playerParty->count) &&
+                    (battleState.playerParty->slots[forcedSwitchIndex] != NULL) &&
+                    (battleState.playerParty->slots[forcedSwitchIndex]->alive);
+
+                if (!valid) {
+                    battleUiSetSingleMessage(&battleState, "Can't switch to that Pokemon!");
+                    actionTextReturnUi = BATTLE_UI_MENU;
+                    actionTextReturnCursor = 0;
+                    actionTextReturnGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
+                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    actionTextAwaitSpaceRelease = true;
+                    break;
+                }
+
                 battleApplyPlayerAction(&battleState, ACTION_SWITCH, forcedSwitchIndex);
 
                 // If it failed, show the message(s) and come back here.
@@ -3036,6 +3093,13 @@ int main(void)
                 actionTextShownEnemyHp = -1;
                 actionTextTargetPlayerHp = -1;
                 actionTextTargetEnemyHp = -1;
+                actionTextDisplayPlayerIndex = -1;
+                actionTextDisplayEnemyIndex = -1;
+                actionTextShownLevel = -1;
+                actionTextShownExp = -1;
+                actionTextTargetLevel = -1;
+                actionTextTargetExp = -1;
+                actionTextExpAnimating = false;
 
                 pokeballThrowShowText = true;
                 pokeballThrowAutoAdvance = true;
