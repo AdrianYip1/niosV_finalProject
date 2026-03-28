@@ -38,16 +38,36 @@ void gainExp(pokemonInBattle *pokemon, pokemonInBattle *defeatedPokemon) {
     int expGained = experienceGained(pokemon->level, defeatedPokemon->level);
     if (expGained == 0) return;
     pokemon->exp += expGained;
-    while (pokemon->exp >= expRequiredAtLevel(pokemon->level)) {
+    while (pokemon->level < MAX_POKEMON_LEVEL && pokemon->exp >= expRequiredAtLevel(pokemon->level)) {
         levelUp(pokemon);
+    }
+    if (pokemon->level >= MAX_POKEMON_LEVEL) {
+        pokemon->level = MAX_POKEMON_LEVEL;
+        pokemon->exp = 0;
     }
 }
 
 void levelUp(pokemonInBattle *pokemon) {
+    if (pokemon == NULL) return;
+    if (pokemon->level >= MAX_POKEMON_LEVEL) {
+        pokemon->level = MAX_POKEMON_LEVEL;
+        pokemon->exp = 0;
+        return;
+    }
+    const int prevMaxHp = pokemon->maxHp;
+    const int prevCurHp = pokemon->scaledStatsWithLevel[0];
+
     pokemon->exp -= expRequiredAtLevel(pokemon->level);
     pokemon->level++;
     scaleStatsWithLevel(pokemon);
+
+
     pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
+    const int deltaHp = pokemon->maxHp - prevMaxHp;
+    int newCurHp = prevCurHp + ((deltaHp > 0) ? deltaHp : 0);
+    if (newCurHp > pokemon->maxHp) newCurHp = pokemon->maxHp;
+    if (newCurHp < 1 && pokemon->alive) newCurHp = 1;
+    pokemon->scaledStatsWithLevel[0] = newCurHp;
     printf("%s grew to level %d!\n", pokemon->id.data->name, pokemon->level);
     checkLevelUpMoves(pokemon, onLearnMove);
     const PokemonData *next = checkEvolution(pokemon->id.data, pokemon->level);
@@ -58,8 +78,16 @@ void levelUp(pokemonInBattle *pokemon) {
         pokemon->id.backFrame_ID = next->id;
         pokemon->type1 = next->type1;
         pokemon->type2 = next->type2;
+        // Evolution changes base stats; preserve current HP by applying the new max-HP delta.
+        const int evoPrevMaxHp = pokemon->maxHp;
+        const int evoPrevCurHp = pokemon->scaledStatsWithLevel[0];
         scaleStatsWithLevel(pokemon);
         pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
+        const int evoDeltaHp = pokemon->maxHp - evoPrevMaxHp;
+        int evoCurHp = evoPrevCurHp + ((evoDeltaHp > 0) ? evoDeltaHp : 0);
+        if (evoCurHp > pokemon->maxHp) evoCurHp = pokemon->maxHp;
+        if (evoCurHp < 1 && pokemon->alive) evoCurHp = 1;
+        pokemon->scaledStatsWithLevel[0] = evoCurHp;
         checkLevelUpMoves(pokemon, onLearnMove);
         printf("%s evolved!\n", next->name);
     }
@@ -250,6 +278,13 @@ bool attemptCatchWithBall(pokemonInBattle *wildPokemon, PokeballType ball) {
 }
 
 void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
+    if (pokemon == NULL || pokemon->id.data == NULL || move == NULL) return;
+
+    // Avoid interactive stdin (scanf) on the board: auto-learn/replace.
+    for (int i = 0; i < 4; i++) {
+        if (pokemon->attacks[i] == move) return; // already knows
+    }
+
     printf("%s wants to learn %s!\n", pokemon->id.data->name, move->name);
     for (int i = 0; i < 4; i++) {
         if (pokemon->attacks[i] == NULL) {
@@ -258,16 +293,15 @@ void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
             return;
         }
     }
-    printf("%s already knows 4 moves. Replace which move? (1-4, 0 to cancel)\n", pokemon->id.data->name);
-    for (int i = 0; i < 4; i++) printf("%d) %s\n", i + 1, pokemon->attacks[i]->name);
-    int choice = 0;
-    scanf("%d", &choice);
-    if (choice >= 1 && choice <= 4) {
-        printf("%s forgot %s and learned %s!\n", pokemon->id.data->name, pokemon->attacks[choice-1]->name, move->name);
-        learnMove(pokemon, move, choice - 1);
+
+    // Replace slot 0 by default.
+    const int replaceSlot = 0;
+    if (pokemon->attacks[replaceSlot] != NULL) {
+        printf("%s forgot %s and learned %s!\n", pokemon->id.data->name, pokemon->attacks[replaceSlot]->name, move->name);
     } else {
-        printf("%s did not learn %s.\n", pokemon->id.data->name, move->name);
+        printf("%s learned %s!\n", pokemon->id.data->name, move->name);
     }
+    learnMove(pokemon, move, replaceSlot);
 }
 
 bool isAlive(pokemonInBattle *pokemon) { return pokemon->alive; }

@@ -1211,7 +1211,7 @@ int main(void)
             {
                 char moneyBuf[32];
                 snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
-                draw_string_f(menuX + 8, menuY + MENU_PARTY_MENU_HEIGHT - 12 - 40, moneyBuf, BLACK, 1);
+                draw_string_f(menuX + 8, menuY + MENU_PARTY_MENU_HEIGHT - 12 - 40 + 10, moneyBuf, BLACK, 1);
             }
 
             // Space selects a pokemon to swap; pressing Space on another swaps the two.
