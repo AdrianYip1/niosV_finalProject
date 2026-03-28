@@ -1019,8 +1019,9 @@ int main(void)
 
         switch (currentGameState) {
         case GAME_STATE_MENU: {
-            const int menuX = (SCREEN_WIDTH - MENU_PARTY_MENU_WIDTH) / 2;
-            const int menuY = (SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2;
+            // Global menu UI offset tweak.
+            const int menuX = ((SCREEN_WIDTH - MENU_PARTY_MENU_WIDTH) / 2) - 4;
+            const int menuY = ((SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2) - 4;
 
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 6) menuCursor = 6;
@@ -1210,7 +1211,7 @@ int main(void)
             {
                 char moneyBuf[32];
                 snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
-                draw_string_f(menuX + 8, menuY + MENU_PARTY_MENU_HEIGHT - 12, moneyBuf, BLACK, 1);
+                draw_string_f(menuX + 8, menuY + MENU_PARTY_MENU_HEIGHT - 12 - 40, moneyBuf, BLACK, 1);
             }
 
             // Space selects a pokemon to swap; pressing Space on another swaps the two.
