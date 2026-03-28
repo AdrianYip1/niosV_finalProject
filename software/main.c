@@ -1082,7 +1082,7 @@ int main(void)
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
                                         MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
-                                        slotX + leaderSelectedDx - 6, slotY + leaderSelectedDy + colYOffset - 7,
+                                        slotX + leaderSelectedDx - 4, slotY + leaderSelectedDy + colYOffset - 6,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(partyLeaderUnselectedSprite,
