@@ -66,6 +66,11 @@ typedef struct {
     // Pending level-up learn-move prompts (has 4 moves already).
     const AttackData *pendingLearnMoves[4];
     int pendingLearnMoveCount;
+
+
+    const AttackData *pendingLearnedMoves[4];
+    const AttackData *pendingForgottenMoves[4];
+    int pendingLearnedMoveCount;
 } pokemonInBattle;
 
 // init

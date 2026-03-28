@@ -20,6 +20,8 @@ static void battleClearMessages(BattleState *state) {
         state->messageFlags[i] = 0;
         state->hpAfterPlayer[i] = -1;
         state->hpAfterEnemy[i] = -1;
+        state->displayPlayerIndex[i] = -1;
+        state->displayEnemyIndex[i] = -1;
     }
 }
 
@@ -27,11 +29,18 @@ static void battlePushMessage(BattleState *state, const char *msg) {
     if (state == NULL || msg == NULL) return;
     if (state->messageCount < 0) state->messageCount = 0;
     if (state->messageCount >= BATTLE_MSG_MAX) return;
-    snprintf(state->messages[state->messageCount], sizeof(state->messages[state->messageCount]), "%s", msg);
+    const int idx = state->messageCount;
+    snprintf(state->messages[idx], sizeof(state->messages[idx]), "%s", msg);
+    state->messageFlags[idx] = 0;
+    state->hpAfterPlayer[idx] = -1;
+    state->hpAfterEnemy[idx] = -1;
+    state->displayPlayerIndex[idx] = (state->playerParty != NULL) ? (signed char)state->playerParty->activeIndex : (signed char)-1;
+    state->displayEnemyIndex[idx] = (state->enemyParty != NULL) ? (signed char)state->enemyParty->activeIndex : (signed char)-1;
     state->messageCount++;
 }
 
 static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *attacker, const AttackData *move, bool opposing, const pokemonInBattle *target) {
+    (void)target;
     const char *attackerName = (attacker != NULL && attacker->id.data != NULL && attacker->id.data->name != NULL)
                                    ? attacker->id.data->name
                                    : "???";
@@ -66,6 +75,8 @@ static void battlePushMissMessage(BattleState *state) {
     if (state == NULL) return;
     battlePushMessage(state, "But it missed!");
 }
+
+static void battlePushFaintedMessage(BattleState *state, const pokemonInBattle *pokemon, bool opposing);
 
 static void battleFormatPokemonName(char *out, size_t outSize, const pokemonInBattle *pokemon, bool opposing) {
     const char *name = (pokemon != NULL && pokemon->id.data != NULL && pokemon->id.data->name != NULL)
@@ -301,8 +312,15 @@ static void awardExpForDefeat(BattleState *state, pokemonInBattle *player, pokem
 
     battlePushFaintedMessage(state, defeated, defeatedWasOpposing);
     const int expGained = experienceGained(player->level, defeated->level);
+    const int prevLevel = player->level;
     gainExp(player, defeated);
     battlePushExpMessage(state, expGained);
+    if (player->level > prevLevel) {
+        const char *name = (player->id.data != NULL && player->id.data->name != NULL) ? player->id.data->name : "???";
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s grew to level %d!", name, player->level);
+        battlePushMessage(state, buf);
+    }
 }
 
 static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
@@ -579,6 +597,7 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
 static void resolveEnemyTurn(BattleState *state) {
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
+    if (state->playerMustSwitch) return;
     if (state->playerParty == NULL || state->enemyParty == NULL) return;
 
     pokemonInBattle *enemy = getActivePokemon(state->enemyParty);
@@ -599,18 +618,18 @@ static void resolveEnemyTurn(BattleState *state) {
 static void resolveTurn(BattleState *state, BattleAction playerAction, int playerParam) {
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
+    if (state->playerMustSwitch) return;
     if (state->playerParty == NULL || state->enemyParty == NULL) return;
 
     pokemonInBattle *player = getActivePokemon(state->playerParty);
     pokemonInBattle *enemy = getActivePokemon(state->enemyParty);
     if (player == NULL || enemy == NULL) return;
 
-    // Ensure both sides have a live active before the turn.
+    // If player's active is fainted, require a manual switch (no auto-switch).
     if (!player->alive) {
-        handleFaint(state, state->playerParty, true);
-        if (state->result != BATTLE_RESULT_ONGOING) return;
-        player = getActivePokemon(state->playerParty);
-        if (player == NULL) return;
+        state->playerMustSwitch = true;
+        checkBattleOver(state);
+        return;
     }
     if (!enemy->alive) {
         handleFaint(state, state->enemyParty, false);
@@ -635,13 +654,19 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
             if (state->result == BATTLE_RESULT_ONGOING && enemy->alive) {
                 (void)resolveAttack(state, enemy, player, enemyMove, true);
                 if (!player->alive) {
-                    handleFaint(state, state->playerParty, true);
+                    battlePushFaintedMessage(state, player, false);
+                    state->playerMustSwitch = true;
+                    checkBattleOver(state);
+                    return;
                 }
             }
         } else {
             (void)resolveAttack(state, enemy, player, enemyMove, true);
             if (!player->alive) {
-                handleFaint(state, state->playerParty, true);
+                battlePushFaintedMessage(state, player, false);
+                state->playerMustSwitch = true;
+                checkBattleOver(state);
+                return;
             }
             if (state->result == BATTLE_RESULT_ONGOING && player->alive) {
                 const bool enemyFaintedNow = resolveAttack(state, player, enemy, playerParam, false);
@@ -659,7 +684,10 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         if (state->result != BATTLE_RESULT_ONGOING) return;
         player = getActivePokemon(state->playerParty);
         if (player != NULL && !player->alive) {
-            handleFaint(state, state->playerParty, true);
+            battlePushFaintedMessage(state, player, false);
+            state->playerMustSwitch = true;
+            checkBattleOver(state);
+            return;
         }
     }
 
@@ -681,7 +709,9 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
     if (state->result != BATTLE_RESULT_ONGOING) return;
     if (player != NULL && playerAliveBeforeTick && !player->alive) {
         battlePushFaintedMessage(state, player, false);
-        handleFaint(state, state->playerParty, true);
+        state->playerMustSwitch = true;
+        checkBattleOver(state);
+        return;
     }
 }
 
@@ -693,6 +723,7 @@ void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, 
     state->type = type;
     state->result = BATTLE_RESULT_ONGOING;
     state->fleeAttempts = 0;
+    state->playerMustSwitch = false;
     battleClearMessages(state);
 
     // clear stat stages at start of battle.
@@ -712,6 +743,29 @@ void battleApplyPlayerAction(BattleState *state, BattleAction action, int param)
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
     battleClearMessages(state);
+
+    if (state->playerMustSwitch) {
+        if (action != ACTION_SWITCH) {
+            battlePushMessage(state, "Choose a Pokemon!");
+            return;
+        }
+        if (state->playerParty == NULL) {
+            battlePushMessage(state, "No party!");
+            return;
+        }
+
+        const int before = state->playerParty->activeIndex;
+        (void)switchPokemon(state->playerParty, param);
+        const int after = state->playerParty->activeIndex;
+        if (after == before) {
+            battlePushMessage(state, "Can't switch to that Pokemon!");
+            return;
+        }
+
+        state->playerMustSwitch = false;
+        return;
+    }
+
     resolveTurn(state, action, param);
     checkBattleOver(state);
 

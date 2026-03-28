@@ -33,6 +33,7 @@ typedef struct {
     BattleType type;
     BattleResult result;
     int fleeAttempts;
+    bool playerMustSwitch;
 
 #ifndef BATTLE_MSG_MAX
 #define BATTLE_MSG_MAX 16
@@ -43,6 +44,9 @@ typedef struct {
     //timing damage with shake animations
     int hpAfterPlayer[BATTLE_MSG_MAX];
     int hpAfterEnemy[BATTLE_MSG_MAX];
+    // which pokemon should be displayed for this message index
+    signed char displayPlayerIndex[BATTLE_MSG_MAX];
+    signed char displayEnemyIndex[BATTLE_MSG_MAX];
     int messageCount;
     int messageReadIndex;
 } BattleState;
