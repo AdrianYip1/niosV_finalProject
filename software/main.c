@@ -758,19 +758,24 @@ int main(void)
     int actionTextTargetPlayerHp = -1;
     int actionTextTargetEnemyHp = -1;
 
-    // Battle logic 
-    BattleState battleState;
-    Party playerParty;
-    Party enemyParty;
-    PC playerPc;
-    Bag playerBag;
-    pokemonInBattle wildEnemy;
+    // Battle logic (static to avoid stack overflow + crash) -> pc has too much data probablt
+    static BattleState battleState;
+    static Party playerParty;
+    static Party enemyParty;
+    static PC playerPc;
+    static Bag playerBag;
+    static pokemonInBattle wildEnemy;
 
-    pokemonInBattle cynthiaTeam[6];
+    static pokemonInBattle cynthiaTeam[6];
     BattleType nextBattleType = BATTLE_WILD;
 
     StaticSprite playerBackSprite;
     StaticSprite enemyFrontSprite;
+
+    // Defer applying battle actions until we're in GAME_STATE_BATTLE_ACTION_TEXT so HP/shake can be timed.
+    bool battleActionPending = false;
+    BattleAction pendingBattleAction = ACTION_ATTACK;
+    int pendingBattleParam = 0;
 
     // Temporary team 
     const int playerTeamSpriteIds[6] = {
@@ -1501,9 +1506,11 @@ int main(void)
                         actionTextTargetPlayerHp = actionTextShownPlayerHp;
                         actionTextTargetEnemyHp = actionTextShownEnemyHp;
 
-                        battleApplyPlayerAction(&battleState, ACTION_ATTACK, moveIndex);
+                        // Defer applying the action until GAME_STATE_BATTLE_ACTION_TEXT (prevents one-frame HP jump).
+                        battleActionPending = true;
+                        pendingBattleAction = ACTION_ATTACK;
+                        pendingBattleParam = moveIndex;
                         play_sfx(plink_audio, plink_audio_len);
-                        syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
                         // Show attack + faint + EXP messages 
                         actionTextReturnUi = BATTLE_UI_MENU;
@@ -2172,6 +2179,15 @@ int main(void)
 
             if (actionTextAwaitSpaceRelease) {
                 if (!spaceDown) actionTextAwaitSpaceRelease = false;
+            }
+
+            // Apply the pending battle action now (so the first rendered action-text frame starts from pre-hit HP).
+            if (battleActionPending) {
+                battleActionPending = false;
+                battleApplyPlayerAction(&battleState, pendingBattleAction, pendingBattleParam);
+                syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                // Force the action-text message-change logic to run for message 0.
+                actionTextLastMsgIndex = -1;
             }
 
             // Current message (used for timing SFX/shake and HP animations).
