@@ -45,6 +45,16 @@ typedef struct {
     PokeballType caughtIn;
     int maxHp;
     int scaledStatsWithLevel[6]; // {hp, attack, sp attack, def, sp def, speed}
+
+    // Battle stat stages (-6..+6)
+    int statStageAttack;
+    int statStageDefense;
+    int statStageSpAttack;
+    int statStageSpDefense;
+    int statStageSpeed;
+    int statStageAccuracy;
+    int statStageEvasion;
+
     int currentPP[4];
     bool inBattle;
     StatusCondition status;
@@ -78,6 +88,7 @@ bool attemptFlee(pokemonInBattle *fleeing, pokemonInBattle *opponent);
 void applyStatusEffect(pokemonInBattle *pokemon, StatusCondition status);
 void tickStatusEffect(pokemonInBattle *pokemon);
 bool canAct(pokemonInBattle *pokemon);
+bool canActThisTurn(pokemonInBattle *pokemon, StatusCondition *blockedBy);
 
 // healing
 void healPokemon(pokemonInBattle *pokemon, int amount);

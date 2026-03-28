@@ -2,8 +2,32 @@
 #include "learnSet.h"
 #include <stdio.h>
 
+static int clampStage(int stage) {
+    if (stage > 6) return 6;
+    if (stage < -6) return -6;
+    return stage;
+}
 
-//pokedex stuff to determine caught/seen -> grayscale the caughtIcon 
+static float stageMultiplierStat(int stage) {
+    stage = clampStage(stage);
+    if (stage >= 0) return (2.0f + (float)stage) / 2.0f;
+    return 2.0f / (2.0f - (float)stage);
+}
+
+static float stageMultiplierAccEva(int stage) {
+    stage = clampStage(stage);
+    if (stage >= 0) return (3.0f + (float)stage) / 3.0f;
+    return 3.0f / (3.0f - (float)stage);
+}
+
+static int applyStageToStat(int baseValue, int stage) {
+    int v = (int)((float)baseValue * stageMultiplierStat(stage) + 0.5f);
+    if (v < 1) v = 1;
+    return v;
+}
+
+
+//pokedex stuff to determine caught/seen -> grayscale the caughtIcon for seen but not caught
 void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, int level) {
     pokemon->id.data = template;
     pokemon->id.frontFrame_ID = template->id;
@@ -17,6 +41,13 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
     pokemon->sleepTurnsRemaining = 0;
     pokemon->type1 = template->type1;
     pokemon->type2 = template->type2;
+    pokemon->statStageAttack = 0;
+    pokemon->statStageDefense = 0;
+    pokemon->statStageSpAttack = 0;
+    pokemon->statStageSpDefense = 0;
+    pokemon->statStageSpeed = 0;
+    pokemon->statStageAccuracy = 0;
+    pokemon->statStageEvasion = 0;
     initMovesFromLearnset(pokemon);
     scaleStatsWithLevel(pokemon);
     pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
@@ -118,8 +149,12 @@ void dealDamage(pokemonInBattle *attacker, pokemonInBattle *target, int baseDama
     if (attacker == NULL || target == NULL) return;
     if (baseDamage <= 0) return;
 
-    const int atkStat = (damageType == 0) ? attacker->scaledStatsWithLevel[1] : attacker->scaledStatsWithLevel[2];
-    const int defStat = (damageType == 0) ? target->scaledStatsWithLevel[3] : target->scaledStatsWithLevel[4];
+    const int atkBase = (damageType == 0) ? attacker->scaledStatsWithLevel[1] : attacker->scaledStatsWithLevel[2];
+    const int defBase = (damageType == 0) ? target->scaledStatsWithLevel[3] : target->scaledStatsWithLevel[4];
+    const int atkStage = (damageType == 0) ? attacker->statStageAttack : attacker->statStageSpAttack;
+    const int defStage = (damageType == 0) ? target->statStageDefense : target->statStageSpDefense;
+    const int atkStat = applyStageToStat(atkBase, atkStage);
+    const int defStat = applyStageToStat(defBase, defStage);
     const int def = (defStat > 0) ? defStat : 1;
 
     // (((2L/5+2) * P * A / D) / 50) + 2
@@ -161,7 +196,17 @@ bool useAttack(pokemonInBattle *attacker, pokemonInBattle *target, int attackInd
     if (attacker->currentPP[attackIndex] <= 0) return false;
     // PP is consumed even if the move misses.
     attacker->currentPP[attackIndex]--;
-    if ((rand() % 100) >= move->accuracy) return false;
+
+    // Accuracy check respects accuracy/evasion stat stages.
+    float finalAcc = (float)move->accuracy;
+    if (target != NULL) {
+        const float accMult = stageMultiplierAccEva(attacker->statStageAccuracy);
+        const float evaMult = stageMultiplierAccEva(target->statStageEvasion);
+        if (evaMult > 0.0f) finalAcc = finalAcc * (accMult / evaMult);
+    }
+    if (finalAcc < 1.0f) finalAcc = 1.0f;
+    if (finalAcc > 100.0f) finalAcc = 100.0f;
+    if ((rand() % 100) >= (int)(finalAcc + 0.5f)) return false;
     if (move->category != ATTACK_STATUS) {
         dealDamage(attacker, target, move->power, move->category, move->type);
     }
@@ -169,8 +214,8 @@ bool useAttack(pokemonInBattle *attacker, pokemonInBattle *target, int attackInd
 }
 
 int determineTurnOrder(pokemonInBattle *pokemon1, pokemonInBattle *pokemon2) {
-    int spd1 = pokemon1->scaledStatsWithLevel[5];
-    int spd2 = pokemon2->scaledStatsWithLevel[5];
+    int spd1 = applyStageToStat(pokemon1->scaledStatsWithLevel[5], pokemon1->statStageSpeed);
+    int spd2 = applyStageToStat(pokemon2->scaledStatsWithLevel[5], pokemon2->statStageSpeed);
     if (spd1 > spd2) return 1;
     if (spd2 > spd1) return 2;
     return 1;
@@ -213,10 +258,26 @@ void tickStatusEffect(pokemonInBattle *pokemon) {
 }
 
 bool canAct(pokemonInBattle *pokemon) {
+    return canActThisTurn(pokemon, NULL);
+}
+
+bool canActThisTurn(pokemonInBattle *pokemon, StatusCondition *blockedBy) {
+    if (blockedBy != NULL) *blockedBy = STATUS_NONE;
+    if (pokemon == NULL) return false;
     if (!pokemon->alive) return false;
-    if (pokemon->status == STATUS_SLEEP) return false;
-    if (pokemon->status == STATUS_FREEZE) return false;
-    if (pokemon->status == STATUS_PARALYSIS && rand() % 100 < 25) return false;
+
+    if (pokemon->status == STATUS_SLEEP) {
+        if (blockedBy != NULL) *blockedBy = STATUS_SLEEP;
+        return false;
+    }
+    if (pokemon->status == STATUS_FREEZE) {
+        if (blockedBy != NULL) *blockedBy = STATUS_FREEZE;
+        return false;
+    }
+    if (pokemon->status == STATUS_PARALYSIS && rand() % 100 < 25) {
+        if (blockedBy != NULL) *blockedBy = STATUS_PARALYSIS;
+        return false;
+    }
     return true;
 }
 
