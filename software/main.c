@@ -1082,24 +1082,24 @@ int main(void)
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
                                         MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
-                                        slotX + leaderSelectedDx, slotY + leaderSelectedDy + colYOffset,
+                                        slotX + leaderSelectedDx - 4, slotY + leaderSelectedDy + colYOffset - 4,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(partyLeaderUnselectedSprite,
                                         MENU_PARTY_LEADER_UNSELECTED_WIDTH, MENU_PARTY_LEADER_UNSELECTED_HEIGHT,
-                                        slotX + leaderUnselectedDx, slotY + leaderUnselectedDy + colYOffset,
+                                        slotX + leaderUnselectedDx - 4, slotY + leaderUnselectedDy + colYOffset - 4,
                                         TRANSPARENT_COLOUR);
                     }
                 } else {
                     if (isSelected) {
                         draw_sprite_any(pokemonSelectedSprite,
                                         MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
-                                        slotX, slotY + colYOffset,
+                                        slotX - 4, slotY + colYOffset - 4,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(pokemonUnselectedSprite,
                                         MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
-                                        slotX + unselectedDx, slotY + unselectedDy + colYOffset,
+                                        slotX + unselectedDx - 4, slotY + unselectedDy + colYOffset - 4,
                                         TRANSPARENT_COLOUR);
                     }
                 }
