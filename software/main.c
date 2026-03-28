@@ -1082,7 +1082,7 @@ int main(void)
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
                                         MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
-                                        slotX + leaderSelectedDx - 4, slotY + leaderSelectedDy + colYOffset - 4,
+                                        slotX + leaderSelectedDx - 6, slotY + leaderSelectedDy + colYOffset - 7,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(partyLeaderUnselectedSprite,
@@ -1094,7 +1094,7 @@ int main(void)
                     if (isSelected) {
                         draw_sprite_any(pokemonSelectedSprite,
                                         MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
-                                        slotX - 4, slotY + colYOffset - 4,
+                                        slotX, slotY + colYOffset,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(pokemonUnselectedSprite,
@@ -1168,24 +1168,24 @@ int main(void)
                 snprintf(hpMaxBuf, sizeof(hpMaxBuf), "%d", maxHp);
 
                 draw_string_f(slotX + POKEMON_TEXT_MENU_X,
-                              slotY + POKEMON_TEXT_MENU_Y + colYOffset + slotYOffsetForSelection,
+                              slotY + POKEMON_TEXT_MENU_Y + colYOffset + slotYOffsetForSelection - 5,
                               (p->id.data != NULL && p->id.data->name != NULL) ? p->id.data->name : "???",
                               BLACK,
                               1);
 
                 draw_string_f(slotX + NON_SELECTED_POKEMON_LEVEL_TEXT_X,
-                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForSelection,
+                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForSelection - 6,
                               lvlBuf,
                               BLACK,
                               1);
 
-                draw_string_f(slotX + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X,
-                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForSelection,
+                draw_string_f(slotX + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X - 2,
+                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForSelection -6,
                               hpCurBuf,
                               BLACK,
                               1);
                 draw_string_f(slotX + NON_SELECTED_POKEMON_MAX_HP_TEXT_X,
-                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForSelection,
+                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForSelection - 6,
                               hpMaxBuf,
                               BLACK,
                               1);
