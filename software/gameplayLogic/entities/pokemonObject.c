@@ -1,16 +1,5 @@
 #include "pokemonObject.h"
 #include "learnSet.h"
-#include <stdio.h>
-
-#ifndef POKEMON_DEBUG_STDIO
-#define POKEMON_DEBUG_STDIO 0
-#endif
-
-#if POKEMON_DEBUG_STDIO
-#define DBG_PRINTF(...) printf(__VA_ARGS__)
-#else
-#define DBG_PRINTF(...) do { } while (0)
-#endif
 
 static int clampStage(int stage) {
     if (stage > 6) return 6;
@@ -120,11 +109,9 @@ void levelUp(pokemonInBattle *pokemon) {
     if (newCurHp > pokemon->maxHp) newCurHp = pokemon->maxHp;
     if (newCurHp < 1 && pokemon->alive) newCurHp = 1;
     pokemon->scaledStatsWithLevel[0] = newCurHp;
-    DBG_PRINTF("%s grew to level %d!\n", pokemon->id.data->name, pokemon->level);
     checkLevelUpMoves(pokemon, onLearnMove);
     const PokemonData *next = checkEvolution(pokemon->id.data, pokemon->level);
     if (next != NULL) {
-        DBG_PRINTF("%s is evolving into %s!\n", pokemon->id.data->name, next->name);
         pokemon->id.data = next;
         pokemon->id.frontFrame_ID = next->id;
         pokemon->id.backFrame_ID = next->id;
@@ -141,7 +128,6 @@ void levelUp(pokemonInBattle *pokemon) {
         if (evoCurHp < 1 && pokemon->alive) evoCurHp = 1;
         pokemon->scaledStatsWithLevel[0] = evoCurHp;
         checkLevelUpMoves(pokemon, onLearnMove);
-        DBG_PRINTF("%s evolved!\n", next->name);
     }
 }
 
@@ -383,11 +369,9 @@ void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
         if (pokemon->pendingLearnMoves[i] == move) return; // already pending
     }
 
-    DBG_PRINTF("%s wants to learn %s!\n", pokemon->id.data->name, move->name);
     for (int i = 0; i < 4; i++) {
         if (pokemon->attacks[i] == NULL) {
             learnMove(pokemon, move, -1);
-            DBG_PRINTF("%s learned %s!\n", pokemon->id.data->name, move->name);
             // Queue a UI message for "learned move" 
             if (pokemon->pendingLearnedMoveCount < 4) {
                 pokemon->pendingLearnedMoves[pokemon->pendingLearnedMoveCount] = move;
@@ -403,7 +387,6 @@ void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
         pokemon->pendingLearnMoves[pokemon->pendingLearnMoveCount++] = move;
     } else {
         // If somehow multiple moves are learned at once, drop extras rather than blocking/crashing.
-        DBG_PRINTF("Learn-move queue full; skipping %s.\n", move->name);
     }
 }
 

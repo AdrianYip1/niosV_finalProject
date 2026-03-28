@@ -136,13 +136,7 @@
 
 //location for drawing names, hp, level
 
-#define myName_X
-#define myName_Y
-
-#define oppName_X
-#define oppName_Y
- 
- //y1 is 20 below 
+//y1 is 20 below 
  //x1 is 62 right 
  //y2 24 below
  //x2 is 48+ 62
@@ -1966,8 +1960,6 @@ int main(void)
 
             draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
-            //draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
-           
 
             // Battle UI States
             if (battleUi == BATTLE_UI_MENU) {
@@ -2077,8 +2069,6 @@ int main(void)
 
                     AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
                                                                        : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
-
-                    //draw_rect(mxs[i], mys[i], moveTypeSprite.width, moveTypeSprite.height, WHITE);
 
                     if (battleCursor == i) {
                         draw_sprite_any_shade_pulse(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
@@ -2590,8 +2580,6 @@ int main(void)
                               HP_HEIGHT,
                               enemyHpBarColour);
                     draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
-                    //draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
-                    //draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
                     draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
                     static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
