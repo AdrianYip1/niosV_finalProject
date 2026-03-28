@@ -69,6 +69,9 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
 
     for (int i = 0; i < 4; i++) pokemon->pendingLearnMoves[i] = NULL;
     pokemon->pendingLearnMoveCount = 0;
+    for (int i = 0; i < 4; i++) pokemon->pendingLearnedMoves[i] = NULL;
+    for (int i = 0; i < 4; i++) pokemon->pendingForgottenMoves[i] = NULL;
+    pokemon->pendingLearnedMoveCount = 0;
 }
 
 void scaleStatsWithLevel(pokemonInBattle *pokemon) {
@@ -385,6 +388,12 @@ void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
         if (pokemon->attacks[i] == NULL) {
             learnMove(pokemon, move, -1);
             DBG_PRINTF("%s learned %s!\n", pokemon->id.data->name, move->name);
+            // Queue a UI message for "learned move" 
+            if (pokemon->pendingLearnedMoveCount < 4) {
+                pokemon->pendingLearnedMoves[pokemon->pendingLearnedMoveCount] = move;
+                pokemon->pendingForgottenMoves[pokemon->pendingLearnedMoveCount] = NULL;
+                pokemon->pendingLearnedMoveCount++;
+            }
             return;
         }
     }

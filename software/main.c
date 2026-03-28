@@ -278,6 +278,10 @@ typedef enum {
     GAME_STATE_LEARN_MOVE_PROMPT = 13,
     GAME_STATE_LEARN_MOVE_YESNO = 14,
     GAME_STATE_LEARN_MOVE_FORGET = 15,
+    GAME_STATE_LEARN_MOVE_MESSAGE = 16,
+
+    // Forced switch after player's Pokemon faints.
+    GAME_STATE_BATTLE_FORCE_SWITCH = 17,
 } GameState;
 
 typedef enum {
@@ -323,6 +327,16 @@ static inline int expBarWidthFor(const pokemonInBattle *pokemon) {
     return clamp_int(w, 1, EXP_WIDTH);
 }
 
+static inline int expBarWidthForValues(int level, int exp) {
+    if (level < 1) level = 1;
+    const int needed = expRequiredAtLevel(level);
+    if (needed <= 0) return 0;
+    if (exp <= 0) return 0;
+    const int numer = (EXP_WIDTH * exp);
+    const int w = (numer + needed - 1) / needed;
+    return clamp_int(w, 1, EXP_WIDTH);
+}
+
 static inline bool popNextPendingLearnMove(Party *party, pokemonInBattle **outPokemon, const AttackData **outMove) {
     if (outPokemon != NULL) *outPokemon = NULL;
     if (outMove != NULL) *outMove = NULL;
@@ -345,6 +359,49 @@ static inline bool popNextPendingLearnMove(Party *party, pokemonInBattle **outPo
         *outPokemon = p;
         *outMove = m;
         return (m != NULL);
+    }
+
+    return false;
+}
+
+static inline void queueLearnedMoveMsg(pokemonInBattle *pokemon, const AttackData *learned, const AttackData *forgotten) {
+    if (pokemon == NULL || learned == NULL) return;
+    if (pokemon->pendingLearnedMoveCount < 0) pokemon->pendingLearnedMoveCount = 0;
+    if (pokemon->pendingLearnedMoveCount >= 4) return;
+    const int idx = pokemon->pendingLearnedMoveCount;
+    pokemon->pendingLearnedMoves[idx] = learned;
+    pokemon->pendingForgottenMoves[idx] = forgotten;
+    pokemon->pendingLearnedMoveCount++;
+}
+
+static inline bool popNextLearnedMoveMsg(Party *party, pokemonInBattle **outPokemon, const AttackData **outLearned, const AttackData **outForgotten) {
+    if (outPokemon != NULL) *outPokemon = NULL;
+    if (outLearned != NULL) *outLearned = NULL;
+    if (outForgotten != NULL) *outForgotten = NULL;
+    if (party == NULL || outPokemon == NULL || outLearned == NULL || outForgotten == NULL) return false;
+
+    for (int i = 0; i < party->count; i++) {
+        pokemonInBattle *p = party->slots[i];
+        if (p == NULL) continue;
+        if (p->pendingLearnedMoveCount <= 0) continue;
+        const AttackData *learned = p->pendingLearnedMoves[0];
+        const AttackData *forgot = p->pendingForgottenMoves[0];
+
+        for (int k = 1; k < p->pendingLearnedMoveCount; k++) {
+            p->pendingLearnedMoves[k - 1] = p->pendingLearnedMoves[k];
+            p->pendingForgottenMoves[k - 1] = p->pendingForgottenMoves[k];
+        }
+        p->pendingLearnedMoveCount--;
+        if (p->pendingLearnedMoveCount < 0) p->pendingLearnedMoveCount = 0;
+        if (p->pendingLearnedMoveCount < 4) {
+            p->pendingLearnedMoves[p->pendingLearnedMoveCount] = NULL;
+            p->pendingForgottenMoves[p->pendingLearnedMoveCount] = NULL;
+        }
+
+        *outPokemon = p;
+        *outLearned = learned;
+        *outForgotten = forgot;
+        return (learned != NULL);
     }
 
     return false;
@@ -530,8 +587,12 @@ static void battleUiSetSingleMessage(BattleState *state, const char *msg) {
         state->messageFlags[i] = 0;
         state->hpAfterPlayer[i] = -1;
         state->hpAfterEnemy[i] = -1;
+        state->displayPlayerIndex[i] = -1;
+        state->displayEnemyIndex[i] = -1;
     }
     snprintf(state->messages[0], sizeof(state->messages[0]), "%s", msg);
+    state->displayPlayerIndex[0] = (state->playerParty != NULL) ? (signed char)state->playerParty->activeIndex : (signed char)-1;
+    state->displayEnemyIndex[0] = (state->enemyParty != NULL) ? (signed char)state->enemyParty->activeIndex : (signed char)-1;
     state->messageCount = 1;
 }
 
@@ -660,7 +721,6 @@ int main(void)
 
     int textboxMsgIndex = 0;
     const char *textboxMsg = TEXT_MESSAGES[textboxMsgIndex];
-    int textboxPreviousDone = 0;
 
     char msg3Render[96];
     char msg4Render[96];
@@ -701,9 +761,6 @@ int main(void)
     float pokeballCatchEndX = 0.0f, pokeballCatchEndY = 0.0f;
     float pokeballCatchCtrlX = 0.0f, pokeballCatchCtrlY = 0.0f;
 
-    unsigned int frame_count = 0;
-    int current_phase = 0;    
-    short colour = BLACK;    
     int bobFrame = 0;
     int bobTimer = 0;
     const int bobSpeedFrames = 3;
@@ -740,9 +797,6 @@ int main(void)
     int bagDescReturnPage = 0;
     ItemId bagDescItem = ITEM_NONE;
 
-    int arrowAnimFrame = 0;
-    int arrowAnimTimer = 0;
-    const int arrowAnimSpeedFrames = 8;
     bool prevUp = false, prevLeft = false, prevDown = false, prevRight = false;
     bool prevEsc = false;
     bool actionTextAwaitSpaceRelease = false;
@@ -757,6 +811,17 @@ int main(void)
     int actionTextShownEnemyHp = -1;
     int actionTextTargetPlayerHp = -1;
     int actionTextTargetEnemyHp = -1;
+    int actionTextDisplayPlayerIndex = -1;
+    int actionTextDisplayEnemyIndex = -1;
+
+    // EXP animation in action-text
+    int actionTextExpStartLevel = -1;
+    int actionTextExpStartExp = -1;
+    int actionTextShownLevel = -1;
+    int actionTextShownExp = -1;
+    int actionTextTargetLevel = -1;
+    int actionTextTargetExp = -1;
+    bool actionTextExpAnimating = false;
 
     // Battle logic (static to avoid stack overflow + crash) -> pc has too much data probablt
     static BattleState battleState;
@@ -944,11 +1009,16 @@ int main(void)
     // Learn-move flow state (UI scaffolding).
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
+    const AttackData *learnMoveForgottenMove = NULL;
     int learnMoveYesNo = 0; // 0=yes, 1=no
     int learnMoveForgetIndex = 0; // 0..3
     GameState learnMoveReturnState = GAME_STATE_MAP;
     BattleUiState learnMoveReturnUi = BATTLE_UI_MENU;
     int learnMoveReturnCursor = 0;
+    char learnMoveMsgBuf[192];
+
+    // Forced switch UI state.
+    int forcedSwitchIndex = 0;
 
     while (1) {
         update_keyboard();
@@ -1505,6 +1575,13 @@ int main(void)
                         actionTextShownEnemyHp = (eActive != NULL) ? eActive->scaledStatsWithLevel[0] : -1;
                         actionTextTargetPlayerHp = actionTextShownPlayerHp;
                         actionTextTargetEnemyHp = actionTextShownEnemyHp;
+                        actionTextExpStartLevel = (pActive != NULL) ? pActive->level : -1;
+                        actionTextExpStartExp = (pActive != NULL) ? pActive->exp : -1;
+                        actionTextShownLevel = actionTextExpStartLevel;
+                        actionTextShownExp = actionTextExpStartExp;
+                        actionTextTargetLevel = actionTextShownLevel;
+                        actionTextTargetExp = actionTextShownExp;
+                        actionTextExpAnimating = false;
 
                         // Defer applying the action until GAME_STATE_BATTLE_ACTION_TEXT (prevents one-frame HP jump).
                         battleActionPending = true;
@@ -1592,11 +1669,26 @@ int main(void)
                                 actionTextShownEnemyHp = (eActive != NULL) ? eActive->scaledStatsWithLevel[0] : -1;
                                 actionTextTargetPlayerHp = actionTextShownPlayerHp;
                                 actionTextTargetEnemyHp = actionTextShownEnemyHp;
+                                actionTextExpStartLevel = (pActive != NULL) ? pActive->level : -1;
+                                actionTextExpStartExp = (pActive != NULL) ? pActive->exp : -1;
+                                actionTextShownLevel = actionTextExpStartLevel;
+                                actionTextShownExp = actionTextExpStartExp;
+                                actionTextTargetLevel = actionTextShownLevel;
+                                actionTextTargetExp = actionTextShownExp;
+                                actionTextExpAnimating = false;
 
-                                battleApplyPlayerAction(&battleState, ACTION_ITEM, (int)last);
-                                syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                                battleActionPending = true;
+                                pendingBattleAction = ACTION_ITEM;
+                                pendingBattleParam = (int)last;
                                 battleUi = BATTLE_UI_MENU;
                                 battleCursor = 0;
+
+                                actionTextReturnUi = BATTLE_UI_MENU;
+                                actionTextReturnCursor = 0;
+                                actionTextReturnGameState = activeBattleMenuState;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
                             }
                         } else {
                             battleUiSetSingleMessage(&battleState, "No last item yet!");
@@ -1671,11 +1763,26 @@ int main(void)
                             actionTextShownEnemyHp = (e != NULL) ? e->scaledStatsWithLevel[0] : -1;
                             actionTextTargetPlayerHp = actionTextShownPlayerHp;
                             actionTextTargetEnemyHp = actionTextShownEnemyHp;
+                            actionTextExpStartLevel = (p != NULL) ? p->level : -1;
+                            actionTextExpStartExp = (p != NULL) ? p->exp : -1;
+                            actionTextShownLevel = actionTextExpStartLevel;
+                            actionTextShownExp = actionTextExpStartExp;
+                            actionTextTargetLevel = actionTextShownLevel;
+                            actionTextTargetExp = actionTextShownExp;
+                            actionTextExpAnimating = false;
 
-                            battleApplyPlayerAction(&battleState, ACTION_ITEM, (int)item);
-                            syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+                            battleActionPending = true;
+                            pendingBattleAction = ACTION_ITEM;
+                            pendingBattleParam = (int)item;
                             battleUi = BATTLE_UI_MENU;
                             battleCursor = 0;
+
+                            actionTextReturnUi = BATTLE_UI_MENU;
+                            actionTextReturnCursor = 0;
+                            actionTextReturnGameState = activeBattleMenuState;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
                         }
                     } else {
                         battleUi = bagDescReturnUi;
@@ -1790,8 +1897,12 @@ int main(void)
             // Draw the battle UI background before do it wont cover HP .
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
-            pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
-            pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+            pokemonInBattle *enemyActive = (battleState.enemyParty != NULL && actionTextDisplayEnemyIndex >= 0 && actionTextDisplayEnemyIndex < battleState.enemyParty->count)
+                                               ? battleState.enemyParty->slots[actionTextDisplayEnemyIndex]
+                                               : ((battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL);
+            pokemonInBattle *playerActive = (battleState.playerParty != NULL && actionTextDisplayPlayerIndex >= 0 && actionTextDisplayPlayerIndex < battleState.playerParty->count)
+                                                ? battleState.playerParty->slots[actionTextDisplayPlayerIndex]
+                                                : ((battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL);
 
             const int enemyHp = (enemyActive != NULL) ? enemyActive->scaledStatsWithLevel[0] : 0;
             const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
@@ -2181,7 +2292,7 @@ int main(void)
                 if (!spaceDown) actionTextAwaitSpaceRelease = false;
             }
 
-            // Apply the pending battle action now (so the first rendered action-text frame starts from pre-hit HP).
+            // Apply the pending battle action now 
             if (battleActionPending) {
                 battleActionPending = false;
                 battleApplyPlayerAction(&battleState, pendingBattleAction, pendingBattleParam);
@@ -2190,7 +2301,7 @@ int main(void)
                 actionTextLastMsgIndex = -1;
             }
 
-            // Current message (used for timing SFX/shake and HP animations).
+            // Current message 
             const char *msg = (battleState.messageCount > 0 && battleState.messageReadIndex >= 0 && battleState.messageReadIndex < battleState.messageCount)
                                   ? battleState.messages[battleState.messageReadIndex]
                                   : "";
@@ -2206,6 +2317,11 @@ int main(void)
             if (actionTextTargetEnemyHp < 0) actionTextTargetEnemyHp = actionTextShownEnemyHp;
             if (actionTextTargetPlayerHp < 0) actionTextTargetPlayerHp = actionTextShownPlayerHp;
 
+            if (actionTextShownLevel < 0) actionTextShownLevel = (playerActiveForAnim != NULL) ? playerActiveForAnim->level : -1;
+            if (actionTextShownExp < 0) actionTextShownExp = (playerActiveForAnim != NULL) ? playerActiveForAnim->exp : 0;
+            if (actionTextTargetLevel < 0) actionTextTargetLevel = actionTextShownLevel;
+            if (actionTextTargetExp < 0) actionTextTargetExp = actionTextShownExp;
+
             // Update HP targets + hit shake exactly when the message changes.
             if (battleState.messageCount <= 0) {
                 actionTextAutoTimer = 0;
@@ -2214,14 +2330,59 @@ int main(void)
                 actionTextShownPlayerHp = actualPlayerHpForAnim;
                 actionTextTargetEnemyHp = actionTextShownEnemyHp;
                 actionTextTargetPlayerHp = actionTextShownPlayerHp;
+                actionTextDisplayPlayerIndex = (battleState.playerParty != NULL) ? battleState.playerParty->activeIndex : -1;
+                actionTextDisplayEnemyIndex = (battleState.enemyParty != NULL) ? battleState.enemyParty->activeIndex : -1;
             } else if (battleState.messageReadIndex != actionTextLastMsgIndex) {
                 actionTextAutoTimer = 0;
                 actionTextLastMsgIndex = battleState.messageReadIndex;
 
                 const int idx = battleState.messageReadIndex;
                 if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                    const int newDispP = (battleState.displayPlayerIndex[idx] >= 0) ? battleState.displayPlayerIndex[idx] : ((battleState.playerParty != NULL) ? battleState.playerParty->activeIndex : -1);
+                    const int newDispE = (battleState.displayEnemyIndex[idx] >= 0) ? battleState.displayEnemyIndex[idx] : ((battleState.enemyParty != NULL) ? battleState.enemyParty->activeIndex : -1);
+
+                    if (newDispP != actionTextDisplayPlayerIndex) {
+                        const bool wasUninitialized = (actionTextDisplayPlayerIndex < 0);
+                        actionTextDisplayPlayerIndex = newDispP;
+                        // Don't clobber the initial pre-hit HP snapshot; only reset HP when a real switch happens.
+                        if (!wasUninitialized || actionTextShownPlayerHp < 0) {
+                            pokemonInBattle *p = (battleState.playerParty != NULL && newDispP >= 0 && newDispP < battleState.playerParty->count)
+                                                     ? battleState.playerParty->slots[newDispP]
+                                                     : NULL;
+                            const int hp = (p != NULL) ? p->scaledStatsWithLevel[0] : actualPlayerHpForAnim;
+                            actionTextShownPlayerHp = hp;
+                            actionTextTargetPlayerHp = hp;
+                        }
+                    }
+                    if (newDispE != actionTextDisplayEnemyIndex) {
+                        const bool wasUninitialized = (actionTextDisplayEnemyIndex < 0);
+                        actionTextDisplayEnemyIndex = newDispE;
+                        if (!wasUninitialized || actionTextShownEnemyHp < 0) {
+                            pokemonInBattle *e = (battleState.enemyParty != NULL && newDispE >= 0 && newDispE < battleState.enemyParty->count)
+                                                     ? battleState.enemyParty->slots[newDispE]
+                                                     : NULL;
+                            const int hp = (e != NULL) ? e->scaledStatsWithLevel[0] : actualEnemyHpForAnim;
+                            actionTextShownEnemyHp = hp;
+                            actionTextTargetEnemyHp = hp;
+                        }
+                    }
+
                     if (battleState.hpAfterPlayer[idx] >= 0) actionTextTargetPlayerHp = battleState.hpAfterPlayer[idx];
                     if (battleState.hpAfterEnemy[idx] >= 0) actionTextTargetEnemyHp = battleState.hpAfterEnemy[idx];
+
+                    // Start EXP animation on the EXP message (use the pre-action snapshot as the start).
+                    if (msg != NULL && strstr(msg, "Gained ") != NULL && strstr(msg, " EXP") != NULL) {
+                        const int dispP = (battleState.displayPlayerIndex[idx] >= 0) ? battleState.displayPlayerIndex[idx] : ((battleState.playerParty != NULL) ? battleState.playerParty->activeIndex : -1);
+                        pokemonInBattle *p = (battleState.playerParty != NULL && dispP >= 0 && dispP < battleState.playerParty->count) ? battleState.playerParty->slots[dispP] : NULL;
+                        const int tgtL = (p != NULL) ? p->level : actionTextShownLevel;
+                        const int tgtE = (p != NULL) ? p->exp : actionTextShownExp;
+
+                        actionTextShownLevel = (actionTextExpStartLevel > 0) ? actionTextExpStartLevel : tgtL;
+                        actionTextShownExp = (actionTextExpStartExp >= 0) ? actionTextExpStartExp : tgtE;
+                        actionTextTargetLevel = tgtL;
+                        actionTextTargetExp = tgtE;
+                        actionTextExpAnimating = true;
+                    }
 
                     const bool playerHpChanged = (battleState.hpAfterPlayer[idx] >= 0);
                     const bool enemyHpChanged = (battleState.hpAfterEnemy[idx] >= 0);
@@ -2230,6 +2391,52 @@ int main(void)
                         if (playerHpChanged) playerHitShakeFrame = -2; // start shake next frame at 0
                         if (enemyHpChanged) enemyHitShakeFrame = -2;
                     }
+                }
+            }
+
+            // Animate EXP with level-up wrap (Pokémon-like).
+            if (actionTextExpAnimating) {
+                const bool done = (actionTextShownLevel == actionTextTargetLevel) && (actionTextShownExp == actionTextTargetExp);
+                if (!done) {
+                    const int needed = expRequiredAtLevel(actionTextShownLevel);
+                    int stepExp = (needed > 0) ? (needed / 16) : 1;
+                    if (stepExp < 1) stepExp = 1;
+
+                    for (int s = 0; s < stepExp; s++) {
+                        if (actionTextShownLevel < actionTextTargetLevel) {
+                            const int need = expRequiredAtLevel(actionTextShownLevel);
+                            if (need > 0 && actionTextShownExp + 1 >= need) {
+                                actionTextShownLevel++;
+                                actionTextShownExp = 0;
+                            } else {
+                                actionTextShownExp++;
+                            }
+                        } else if (actionTextShownLevel == actionTextTargetLevel) {
+                            if (actionTextShownExp < actionTextTargetExp) actionTextShownExp++;
+                            else if (actionTextShownExp > actionTextTargetExp) actionTextShownExp--;
+                        }
+
+                        if ((actionTextShownLevel == actionTextTargetLevel) && (actionTextShownExp == actionTextTargetExp)) break;
+                    }
+                } else {
+                    actionTextExpAnimating = false;
+                }
+            }
+
+            // Ensure sprites match the displayed pokemon for the current message (prevents early auto-switch visuals).
+            {
+                const int idx = battleState.messageReadIndex;
+                const int dispP = (idx >= 0 && idx < BATTLE_MSG_MAX && battleState.displayPlayerIndex[idx] >= 0)
+                                      ? battleState.displayPlayerIndex[idx]
+                                      : actionTextDisplayPlayerIndex;
+                const int dispE = (idx >= 0 && idx < BATTLE_MSG_MAX && battleState.displayEnemyIndex[idx] >= 0)
+                                      ? battleState.displayEnemyIndex[idx]
+                                      : actionTextDisplayEnemyIndex;
+                if (battleState.playerParty != NULL && dispP >= 0 && dispP < battleState.playerParty->count && battleState.playerParty->slots[dispP] != NULL) {
+                    setPokemonBackBattleSpriteId(&playerBackSprite, battleState.playerParty->slots[dispP]->id.backFrame_ID);
+                }
+                if (battleState.enemyParty != NULL && dispE >= 0 && dispE < battleState.enemyParty->count && battleState.enemyParty->slots[dispE] != NULL) {
+                    setPokemonFrontBattleSpriteId(&enemyFrontSprite, battleState.enemyParty->slots[dispE]->id.frontFrame_ID);
                 }
             }
 
@@ -2332,8 +2539,12 @@ int main(void)
 
                 // Keep HP UI visible during the pause
                 {
-                    pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
-                    pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+                    pokemonInBattle *enemyActive = (battleState.enemyParty != NULL && actionTextDisplayEnemyIndex >= 0 && actionTextDisplayEnemyIndex < battleState.enemyParty->count)
+                                                       ? battleState.enemyParty->slots[actionTextDisplayEnemyIndex]
+                                                       : ((battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL);
+                    pokemonInBattle *playerActive = (battleState.playerParty != NULL && actionTextDisplayPlayerIndex >= 0 && actionTextDisplayPlayerIndex < battleState.playerParty->count)
+                                                        ? battleState.playerParty->slots[actionTextDisplayPlayerIndex]
+                                                        : ((battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL);
 
                     const int enemyHp = (actionTextShownEnemyHp >= 0) ? actionTextShownEnemyHp : ((enemyActive != NULL) ? enemyActive->scaledStatsWithLevel[0] : 0);
                     const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
@@ -2455,12 +2666,22 @@ int main(void)
             pokemonInBattle *enemyActive = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
             pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
 
+            // Use per-message display indices for UI values (prevents showing the next Pokemon early).
+            if (battleState.enemyParty != NULL && actionTextDisplayEnemyIndex >= 0 && actionTextDisplayEnemyIndex < battleState.enemyParty->count) {
+                enemyActive = battleState.enemyParty->slots[actionTextDisplayEnemyIndex];
+            }
+            if (battleState.playerParty != NULL && actionTextDisplayPlayerIndex >= 0 && actionTextDisplayPlayerIndex < battleState.playerParty->count) {
+                playerActive = battleState.playerParty->slots[actionTextDisplayPlayerIndex];
+            }
+
             const int enemyHp = (actionTextShownEnemyHp >= 0) ? actionTextShownEnemyHp : ((enemyActive != NULL) ? enemyActive->scaledStatsWithLevel[0] : 0);
             const int enemyMaxHp = (enemyActive != NULL) ? enemyActive->maxHp : 1;
             const int playerHp = (actionTextShownPlayerHp >= 0) ? actionTextShownPlayerHp : ((playerActive != NULL) ? playerActive->scaledStatsWithLevel[0] : 0);
             const int playerMaxHp = (playerActive != NULL) ? playerActive->maxHp : 1;
             const bool playerFainted = (playerActive != NULL) && (!playerActive->alive || playerHp <= 0);
-            const int playerExpBarWidth = expBarWidthFor(playerActive);
+            const int levelForUi = (actionTextShownLevel > 0) ? actionTextShownLevel : ((playerActive != NULL) ? playerActive->level : 0);
+            const int expForUi = (actionTextShownExp >= 0) ? actionTextShownExp : ((playerActive != NULL) ? playerActive->exp : 0);
+            const int playerExpBarWidth = expBarWidthForValues(levelForUi, expForUi);
 
             
             if (playerFainted) {
@@ -2523,9 +2744,10 @@ int main(void)
         
             if (battleState.messageCount > 0) {
                 const bool animatingHp = (actionTextShownPlayerHp != actionTextTargetPlayerHp) || (actionTextShownEnemyHp != actionTextTargetEnemyHp);
+                const bool animatingExp = actionTextExpAnimating && ((actionTextShownLevel != actionTextTargetLevel) || (actionTextShownExp != actionTextTargetExp));
                 const int delayFrames = manual ? 30 : 15;
                 actionTextAutoTimer++;
-                if (!animatingHp && !actionTextAwaitSpaceRelease && (spacePressed || actionTextAutoTimer >= delayFrames)) {
+                if (!animatingHp && !animatingExp && !actionTextAwaitSpaceRelease && (spacePressed || actionTextAutoTimer >= delayFrames)) {
                     shouldAdvance = true;
                 }
             }
@@ -2548,6 +2770,19 @@ int main(void)
                     battleState.messageReadIndex = 0;
                     battleState.messageCount = 0;
                     actionTextLastMsgIndex = -1;
+
+                    // If a move was learned automatically (empty slot), show that message before returning.
+                    pokemonInBattle *learnedP = NULL;
+                    const AttackData *learnedM = NULL;
+                    const AttackData *forgotM = NULL;
+                    if (popNextLearnedMoveMsg(&playerParty, &learnedP, &learnedM, &forgotM)) {
+                        learnMovePokemon = learnedP;
+                        learnMoveMove = learnedM;
+                        learnMoveForgottenMove = forgotM;
+                        currentGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                        previousGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                        break;
+                    }
 
                     bool startedLearnFlow = false;
                     if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
@@ -2598,6 +2833,9 @@ int main(void)
                             learnMoveReturnState = actionTextReturnGameState;
                             currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
                             previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                        } else if (battleState.playerMustSwitch) {
+                            currentGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
+                            previousGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
                         } else {
                             battleUi = actionTextReturnUi;
                             battleCursor = actionTextReturnCursor;
@@ -2674,10 +2912,49 @@ int main(void)
 
             if (spacePressed) {
                 if (learnMovePokemon != NULL && learnMoveMove != NULL) {
+                    learnMoveForgottenMove = (learnMoveForgetIndex >= 0 && learnMoveForgetIndex < 4) ? learnMovePokemon->attacks[learnMoveForgetIndex] : NULL;
                     (void)learnMove(learnMovePokemon, learnMoveMove, learnMoveForgetIndex);
+                    queueLearnedMoveMsg(learnMovePokemon, learnMoveMove, learnMoveForgottenMove);
                 }
+
+                currentGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                previousGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                break;
+
+            }
+            break;
+        }
+
+        case GAME_STATE_LEARN_MOVE_MESSAGE: {
+            const char *pokeName = (learnMovePokemon != NULL && learnMovePokemon->id.data != NULL && learnMovePokemon->id.data->name != NULL)
+                                       ? learnMovePokemon->id.data->name
+                                       : "???";
+            const char *learnedName = (learnMoveMove != NULL && learnMoveMove->name != NULL) ? learnMoveMove->name : "???";
+            const char *forgotName = (learnMoveForgottenMove != NULL && learnMoveForgottenMove->name != NULL) ? learnMoveForgottenMove->name : NULL;
+
+            if (forgotName != NULL) {
+                snprintf(learnMoveMsgBuf, sizeof(learnMoveMsgBuf), "%s forgot %s and learned %s!", pokeName, forgotName, learnedName);
+            } else {
+                snprintf(learnMoveMsgBuf, sizeof(learnMoveMsgBuf), "%s learned %s!", pokeName, learnedName);
+            }
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, learnMoveMsgBuf, BLACK);
+
+            if (spacePressed) {
+                // Next: if more learn prompts exist, do them; otherwise, return to where we were.
                 learnMovePokemon = NULL;
                 learnMoveMove = NULL;
+                learnMoveForgottenMove = NULL;
+
+                // Show any additional learned messages first.
+                pokemonInBattle *p2 = NULL;
+                const AttackData *l2 = NULL;
+                const AttackData *f2 = NULL;
+                if (popNextLearnedMoveMsg(&playerParty, &p2, &l2, &f2)) {
+                    learnMovePokemon = p2;
+                    learnMoveMove = l2;
+                    learnMoveForgottenMove = f2;
+                    break;
+                }
 
                 if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
                     currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
@@ -2689,6 +2966,96 @@ int main(void)
                     previousGameState = learnMoveReturnState;
                 }
             }
+            break;
+        }
+
+        case GAME_STATE_BATTLE_FORCE_SWITCH: {
+            // pick a living Pokemon to send out after faint.
+            if (!battleState.playerMustSwitch) {
+                currentGameState = activeBattleMenuState;
+                previousGameState = activeBattleMenuState;
+                break;
+            }
+
+            Party *p = &playerParty;
+            if (p->count <= 0) {
+                currentGameState = GAME_STATE_MAP;
+                previousGameState = GAME_STATE_MAP;
+                break;
+            }
+
+            if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
+            if (forcedSwitchIndex >= p->count) forcedSwitchIndex = p->count - 1;
+            if (p->slots[forcedSwitchIndex] == NULL || !p->slots[forcedSwitchIndex]->alive) {
+                const int firstAlive = getFirstAlivePokemon(p);
+                if (firstAlive >= 0) forcedSwitchIndex = firstAlive;
+            }
+
+            // Simple 2x3 navigation across slots 0..5.
+            const int prev = forcedSwitchIndex;
+            int row = forcedSwitchIndex / 2;
+            int col = forcedSwitchIndex % 2;
+            if (upPressed && row > 0) row--;
+            if (downPressed && row < 2) row++;
+            if (leftPressed && col > 0) col--;
+            if (rightPressed && col < 1) col++;
+            int next = row * 2 + col;
+            if (next < 0) next = 0;
+            if (next > 5) next = 5;
+            // Skip dead/empty slots by scanning a few steps.
+            if (p->slots[next] == NULL || !p->slots[next]->alive) {
+                int scan = next;
+                for (int i = 0; i < 6; i++) {
+                    scan = (scan + 1) % 6;
+                    if (scan < p->count && p->slots[scan] != NULL && p->slots[scan]->alive) {
+                        next = scan;
+                        break;
+                    }
+                }
+            }
+            forcedSwitchIndex = next;
+            if (forcedSwitchIndex != prev) play_sfx(plink_audio, plink_audio_len);
+
+            // You will replace this with your own UI; for now just show a textbox.
+            draw_map();
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Choose a Pokemon to send out!", BLACK);
+
+            if (spacePressed) {
+                battleApplyPlayerAction(&battleState, ACTION_SWITCH, forcedSwitchIndex);
+
+                // If it failed, show the message(s) and come back here.
+                if (battleState.playerMustSwitch) {
+                    actionTextReturnUi = BATTLE_UI_MENU;
+                    actionTextReturnCursor = 0;
+                    actionTextReturnGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
+                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    actionTextAwaitSpaceRelease = true;
+                    break;
+                }
+
+                // Suppress any switch message; the throw animation handles "Go! <name>!"
+                battleState.messageCount = 0;
+                battleState.messageReadIndex = 0;
+
+                actionTextShownPlayerHp = -1;
+                actionTextShownEnemyHp = -1;
+                actionTextTargetPlayerHp = -1;
+                actionTextTargetEnemyHp = -1;
+
+                pokeballThrowShowText = true;
+                pokeballThrowAutoAdvance = true;
+                pokeballThrowReturnState = activeBattleMenuState;
+                pokeballThrowInit = false;
+                battleThrowPokeballTextReady = false;
+
+                battleUi = BATTLE_UI_MENU;
+                battleCursor = 0;
+                currentGameState = GAME_STATE_POKEBALL_THROW;
+                previousGameState = GAME_STATE_POKEBALL_THROW;
+            }
+
             break;
         }
 
