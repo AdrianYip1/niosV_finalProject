@@ -663,6 +663,27 @@ static void autoSwapLeadIfFainted(Party *party, StaticSprite partyBoxSprites[6])
     syncPartyBoxSpritesToParty(partyBoxSprites, party);
 }
 
+static void draw_sprite_any_rot90_cw(const unsigned short *sprite,
+                                     int width, int height,
+                                     int x, int y,
+                                     short transparent)
+{
+    if (sprite == NULL || width <= 0 || height <= 0) return;
+
+    // 90° clockwise rotation.
+    // Source (sx, sy) maps to dest (dx, dy):
+    // dx = (height - 1 - sy), dy = sx
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            const unsigned short colour = sprite[sy * width + sx];
+            if (colour == (unsigned short)transparent) continue;
+            const int dx = x + (height - 1 - sy);
+            const int dy = y + sx;
+            draw_pixel(dx, dy, (short)colour);
+        }
+    }
+}
+
 static void battleUiSetSingleMessage(BattleState *state, const char *msg) {
     if (state == NULL || msg == NULL) return;
     state->messageCount = 0;
@@ -3769,8 +3790,11 @@ int main(void)
         }
 
         case GAME_STATE_PC_MENU:
-
-        draw_sprite_any(pcBoxBlueSprite,PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT, 340 - PC_MENU_PC_BOX_BLUE_WIDTH, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT/2)), TRANSPARENT_COLOUR );
+ 
+        draw_sprite_any_rot90_cw(pcBoxBlueSprite,
+                                 PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
+                                 340 - PC_MENU_PC_BOX_BLUE_WIDTH, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)),
+                                 TRANSPARENT_COLOUR);
         draw_sprite_any(pcBoxBackgroundSprite, PC_MENU_PC_BOX_BACKGROUND_WIDTH,PC_MENU_PC_BOX_BACKGROUND_HEIGHT, 0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)), TRANSPARENT_COLOUR );
         draw_sprite_any(leftArrowSprite, PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT, 0, 20, TRANSPARENT_COLOUR);
         draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 20, 20, TRANSPARENT_COLOUR);
