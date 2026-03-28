@@ -303,7 +303,7 @@ static inline bool isBattleMenuState(GameState state) {
 }
 
 static inline bool isOverworldState(GameState state) {
-    return state == GAME_STATE_MAP || state == GAME_STATE_MENU;
+    return state == GAME_STATE_MAP || state == GAME_STATE_MENU || state == GAME_STATE_PC_MENU;
 }
 
 static inline int clamp_int(int v, int lo, int hi) {
@@ -623,6 +623,44 @@ static void syncBattleSprites(const BattleState *state, StaticSprite *playerBack
             }
         }
     }
+}
+
+static inline bool partySlotIsAlive(const pokemonInBattle *slotPokemon) {
+    if (slotPokemon == NULL) return false;
+    const int hp = slotPokemon->scaledStatsWithLevel[0];
+    return slotPokemon->alive && (hp > 0);
+}
+
+static void syncPartyBoxSpritesToParty(StaticSprite partyBoxSprites[6], const Party *party) {
+    if (partyBoxSprites == NULL || party == NULL) return;
+    for (int i = 0; i < 6; i++) {
+        const pokemonInBattle *slotPokemon = (i >= 0 && i < party->count) ? party->slots[i] : NULL;
+        const int spriteId = (slotPokemon != NULL) ? slotPokemon->id.frontFrame_ID : 0;
+        setPokemonBoxSpriteId(&partyBoxSprites[i], spriteId);
+    }
+}
+
+static void autoSwapLeadIfFainted(Party *party, StaticSprite partyBoxSprites[6]) {
+    if (party == NULL || party->count <= 0) return;
+    if (partySlotIsAlive(party->slots[0])) return;
+
+    int nextAlive = -1;
+    for (int i = 1; i < party->count; i++) {
+        if (partySlotIsAlive(party->slots[i])) {
+            nextAlive = i;
+            break;
+        }
+    }
+    if (nextAlive < 0) return;
+
+    pokemonInBattle *tmp = party->slots[0];
+    party->slots[0] = party->slots[nextAlive];
+    party->slots[nextAlive] = tmp;
+
+    if (party->activeIndex == 0) party->activeIndex = nextAlive;
+    else if (party->activeIndex == nextAlive) party->activeIndex = 0;
+
+    syncPartyBoxSpritesToParty(partyBoxSprites, party);
 }
 
 static void battleUiSetSingleMessage(BattleState *state, const char *msg) {
@@ -1862,6 +1900,7 @@ int main(void)
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     actionTextAwaitSpaceRelease = true;
                 } else if (isBattleMenuState(currentGameState) && battleState.result != BATTLE_RESULT_ONGOING) {
+                    autoSwapLeadIfFainted(&playerParty, partyBoxSprites);
                     currentGameState = GAME_STATE_MAP;
                 }
             }
@@ -2847,6 +2886,7 @@ int main(void)
                     }
 
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
+                        autoSwapLeadIfFainted(&playerParty, partyBoxSprites);
                         GameState endState = GAME_STATE_MAP;
                         if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
                             endState = GAME_STATE_BATTLE_WIN;
@@ -2887,6 +2927,8 @@ int main(void)
                             currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
                             previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
                         } else if (battleState.playerMustSwitch) {
+                            forcedSwitchIndex = getFirstAlivePokemon(&playerParty);
+                            if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
                             currentGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
                             previousGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
                         } else {
@@ -3040,15 +3082,15 @@ int main(void)
             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
             if (forcedSwitchIndex > 5) forcedSwitchIndex = 5;
 
-            // Simple 2x3 navigation across slots 0..5 (do not skip invalid slots).
+            // Simple 3x2 navigation across slots 0..5 (do not skip invalid slots).
             const int prev = forcedSwitchIndex;
-            int row = forcedSwitchIndex / 2;
-            int col = forcedSwitchIndex % 2;
+            int row = forcedSwitchIndex / 3;
+            int col = forcedSwitchIndex % 3;
             if (upPressed && row > 0) row--;
-            if (downPressed && row < 2) row++;
+            if (downPressed && row < 1) row++;
             if (leftPressed && col > 0) col--;
-            if (rightPressed && col < 1) col++;
-            int next = row * 2 + col;
+            if (rightPressed && col < 2) col++;
+            int next = row * 3 + col;
             if (next < 0) next = 0;
             if (next > 5) next = 5;
             forcedSwitchIndex = next;
