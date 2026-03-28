@@ -810,7 +810,7 @@ int main(void)
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
         int ownedIndex = -1;
-        if (species != NULL && pcAdd(&playerPc, species, 80 + i, &ownedIndex)) {
+        if (species != NULL && pcAdd(&playerPc, species, 19 + i, &ownedIndex)) {
             addPokemonToParty(&playerParty, pcGet(&playerPc, ownedIndex));
         }
     }
@@ -1134,7 +1134,7 @@ int main(void)
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
                                         MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
-                                        slotX + leaderSelectedDx - 6, slotY + leaderSelectedDy + colYOffset - 7,
+                                        slotX + leaderSelectedDx - 3, slotY + leaderSelectedDy + colYOffset - 6,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(partyLeaderUnselectedSprite,
