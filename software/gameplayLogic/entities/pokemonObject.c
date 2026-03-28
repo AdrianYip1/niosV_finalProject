@@ -66,11 +66,16 @@ void levelUp(pokemonInBattle *pokemon) {
 }
 
 int expRequiredAtLevel(int level) {
-    return (int)pow((0.8 * level), 3);
+    if (level < 1) level = 1;
+    int req = (level * level) * 3;
+    if (req < 50) req = 50;
+    return req;
 }
 
 int experienceGained(int levelSelf, int levelOpponent) {
-    return ((BASE_EXP_GAINED * levelOpponent) / 7) * EXP_MULTIPLIER;
+    (void)levelSelf;
+    if (levelOpponent < 1) levelOpponent = 1;
+    return (BASE_EXP_GAINED * levelOpponent) * EXP_MULTIPLIER;
 }
 
 float getTypeEffectiveness(PokemonType attackType, PokemonType defendType1, PokemonType defendType2) {
@@ -82,22 +87,37 @@ float getTypeEffectiveness(PokemonType attackType, PokemonType defendType1, Poke
 }
 
 void dealDamage(pokemonInBattle *attacker, pokemonInBattle *target, int baseDamage, int damageType, PokemonType moveType) {
-    int modifierID = (damageType == 0) ? 1 : 2;
-    int dealtDamage = ((baseDamage * attacker->level + 10) / 250) * attacker->scaledStatsWithLevel[modifierID];
-    float effectiveness = getTypeEffectiveness(moveType, target->type1, target->type2);
-    dealtDamage = (int)(dealtDamage * effectiveness);
+    if (attacker == NULL || target == NULL) return;
+    if (baseDamage <= 0) return;
 
-    
-    takeDamage(target, dealtDamage, damageType);
+    const int atkStat = (damageType == 0) ? attacker->scaledStatsWithLevel[1] : attacker->scaledStatsWithLevel[2];
+    const int defStat = (damageType == 0) ? target->scaledStatsWithLevel[3] : target->scaledStatsWithLevel[4];
+    const int def = (defStat > 0) ? defStat : 1;
+
+    // (((2L/5+2) * P * A / D) / 50) + 2
+    const int level = (attacker->level > 0) ? attacker->level : 1;
+    int dmg = (((((2 * level) / 5) + 2) * baseDamage * atkStat) / def) / 50 + 2;
+
+    const float eff = getTypeEffectiveness(moveType, target->type1, target->type2);
+    if (eff <= 0.0f) {
+        dmg = 0;
+    } else {
+        dmg = (int)((float)dmg * eff + 0.5f);
+    }
+
+    // Random 0.85..1.00
+    dmg = (dmg * (85 + (rand() % 16))) / 100;
+    if (dmg < 1 && eff > 0.0f) dmg = 1;
+
+    takeDamage(target, dmg, damageType);
 }
 
 void takeDamage(pokemonInBattle *target, int incomingDamage, int damageType) {
-    double scale = (double)rand() / (double)RAND_MAX;
-    double random_num = 0.85 + scale * (1.0 - 0.85);
-    int modifierID = (damageType == 0) ? 3 : 4;
-    const int denom = (target->scaledStatsWithLevel[modifierID] > 0) ? target->scaledStatsWithLevel[modifierID] : 1;
-    int actualDamage = (int)((double)incomingDamage / denom * random_num);
-    if (incomingDamage > 0 && actualDamage < 1) actualDamage = 1;
+    (void)damageType;
+    if (target == NULL) return;
+    if (incomingDamage <= 0) return;
+
+    const int actualDamage = incomingDamage;
     if (actualDamage >= target->scaledStatsWithLevel[0]) {
         target->alive = false;
         target->scaledStatsWithLevel[0] = 0;
