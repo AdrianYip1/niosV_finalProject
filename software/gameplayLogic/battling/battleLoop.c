@@ -18,6 +18,8 @@ static void battleClearMessages(BattleState *state) {
     for (int i = 0; i < BATTLE_MSG_MAX; i++) {
         state->messages[i][0] = '\0';
         state->messageFlags[i] = 0;
+        state->hpAfterPlayer[i] = -1;
+        state->hpAfterEnemy[i] = -1;
     }
 }
 
@@ -189,10 +191,24 @@ static void battleTickStatusWithMessages(BattleState *state, pokemonInBattle *po
         char buf[96];
         snprintf(buf, sizeof(buf), "%s is hurt by its burn!", name);
         battlePushMessage(state, buf);
+        if (state->messageCount > 0) {
+            const int idx = state->messageCount - 1;
+            if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                if (opposing) state->hpAfterEnemy[idx] = afterHp;
+                else state->hpAfterPlayer[idx] = afterHp;
+            }
+        }
     } else if (beforeStatus == STATUS_POISON && afterHp < beforeHp) {
         char buf[96];
         snprintf(buf, sizeof(buf), "%s is hurt by poison!", name);
         battlePushMessage(state, buf);
+        if (state->messageCount > 0) {
+            const int idx = state->messageCount - 1;
+            if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                if (opposing) state->hpAfterEnemy[idx] = afterHp;
+                else state->hpAfterPlayer[idx] = afterHp;
+            }
+        }
     }
 
     if (beforeStatus == STATUS_SLEEP && afterStatus == STATUS_NONE) {
@@ -349,6 +365,13 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
                         attacker->sleepTurnsRemaining = 2;
                         battlePushStatusInflictedMessage(state, attacker, opposing, STATUS_SLEEP);
                         battlePushMessage(state, "Recovered HP!");
+                        if (state->messageCount > 0) {
+                            const int idx = state->messageCount - 1;
+                            if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                                if (opposing) state->hpAfterEnemy[idx] = attacker->scaledStatsWithLevel[0];
+                                else state->hpAfterPlayer[idx] = attacker->scaledStatsWithLevel[0];
+                            }
+                        }
                     }
                     break;
                 default:
@@ -369,10 +392,17 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
                     char buf[96];
                     snprintf(buf, sizeof(buf), "%s absorbed %d HP!", attackerName, gained);
                     battlePushMessage(state, buf);
+                    if (state->messageCount > 0) {
+                        const int idx = state->messageCount - 1;
+                        if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                            if (opposing) state->hpAfterEnemy[idx] = attacker->scaledStatsWithLevel[0];
+                            else state->hpAfterPlayer[idx] = attacker->scaledStatsWithLevel[0];
+                        }
+                    }
                 }
             }
 
-            // Secondary status effects (only when damage is dealt).
+            // Secondary status effects 
             if (damageDealt > 0 && target->alive) {
                 StatusCondition status = STATUS_NONE;
                 int chance = 0;
@@ -404,6 +434,11 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
     // check flag for damage in message 
     if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {
         state->messageFlags[usedMsgIndex] = (unsigned char)tookDamage;
+        // HP should change during the "used" message for better timing in the UI.
+        if (tookDamage) {
+            if (opposing) state->hpAfterPlayer[usedMsgIndex] = hpAfter;
+            else state->hpAfterEnemy[usedMsgIndex] = hpAfter;
+        }
     }
 
     return faintedNow;
@@ -504,6 +539,12 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     } else {
                         healPokemon(player, heal);
                         battlePushMessage(state, "Recovered HP!");
+                    }
+                    if (state->messageCount > 0) {
+                        const int idx = state->messageCount - 1;
+                        if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                            state->hpAfterPlayer[idx] = player->scaledStatsWithLevel[0];
+                        }
                     }
                     break;
                 }
@@ -653,6 +694,18 @@ void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, 
     state->result = BATTLE_RESULT_ONGOING;
     state->fleeAttempts = 0;
     battleClearMessages(state);
+
+    // clear stat stages at start of battle.
+    if (state->playerParty != NULL) {
+        for (int i = 0; i < state->playerParty->count; i++) {
+            if (state->playerParty->slots[i] != NULL) resetStatStages(state->playerParty->slots[i]);
+        }
+    }
+    if (state->enemyParty != NULL) {
+        for (int i = 0; i < state->enemyParty->count; i++) {
+            if (state->enemyParty->slots[i] != NULL) resetStatStages(state->enemyParty->slots[i]);
+        }
+    }
 }
 
 void battleApplyPlayerAction(BattleState *state, BattleAction action, int param) {
@@ -661,6 +714,20 @@ void battleApplyPlayerAction(BattleState *state, BattleAction action, int param)
     battleClearMessages(state);
     resolveTurn(state, action, param);
     checkBattleOver(state);
+
+    //clear stat stages when battle ends (win/lose/flee/caught).
+    if (state->result != BATTLE_RESULT_ONGOING) {
+        if (state->playerParty != NULL) {
+            for (int i = 0; i < state->playerParty->count; i++) {
+                if (state->playerParty->slots[i] != NULL) resetStatStages(state->playerParty->slots[i]);
+            }
+        }
+        if (state->enemyParty != NULL) {
+            for (int i = 0; i < state->enemyParty->count; i++) {
+                if (state->enemyParty->slots[i] != NULL) resetStatStages(state->enemyParty->slots[i]);
+            }
+        }
+    }
 }
 
 BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type) {

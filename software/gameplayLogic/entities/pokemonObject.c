@@ -26,6 +26,17 @@ static int applyStageToStat(int baseValue, int stage) {
     return v;
 }
 
+void resetStatStages(pokemonInBattle *pokemon) {
+    if (pokemon == NULL) return;
+    pokemon->statStageAttack = 0;
+    pokemon->statStageDefense = 0;
+    pokemon->statStageSpAttack = 0;
+    pokemon->statStageSpDefense = 0;
+    pokemon->statStageSpeed = 0;
+    pokemon->statStageAccuracy = 0;
+    pokemon->statStageEvasion = 0;
+}
+
 
 //pokedex stuff to determine caught/seen -> grayscale the caughtIcon for seen but not caught
 void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, int level) {
@@ -41,16 +52,13 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
     pokemon->sleepTurnsRemaining = 0;
     pokemon->type1 = template->type1;
     pokemon->type2 = template->type2;
-    pokemon->statStageAttack = 0;
-    pokemon->statStageDefense = 0;
-    pokemon->statStageSpAttack = 0;
-    pokemon->statStageSpDefense = 0;
-    pokemon->statStageSpeed = 0;
-    pokemon->statStageAccuracy = 0;
-    pokemon->statStageEvasion = 0;
+    resetStatStages(pokemon);
     initMovesFromLearnset(pokemon);
     scaleStatsWithLevel(pokemon);
     pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
+
+    for (int i = 0; i < 4; i++) pokemon->pendingLearnMoves[i] = NULL;
+    pokemon->pendingLearnMoveCount = 0;
 }
 
 void scaleStatsWithLevel(pokemonInBattle *pokemon) {
@@ -157,20 +165,26 @@ void dealDamage(pokemonInBattle *attacker, pokemonInBattle *target, int baseDama
     const int defStat = applyStageToStat(defBase, defStage);
     const int def = (defStat > 0) ? defStat : 1;
 
-    // (((2L/5+2) * P * A / D) / 50) + 2
+    // Pokémon-style base damage:
+    // base = floor(floor(floor((2*L/5+2) * P * A / D) / 50) + 2)
     const int level = (attacker->level > 0) ? attacker->level : 1;
-    int dmg = (((((2 * level) / 5) + 2) * baseDamage * atkStat) / def) / 50 + 2;
+    const int levelFactor = ((2 * level) / 5) + 2;
+    int base = (levelFactor * baseDamage * atkStat) / def;
+    base = (base / 50) + 2;
 
     const float eff = getTypeEffectiveness(moveType, target->type1, target->type2);
     if (eff <= 0.0f) {
-        dmg = 0;
-    } else {
-        dmg = (int)((float)dmg * eff + 0.5f);
+        return; // no effect
     }
 
-    // Random 0.85..1.00
-    dmg = (dmg * (85 + (rand() % 16))) / 100;
-    if (dmg < 1 && eff > 0.0f) dmg = 1;
+    const bool stab = (moveType != TYPE_NONE) && ((attacker->type1 == moveType) || (attacker->type2 == moveType)); //does 1.5x more damage
+    const float stabMult = stab ? 1.5f : 1.0f;
+    const float randMult = (float)(85 + (rand() % 16)) / 100.0f; // 0.85..1.00
+    const float burnMult = (damageType == ATTACK_PHYSICAL && attacker->status == STATUS_BURN) ? 0.5f : 1.0f;
+
+    float modifier = stabMult * eff * randMult * burnMult;
+    int dmg = (int)((float)base * modifier);
+    if (dmg < 1) dmg = 1;
 
     takeDamage(target, dmg, damageType);
 }
@@ -208,7 +222,13 @@ bool useAttack(pokemonInBattle *attacker, pokemonInBattle *target, int attackInd
     if (finalAcc > 100.0f) finalAcc = 100.0f;
     if ((rand() % 100) >= (int)(finalAcc + 0.5f)) return false;
     if (move->category != ATTACK_STATUS) {
-        dealDamage(attacker, target, move->power, move->category, move->type);
+        // Fixed-damage move: Dragon Rage (40 damage, still respects immunity).
+        if (move->id == 40) {
+            const float eff = getTypeEffectiveness(move->type, target->type1, target->type2);
+            if (eff > 0.0f) takeDamage(target, 40, move->category);
+        } else {
+            dealDamage(attacker, target, move->power, move->category, move->type);
+        }
     }
     return true;
 }
@@ -342,9 +362,12 @@ bool attemptCatchWithBall(pokemonInBattle *wildPokemon, PokeballType ball) {
 void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
     if (pokemon == NULL || pokemon->id.data == NULL || move == NULL) return;
 
-    // Avoid interactive stdin (scanf) on the board: auto-learn/replace.
+    // Avoid scanf on the board.
     for (int i = 0; i < 4; i++) {
         if (pokemon->attacks[i] == move) return; // already knows
+    }
+    for (int i = 0; i < pokemon->pendingLearnMoveCount; i++) {
+        if (pokemon->pendingLearnMoves[i] == move) return; // already pending
     }
 
     printf("%s wants to learn %s!\n", pokemon->id.data->name, move->name);
@@ -356,14 +379,13 @@ void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
         }
     }
 
-    // Replace slot 0 by default.
-    const int replaceSlot = 0;
-    if (pokemon->attacks[replaceSlot] != NULL) {
-        printf("%s forgot %s and learned %s!\n", pokemon->id.data->name, pokemon->attacks[replaceSlot]->name, move->name);
+    // Already has 4 moves: queue for UI-driven learn/forget flow in main.
+    if (pokemon->pendingLearnMoveCount < 4) {
+        pokemon->pendingLearnMoves[pokemon->pendingLearnMoveCount++] = move;
     } else {
-        printf("%s learned %s!\n", pokemon->id.data->name, move->name);
+        // If somehow multiple moves are learned at once, drop extras rather than blocking/crashing.
+        printf("Learn-move queue full; skipping %s.\n", move->name);
     }
-    learnMove(pokemon, move, replaceSlot);
 }
 
 bool isAlive(pokemonInBattle *pokemon) { return pokemon->alive; }

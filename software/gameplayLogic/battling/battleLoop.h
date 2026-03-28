@@ -39,6 +39,10 @@ typedef struct {
 #endif
     char messages[BATTLE_MSG_MAX][96];
     unsigned char messageFlags[BATTLE_MSG_MAX];  // 1 if this message displays a damaging hit (exclude no effect)
+
+    //timing damage with shake animations
+    int hpAfterPlayer[BATTLE_MSG_MAX];
+    int hpAfterEnemy[BATTLE_MSG_MAX];
     int messageCount;
     int messageReadIndex;
 } BattleState;

@@ -62,6 +62,10 @@ typedef struct {
     PokemonType type1;
     PokemonType type2;
     const AttackData *attacks[4];
+
+    // Pending level-up learn-move prompts (has 4 moves already).
+    const AttackData *pendingLearnMoves[4];
+    int pendingLearnMoveCount;
 } pokemonInBattle;
 
 // init
@@ -89,6 +93,7 @@ void applyStatusEffect(pokemonInBattle *pokemon, StatusCondition status);
 void tickStatusEffect(pokemonInBattle *pokemon);
 bool canAct(pokemonInBattle *pokemon);
 bool canActThisTurn(pokemonInBattle *pokemon, StatusCondition *blockedBy);
+void resetStatStages(pokemonInBattle *pokemon);
 
 // healing
 void healPokemon(pokemonInBattle *pokemon, int amount);
