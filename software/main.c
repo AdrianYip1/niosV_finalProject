@@ -3872,6 +3872,20 @@ int main(void)
         draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 20, 20, TRANSPARENT_COLOUR);
         draw_sprite_any(pcLabelSprite, PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT, 30, 20, TRANSPARENT_COLOUR );
         draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, PC_MENU_PARTY_BOX_X, PC_MENU_PARTY_BOX_Y, TRANSPARENT_COLOUR);
+
+        for (int i = 0; i < PC_MAX; i++) { //skip over party members
+            pokemonInBattle *pokemon = pcGet(&playerPc, i);
+            if (pokemon != NULL && pokemon != &playerParty.slots[0] && pokemon != &playerParty.slots[1] &&
+                pokemon != &playerParty.slots[2] && pokemon != &playerParty.slots[3] &&
+                pokemon != &playerParty.slots[4] && pokemon != &playerParty.slots[5]) {
+                draw_sprite_any(partyBoxSprites[i].pixels, partyBoxSprites[i].width, partyBoxSprites[i].height, partyBoxSprites[i].x, partyBoxSprites[i].y, TRANSPARENT_COLOUR);
+            }
+        }
+
+        for (int i = 0; i < 6; i++) { //party members
+            draw_sprite_any(partyBoxSprites[i].pixels, partyBoxSprites[i].width, partyBoxSprites[i].height, partyBoxSprites[i].x, partyBoxSprites[i].y, TRANSPARENT_COLOUR);
+        }
+
         bool didMovePcCursor = false;
          
         const int oldPcIndex = pcCursor;
