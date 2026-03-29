@@ -3900,15 +3900,17 @@ int main(void)
             }
 
             // Base UI
+
+                  draw_sprite_any_rot90_cw(pcBoxBlueSprite,
+                                     PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
+                                     (340 - PC_MENU_PC_BOX_BLUE_WIDTH) + 40, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)) - 20 + 3,
+                                     TRANSPARENT_COLOUR);
             draw_sprite_any(pcBoxBackgroundSprite,
                             PC_MENU_PC_BOX_BACKGROUND_WIDTH, PC_MENU_PC_BOX_BACKGROUND_HEIGHT,
                             0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)) - 35 + 10 - 5 + 5,
                             TRANSPARENT_COLOUR);
 
-            draw_sprite_any_rot90_cw(pcBoxBlueSprite,
-                                     PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
-                                     (340 - PC_MENU_PC_BOX_BLUE_WIDTH) + 40, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)) - 20 + 3,
-                                     TRANSPARENT_COLOUR);
+
 
             draw_sprite_any(leftArrowSprite,
                             PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT,
