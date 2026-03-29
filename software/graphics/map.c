@@ -38,12 +38,18 @@ static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
 #define ROUTE_B_CYNTHIA_BBOX_Y 27
 #define ROUTE_B_CYNTHIA_BBOX_W 15
 #define ROUTE_B_CYNTHIA_BBOX_H 21
-#define POKEMON_CENTER_NURSE_X 142
+#define POKEMON_CENTER_NURSE_X 146
 #define POKEMON_CENTER_NURSE_Y 60
 #define POKEMON_CENTER_NURSE_BBOX_X POKEMON_CENTER_NURSE_X
 #define POKEMON_CENTER_NURSE_BBOX_Y POKEMON_CENTER_NURSE_Y
 #define POKEMON_CENTER_NURSE_BBOX_W POKEMON_CENTER_NURSE_WIDTH
 #define POKEMON_CENTER_NURSE_BBOX_H POKEMON_CENTER_NURSE_HEIGHT
+#define POKE_MART_CLERK_X 187
+#define POKE_MART_CLERK_Y 91
+#define POKE_MART_CLERK_BBOX_X POKE_MART_CLERK_X
+#define POKE_MART_CLERK_BBOX_Y POKE_MART_CLERK_Y
+#define POKE_MART_CLERK_BBOX_W POKEMON_CENTER_CLERK_WIDTH
+#define POKE_MART_CLERK_BBOX_H POKEMON_CENTER_CLERK_HEIGHT
 #define POKEMON_CENTER_DESK_BBOX_X 58
 #define POKEMON_CENTER_DESK_BBOX_Y 47
 #define POKEMON_CENTER_DESK_BBOX_W POKEMON_CENTER_DESK_WIDTH
@@ -530,15 +536,17 @@ void draw_map(void) {
     if (g_current_preset == MAP_PRESET_POKEMON_CENTER_INTERIOR) {
         draw_sprite_any(pokemonCenterNurseSprite,
                         POKEMON_CENTER_NURSE_WIDTH, POKEMON_CENTER_NURSE_HEIGHT,
-                        142, 60,
-                        TRANSPARENT_COLOUR);
-        draw_sprite_any(pokemonCenterClerkSprite,
-                        POKEMON_CENTER_CLERK_WIDTH, POKEMON_CENTER_CLERK_HEIGHT,
-                        39, 99,
+                        POKEMON_CENTER_NURSE_X, POKEMON_CENTER_NURSE_Y,
                         TRANSPARENT_COLOUR);
         draw_sprite_any(pokemonCenterDeskSprite,
                         POKEMON_CENTER_DESK_WIDTH, POKEMON_CENTER_DESK_HEIGHT,
                         95, 47,
+                        TRANSPARENT_COLOUR);
+    }
+    if (g_current_preset == MAP_PRESET_POKE_MART_INTERIOR) {
+        draw_sprite_any(pokemonCenterClerkSprite,
+                        POKEMON_CENTER_CLERK_WIDTH, POKEMON_CENTER_CLERK_HEIGHT,
+                        POKE_MART_CLERK_X, POKE_MART_CLERK_Y,
                         TRANSPARENT_COLOUR);
     }
 }
@@ -574,6 +582,23 @@ bool map_can_talk_to_pokemon_center_nurse(const McBounds *bounds) {
              (POKEMON_CENTER_NURSE_BBOX_X + POKEMON_CENTER_NURSE_BBOX_W - 1 + horizontal_margin) < bounds->x0 ||
              bounds->y1 < (POKEMON_CENTER_NURSE_BBOX_Y - vertical_margin) ||
              (POKEMON_CENTER_NURSE_BBOX_Y + POKEMON_CENTER_NURSE_BBOX_H - 1 + vertical_margin) < bounds->y0);
+}
+
+bool map_can_talk_to_poke_mart_clerk(const McBounds *bounds) {
+    const int horizontal_margin = 24;
+    const int vertical_margin = 28;
+
+    if (bounds == NULL || !bounds->valid) {
+        return false;
+    }
+    if (g_current_preset != MAP_PRESET_POKE_MART_INTERIOR) {
+        return false;
+    }
+
+    return !(bounds->x1 < (POKE_MART_CLERK_BBOX_X - horizontal_margin) ||
+             (POKE_MART_CLERK_BBOX_X + POKE_MART_CLERK_BBOX_W - 1 + horizontal_margin) < bounds->x0 ||
+             bounds->y1 < (POKE_MART_CLERK_BBOX_Y - vertical_margin) ||
+             (POKE_MART_CLERK_BBOX_Y + POKE_MART_CLERK_BBOX_H - 1 + vertical_margin) < bounds->y0);
 }
 
 bool map_is_mc_on_grass_patch(const McBounds *bounds) {

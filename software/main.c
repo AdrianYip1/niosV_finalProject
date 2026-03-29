@@ -21,12 +21,16 @@
 #include "../software/se/opening_audio.h"
 #include "../software/se/introduction_audio.h"
 #include "../software/se/battle_audio.h"
+#include "../software/se/cynthia_audio.h"
 #include "../software/se/map_audio.h"
+#include "../software/se/pokemon_center_audio.h"
 #include "../software/se/plink_audio.h"
 #include "../software/se/pokeball_audio.h"
 #include "../software/se/pokeball_shaking_audio.h"  
 #include "../software/se/caught_pokemon_audio.h"
 #include "../software/se/hit_normal_audio.h"
+#include "../software/se/super_effective_audio.h"
+#include "../software/se/not_effective_audio.h"
 #include "../software/se/recover_audio.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h"
@@ -279,6 +283,9 @@
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!";
+static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart! What would you like to buy today?";
+
+static void play_world_map_bgm(WorldMapId map_id);
 
 
 // Game States
@@ -1210,7 +1217,7 @@ int main(void)
     previousGameState = GAME_STATE_MAP;
     currentMapId = WORLD_MAP_ROUTE_A;
     load_world_map(currentMapId, 80, 112, MC_FACING_S);
-    play_bgm(map_audio, map_audio_len);
+    play_world_map_bgm(currentMapId);
     wait_for_vsync();
 
     textboxDone = 0;
@@ -1272,11 +1279,15 @@ int main(void)
         const bool isOverworld = isOverworldState(currentGameState);
         if (wasOverworld != isOverworld) {
             if (isOverworld) {
-                play_bgm(map_audio, map_audio_len);
                 load_world_map(currentMapId, mapReturnX, mapReturnY, MC_FACING_S);
+                play_world_map_bgm(currentMapId);
             } else {
                 getMCPosition(&mapReturnX, &mapReturnY);
-                play_bgm(battle_audio, battle_audio_len);
+                if (nextBattleType == BATTLE_TRAINER) {
+                    play_bgm(cynthia_audio, cynthia_audio_len);
+                } else {
+                    play_bgm(battle_audio, battle_audio_len);
+                }
                 init_map();
                 load_map_preset(MAP_PRESET_BACKDROP1);
                 battleUi = BATTLE_UI_MENU;
@@ -2617,6 +2628,11 @@ int main(void)
                         play_sfx(hit_normal_audio, hit_normal_audio_len);
                         if (playerHpChanged) playerHitShakeFrame = -2; // start shake next frame at 0
                         if (enemyHpChanged) enemyHitShakeFrame = -2;
+                    }
+                    if (msg != NULL && strstr(msg, "super effective") != NULL) {
+                        play_sfx(super_effective_audio, super_effective_audio_len);
+                    } else if (msg != NULL && strstr(msg, "not very effective") != NULL) {
+                        play_sfx(not_effective_audio, not_effective_audio_len);
                     }
                 }
             }
@@ -4145,6 +4161,7 @@ int main(void)
                                            &targetMap, &spawnX, &spawnY, &spawnFacing)) {
                     currentMapId = targetMap;
                     load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
+                    play_world_map_bgm(currentMapId);
                     draw_map();
                 } else if ((spacePressed || enterPressed) &&
                            map_can_use_pokemon_center_pc(&mcBounds)) {
@@ -4155,6 +4172,11 @@ int main(void)
                 } else if ((spacePressed || enterPressed) &&
                            map_can_talk_to_pokemon_center_nurse(&mcBounds)) {
                     dialogueText = NURSE_GREETING_TEXT;
+                    dialogueReturnState = GAME_STATE_MAP;
+                    currentGameState = GAME_STATE_DIALOGUE;
+                } else if ((spacePressed || enterPressed) &&
+                           map_can_talk_to_poke_mart_clerk(&mcBounds)) {
+                    dialogueText = CLERK_GREETING_TEXT;
                     dialogueReturnState = GAME_STATE_MAP;
                     currentGameState = GAME_STATE_DIALOGUE;
                 } else if (currentMapId == WORLD_MAP_ROUTE_B &&
@@ -4176,4 +4198,12 @@ int main(void)
     }
 
     return 0;
+}
+static void play_world_map_bgm(WorldMapId map_id) {
+    if (map_id == WORLD_MAP_POKEMON_CENTER_1) {
+        play_bgm(pokemon_center_audio, pokemon_center_audio_len);
+        return;
+    }
+
+    play_bgm(map_audio, map_audio_len);
 }

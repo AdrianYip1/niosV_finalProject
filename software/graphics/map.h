@@ -49,6 +49,7 @@ void apply_map_decor_layout(MapDecorLayout layout);
 void draw_map_cell(int x, int y);
 bool map_can_talk_to_route_b_cynthia(const McBounds *bounds);
 bool map_can_talk_to_pokemon_center_nurse(const McBounds *bounds);
+bool map_can_talk_to_poke_mart_clerk(const McBounds *bounds);
 bool map_is_mc_on_grass_patch(const McBounds *bounds);
 bool map_can_use_pokemon_center_pc(const McBounds *bounds);
 

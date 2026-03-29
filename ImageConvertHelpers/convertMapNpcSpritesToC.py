@@ -105,6 +105,25 @@ def main() -> None:
     print(f"Wrote {cynthia_source} and {cynthia_header} ({cynthia_out_w}x{cynthia_out_h})")
     print(f"Wrote {nurse_source} and {nurse_header} ({nurse_out_w}x{nurse_out_h})")
 
+    clerk_src = Path("ImageConvertHelpers/clerk.png")
+    clerk_out_w = 24
+    clerk_out_h = 29
+    clerk_header = Path("software/graphics/sprites/pokemonCenter/pokemonCenterClerkSprite.h")
+    clerk_source = Path("software/graphics/sprites/pokemonCenter/pokemonCenterClerkSprite.c")
+    clerk_vals = image_to_rgb565_values(clerk_src, clerk_out_w, clerk_out_h)
+    write_sprite(
+        clerk_header,
+        clerk_source,
+        "POKEMON_CENTER_CLERK_WIDTH",
+        "POKEMON_CENTER_CLERK_HEIGHT",
+        "pokemonCenterClerkSprite",
+        clerk_vals,
+        clerk_out_w,
+        clerk_out_h,
+    )
+
+    print(f"Wrote {clerk_source} and {clerk_header} ({clerk_out_w}x{clerk_out_h})")
+
 
 if __name__ == "__main__":
     main()
