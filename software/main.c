@@ -135,25 +135,25 @@
 #define battleBackdropY 240 - 91
 
 // PC menu cursor
-#define PC_MENU_ARROW_Y 20
-#define PC_MENU_LEFT_ARROW_X 0
-#define PC_MENU_RIGHT_ARROW_X ((340 / 2) + 20)
+#define PC_MENU_ARROW_Y 20 - 9
+#define PC_MENU_LEFT_ARROW_X 3
+#define PC_MENU_RIGHT_ARROW_X ((340 / 2) + 20) + 20
 
 #define PC_MENU_GRID_COLS 5
 #define PC_MENU_GRID_ROWS 5
-#define PC_MENU_GRID_X0 14
-#define PC_MENU_GRID_Y0 48
+#define PC_MENU_GRID_X0 10
+#define PC_MENU_GRID_Y0 40
 #define PC_MENU_GRID_STEP_X 42
-#define PC_MENU_GRID_STEP_Y 40
+#define PC_MENU_GRID_STEP_Y 40 - 10
 
-#define PC_MENU_PARTY_BOX_X 200
+#define PC_MENU_PARTY_BOX_X 200 
 #define PC_MENU_PARTY_BOX_Y (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2))
 #define PC_MENU_PARTY_COLS 2
 #define PC_MENU_PARTY_ROWS 3
-#define PC_MENU_PARTY_X0 (PC_MENU_PARTY_BOX_X + 10)
-#define PC_MENU_PARTY_Y0 (PC_MENU_PARTY_BOX_Y + 10)
-#define PC_MENU_PARTY_STEP_X 53
-#define PC_MENU_PARTY_STEP_Y 50
+#define PC_MENU_PARTY_X0 (PC_MENU_PARTY_BOX_X + 10) + 20
+#define PC_MENU_PARTY_Y0 (PC_MENU_PARTY_BOX_Y + 10) - 2
+#define PC_MENU_PARTY_STEP_X 53 - 3
+#define PC_MENU_PARTY_STEP_Y 50 - 10 - 5
 
 
 //location for drawing names, hp, level
@@ -528,37 +528,37 @@ static int navPCMenu33(int index, NavDir dir) {
          /* up left down right */
         /*0 left arrow*/ {0, 0, 2, 1},
         /*1 right arrow */ {1, 0, 6, 27},
-        /*2 top left */ {1, 2, 7, 3},
-        /*3 */ {3, 2, 8, 4},
-        /*4  */ {4, 3, 9, 5},
-        /*5  */ {5, 4, 10, 6},
-        /*6 top right */ {3, 5, 11, 27},
-        /*7  */ {4, 7, 12, 8},
-        /*8  */ {5, 7, 13, 9},
-        /*9 */ {0, 8, 14, 10},
-        /*10  */ {1, 9, 15, 11},
-        /*11  */ {1, 10, 16, 28},
-        /*12 */ {3, 12, 17, 13},
-        /* 13*/ {4, 12, 18, 14},
-        /*14  */ {5, 13, 19, 15},
-        /*15  */ {3, 14, 20, 16},
-        /*16  */ {4, 15, 21, 29},
-        /*17 */ {5, 17, 22, 18},
-        /*18*/ {0, 17, 23, 19},
-        /*19 */ {1, 18, 24, 20},
-        /*20 */ {1, 19, 25, 21},
-        /*21 */ {3, 20, 26, 31},
-        /*22 bottom left*/ {4, 22, 22, 23},
-        /*23 */ {5, 22, 23, 24},
-        /*24 */ {3, 23, 24, 25},
-        /*25 */ {4, 24, 25, 26},
-        /*26 : bottom right*/ {5, 25, 26, 31},
-        /*27: p1 */ {5, 6, 29, 28},
-        /*28 : p2*/ {0, 27, 30, 28},
-        /*29 : p3*/ {1, 11, 31, 30},
-        /*30 : p4*/ {1, 29, 32, 30},
-        /*31 : p5*/ {3, 16, 31, 32},
-        /*32 : p6*/ {4, 31, 32, 32},
+        /*2 top left */ {0, 2, 7, 3},
+        /*3 */ {0, 2, 8, 4},
+        /*4  */ {1, 3, 9, 5},
+        /*5  */ {1, 4, 10, 6},
+        /*6 top right */ {1, 5, 11, 27},
+        /*7  */ {2, 7, 12, 8},
+        /*8  */ {3, 7, 13, 9},
+        /*9 */ {4, 8, 14, 10},
+        /*10  */ {5, 9, 15, 11},
+        /*11  */ {6, 10, 16, 28},
+        /*12 */ {7, 12, 17, 13},
+        /* 13*/ {8, 12, 18, 14},
+        /*14  */ {9, 13, 19, 15},
+        /*15  */ {10, 14, 20, 16},
+        /*16  */ {11, 15, 21, 29},
+        /*17 */ {12, 17, 22, 18},
+        /*18*/ {13, 17, 23, 19},
+        /*19 */ {14, 18, 24, 20},
+        /*20 */ {15, 19, 25, 21},
+        /*21 */ {16, 20, 26, 31},
+        /*22 bottom left*/ {17, 22, 22, 23},
+        /*23 */ {18, 22, 23, 24},
+        /*24 */ {19, 23, 24, 25},
+        /*25 */ {20, 24, 25, 26},
+        /*26 : bottom right*/ {21, 25, 26, 31},
+        /*27: p1 */ {27, 6, 29, 28},
+        /*28 : p2*/ {28, 27, 30, 28},
+        /*29 : p3*/ {27, 11, 31, 30},
+        /*30 : p4*/ {28, 29, 32, 30},
+        /*31 : p5*/ {29, 16, 31, 32},
+        /*32 : p6*/ {30, 31, 32, 32},
     };
 
     if (index < 0) index = 0;
@@ -3865,13 +3865,13 @@ int main(void)
  
         draw_sprite_any_rot90_cw(pcBoxBlueSprite,
                                  PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
-                                 340 - PC_MENU_PC_BOX_BLUE_WIDTH, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)),
+                                 340 - PC_MENU_PC_BOX_BLUE_WIDTH + 40, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)) - 20 + 3,
                                  TRANSPARENT_COLOUR);
-        draw_sprite_any(pcBoxBackgroundSprite, PC_MENU_PC_BOX_BACKGROUND_WIDTH,PC_MENU_PC_BOX_BACKGROUND_HEIGHT, 0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)), TRANSPARENT_COLOUR );
+        draw_sprite_any(pcBoxBackgroundSprite, PC_MENU_PC_BOX_BACKGROUND_WIDTH,PC_MENU_PC_BOX_BACKGROUND_HEIGHT, 0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)) - 35+ 10-5, TRANSPARENT_COLOUR );
         draw_sprite_any(leftArrowSprite, PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT, 0, 20, TRANSPARENT_COLOUR);
-        draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 20, 20, TRANSPARENT_COLOUR);
-        draw_sprite_any(pcLabelSprite, PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT, 30, 20, TRANSPARENT_COLOUR );
-        draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, PC_MENU_PARTY_BOX_X, PC_MENU_PARTY_BOX_Y, TRANSPARENT_COLOUR);
+        draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 30, 20, TRANSPARENT_COLOUR);
+        draw_sprite_any(pcLabelSprite, PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT, 20, 20 + 3, TRANSPARENT_COLOUR );
+        draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, PC_MENU_PARTY_BOX_X + 10, PC_MENU_PARTY_BOX_Y, TRANSPARENT_COLOUR);
         bool didMovePcCursor = false;
          
         const int oldPcIndex = pcCursor;
