@@ -155,8 +155,8 @@
 #define PC_MENU_PARTY_STEP_X 53 - 3
 #define PC_MENU_PARTY_STEP_Y 50 - 10 - 5 - 5
 // Some party-box layouts have the right column vertically offset vs the left.
-// Use a negative value to move the right column up.
-#define PC_MENU_PARTY_RIGHT_COL_DY (-25)
+// Positive moves the right column down.
+#define PC_MENU_PARTY_RIGHT_COL_DY (25)
 
 
 //location for drawing names, hp, level
@@ -1018,7 +1018,7 @@ int main(void)
     StaticSprite playerBackSprite;
     StaticSprite enemyFrontSprite;
 
-    // Defer applying battle actions until we're in GAME_STATE_BATTLE_ACTION_TEXT so HP/shake can be timed.
+    // Defer battle actions until GAME_STATE_BATTLE_ACTION_TEXT so HP/shake can be timed.
     bool battleActionPending = false;
     BattleAction pendingBattleAction = ACTION_ATTACK;
     int pendingBattleParam = 0;
@@ -1040,13 +1040,7 @@ int main(void)
     initPokemonBoxSprite(&partyBoxSprites[4], playerTeamSpriteIds[4], PARTY_5_X, PARTY_5_Y);
     initPokemonBoxSprite(&partyBoxSprites[5], playerTeamSpriteIds[5], PARTY_6_X, PARTY_6_Y);
 
-    // PC menu box-sprites (drawn only in GAME_STATE_PC_MENU).
-    StaticSprite pcStorageBoxSprites[PC_MAX];
-    StaticSprite pcPartyBoxSprites[6];
-    memset(pcStorageBoxSprites, 0, sizeof(pcStorageBoxSprites));
-    memset(pcPartyBoxSprites, 0, sizeof(pcPartyBoxSprites));
-
-    // init the roster and party (persistent).
+    // init the roster and party
     pcInit(&playerPc);
     initParty(&playerParty);
     int playerMoney = STARTING_MONEY;
@@ -1196,7 +1190,9 @@ int main(void)
     int pcCursor = 0; // 6 + 2 + max storage in pc
     int pcCursorAmount = 6 + 2 + PC_MAX;
     int pcSwapIndex = -1; //first picked index for swapping in pc
-    // Learn-move flow state (UI scaffolding).
+    pokemonInBattle *pcHeldMon = NULL;
+    
+    // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
     const AttackData *learnMoveForgottenMove = NULL;
@@ -3890,6 +3886,8 @@ int main(void)
             (void)didMovePcCursor;
 
             if (escPressed) {
+                pcSwapIndex = -1;
+                pcHeldMon = NULL;
                 currentGameState = GAME_STATE_MAP;
                 break;
             }
@@ -3925,14 +3923,106 @@ int main(void)
                             PC_MENU_PARTY_BOX_X + 10, PC_MENU_PARTY_BOX_Y,
                             TRANSPARENT_COLOUR);
 
-            // PC storage slots (0..PC_MAX-1) map to cursor indices 2..26.
+            // PC storage: show owned Pokemon that arent currently in the party.
+            pokemonInBattle *pcDisplay[PC_MAX];
+            int pcDisplayCount = 0;
+            for (int i = 0; i < playerPc.count && pcDisplayCount < PC_MAX; i++) {
+                pokemonInBattle *mon = &playerPc.mons[i];
+                bool inParty = false;
+                for (int j = 0; j < playerParty.count; j++) {
+                    if (playerParty.slots[j] == mon) {
+                        inParty = true;
+                        break;
+                    }
+                }
+                if (!inParty) {
+                    pcDisplay[pcDisplayCount++] = mon;
+                }
+            }
+
+            // Determine what's under the cursor.
+            pokemonInBattle *cursorMon = NULL;
+            if (pcCursor >= 2 && pcCursor <= 26) {
+                const int idx = pcCursor - 2;
+                if (idx >= 0 && idx < pcDisplayCount) cursorMon = pcDisplay[idx];
+            } else if (pcCursor >= 27 && pcCursor <= 32) {
+                const int idx = pcCursor - 27;
+                if (idx >= 0 && idx < playerParty.count) cursorMon = playerParty.slots[idx];
+            }
+
+            // Space-> pick up / drop / swa pokemon
+            if (spacePressed) {
+                if (pcSwapIndex < 0) {
+                    if (pcCursor >= 2 && pcCursor <= 32 && cursorMon != NULL) {
+                        pcSwapIndex = pcCursor;
+                        pcHeldMon = cursorMon;
+                    }
+                } else {
+                    const bool targetIsArrow = (pcCursor == 0 || pcCursor == 1);
+                    if (!targetIsArrow) {
+                        if (pcCursor == pcSwapIndex) {
+                            pcSwapIndex = -1;
+                            pcHeldMon = NULL;
+                        } else if (pcHeldMon != NULL) {
+                            bool didSwap = false;
+
+                            // Party <-> Party swap uses pointer swap
+                            if (pcSwapIndex >= 27 && pcSwapIndex <= 32 && pcCursor >= 27 && pcCursor <= 32) {
+                                const int a = pcSwapIndex - 27;
+                                const int b = pcCursor - 27;
+                                if (a >= 0 && a < playerParty.count && b >= 0 && b < playerParty.count) {
+                                    pokemonInBattle *tmp = playerParty.slots[a];
+                                    playerParty.slots[a] = playerParty.slots[b];
+                                    playerParty.slots[b] = tmp;
+
+                                    if (playerParty.activeIndex == a) playerParty.activeIndex = b;
+                                    else if (playerParty.activeIndex == b) playerParty.activeIndex = a;
+
+                                    didSwap = true;
+                                }
+                            } else if (cursorMon != NULL) {
+                                // PC grid swaps (and party<->PC swaps) are done by swapping the Pokemon data.
+                                pokemonInBattle tmp = *pcHeldMon;
+                                *pcHeldMon = *cursorMon;
+                                *cursorMon = tmp;
+                                didSwap = true;
+                            } else if (pcCursor >= 27 && pcCursor <= 32) {
+                                // Allow placing a PC Pokemon into the next empty party slot (at the end).
+                                const int targetSlot = pcCursor - 27;
+                                bool heldAlreadyInParty = false;
+                                for (int j = 0; j < playerParty.count; j++) {
+                                    if (playerParty.slots[j] == pcHeldMon) {
+                                        heldAlreadyInParty = true;
+                                        break;
+                                    }
+                                }
+                                if (!heldAlreadyInParty && targetSlot == playerParty.count && playerParty.count < 6) {
+                                    playerParty.slots[playerParty.count++] = pcHeldMon;
+                                    didSwap = true;
+                                }
+                            }
+
+                            if (didSwap) {
+                                pcSwapIndex = -1;
+                                pcHeldMon = NULL;
+                            }
+                        }
+                    }
+                }
+            }
+
             for (int i = 0; i < PC_MAX; i++) {
                 int x = 0, y = 0;
                 pcMenuCursorPos(2 + i, &x, &y);
-                const pokemonInBattle *mon = pcGet(&playerPc, i);
-                const int spriteId = (mon != NULL) ? mon->id.frontFrame_ID : 0;
-                (void)initPokemonBoxSprite(&pcStorageBoxSprites[i], spriteId, x, y);
-                drawStaticSprite(&pcStorageBoxSprites[i]);
+                pokemonInBattle *mon = (i < pcDisplayCount) ? pcDisplay[i] : NULL;
+                if (pcHeldMon != NULL && mon == pcHeldMon) continue;
+                const unsigned short *pokeSprite = (mon != NULL) ? menuPokemonSpriteForId(mon->id.frontFrame_ID) : NULL;
+                if (pokeSprite != NULL) {
+                    draw_sprite_any(pokeSprite,
+                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                    x, y,
+                                    TRANSPARENT_COLOUR);
+                }
             }
 
             // Party slots (0..5) map to cursor indices 27..32.
@@ -3940,9 +4030,14 @@ int main(void)
                 int x = 0, y = 0;
                 pcMenuCursorPos(27 + i, &x, &y);
                 const pokemonInBattle *mon = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
-                const int spriteId = (mon != NULL) ? mon->id.frontFrame_ID : 0;
-                (void)initPokemonBoxSprite(&pcPartyBoxSprites[i], spriteId, x, y);
-                drawStaticSprite(&pcPartyBoxSprites[i]);
+                if (pcHeldMon != NULL && mon == pcHeldMon) continue;
+                const unsigned short *pokeSprite = (mon != NULL) ? menuPokemonSpriteForId(mon->id.frontFrame_ID) : NULL;
+                if (pokeSprite != NULL) {
+                    draw_sprite_any(pokeSprite,
+                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                    x, y,
+                                    TRANSPARENT_COLOUR);
+                }
             }
 
             // Selection cursor
@@ -3953,6 +4048,19 @@ int main(void)
                                 PC_MENU_SELECT_CURSOR_WIDTH, PC_MENU_SELECT_CURSOR_HEIGHT,
                                 cx, cy,
                                 TRANSPARENT_COLOUR);
+            }
+
+            // Held Pokemon follows the cursor.
+            if (pcHeldMon != NULL) {
+                const unsigned short *heldSprite = menuPokemonSpriteForId(pcHeldMon->id.frontFrame_ID);
+                if (heldSprite != NULL) {
+                    int hx = 0, hy = 0;
+                    pcMenuCursorPos(pcCursor, &hx, &hy);
+                    draw_sprite_any(heldSprite,
+                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                    hx, hy - 2,
+                                    TRANSPARENT_COLOUR);
+                }
             }
 
             break;
