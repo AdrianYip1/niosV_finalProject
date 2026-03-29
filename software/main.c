@@ -1191,7 +1191,7 @@ int main(void)
     int pcCursorAmount = 6 + 2 + PC_MAX;
     int pcSwapIndex = -1; //first picked index for swapping in pc
     pokemonInBattle *pcHeldMon = NULL;
-    
+
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
@@ -4003,6 +4003,8 @@ int main(void)
                             }
 
                             if (didSwap) {
+                                //  sync with the party after PC/party edits.
+                                syncPartyBoxSpritesToParty(partyBoxSprites, &playerParty);
                                 pcSwapIndex = -1;
                                 pcHeldMon = NULL;
                             }
