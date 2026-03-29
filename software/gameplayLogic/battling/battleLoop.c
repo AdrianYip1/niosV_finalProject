@@ -18,6 +18,10 @@ static void battleClearMessages(BattleState *state) {
     for (int i = 0; i < BATTLE_MSG_MAX; i++) {
         state->messages[i][0] = '\0';
         state->messageFlags[i] = 0;
+        state->hpAfterPlayer[i] = -1;
+        state->hpAfterEnemy[i] = -1;
+        state->displayPlayerIndex[i] = -1;
+        state->displayEnemyIndex[i] = -1;
     }
 }
 
@@ -25,11 +29,18 @@ static void battlePushMessage(BattleState *state, const char *msg) {
     if (state == NULL || msg == NULL) return;
     if (state->messageCount < 0) state->messageCount = 0;
     if (state->messageCount >= BATTLE_MSG_MAX) return;
-    snprintf(state->messages[state->messageCount], sizeof(state->messages[state->messageCount]), "%s", msg);
+    const int idx = state->messageCount;
+    snprintf(state->messages[idx], sizeof(state->messages[idx]), "%s", msg);
+    state->messageFlags[idx] = 0;
+    state->hpAfterPlayer[idx] = -1;
+    state->hpAfterEnemy[idx] = -1;
+    state->displayPlayerIndex[idx] = (state->playerParty != NULL) ? (signed char)state->playerParty->activeIndex : (signed char)-1;
+    state->displayEnemyIndex[idx] = (state->enemyParty != NULL) ? (signed char)state->enemyParty->activeIndex : (signed char)-1;
     state->messageCount++;
 }
 
 static void battlePushUsedMessage(BattleState *state, const pokemonInBattle *attacker, const AttackData *move, bool opposing, const pokemonInBattle *target) {
+    (void)target;
     const char *attackerName = (attacker != NULL && attacker->id.data != NULL && attacker->id.data->name != NULL)
                                    ? attacker->id.data->name
                                    : "???";
@@ -63,6 +74,163 @@ static void battlePushEffectivenessMessage(BattleState *state, float eff) {
 static void battlePushMissMessage(BattleState *state) {
     if (state == NULL) return;
     battlePushMessage(state, "But it missed!");
+}
+
+static void battlePushFaintedMessage(BattleState *state, const pokemonInBattle *pokemon, bool opposing);
+
+static void battleFormatPokemonName(char *out, size_t outSize, const pokemonInBattle *pokemon, bool opposing) {
+    const char *name = (pokemon != NULL && pokemon->id.data != NULL && pokemon->id.data->name != NULL)
+                           ? pokemon->id.data->name
+                           : "???";
+    if (opposing) snprintf(out, outSize, "Opposing %s", name);
+    else snprintf(out, outSize, "%s", name);
+}
+
+static void battlePushFailedMessage(BattleState *state) {
+    if (state == NULL) return;
+    battlePushMessage(state, "But it failed!");
+}
+
+static bool pokemonHasType(const pokemonInBattle *pokemon, PokemonType type) {
+    if (pokemon == NULL) return false;
+    return (pokemon->type1 == type) || (pokemon->type2 == type);
+}
+
+static bool statusCanApplyToTarget(StatusCondition status, const pokemonInBattle *target) {
+    if (target == NULL) return false;
+    if (status == STATUS_POISON && (pokemonHasType(target, TYPE_POISON) || pokemonHasType(target, TYPE_STEEL))) return false;
+    if (status == STATUS_BURN && pokemonHasType(target, TYPE_FIRE)) return false;
+    if (status == STATUS_FREEZE && pokemonHasType(target, TYPE_ICE)) return false;
+    return true;
+}
+
+static void battlePushStatusInflictedMessage(BattleState *state, const pokemonInBattle *target, bool targetOpposing, StatusCondition status) {
+    if (state == NULL) return;
+    char name[64];
+    battleFormatPokemonName(name, sizeof(name), target, targetOpposing);
+    char buf[96];
+
+    switch (status) {
+        case STATUS_BURN: snprintf(buf, sizeof(buf), "%s was burned!", name); break;
+        case STATUS_POISON: snprintf(buf, sizeof(buf), "%s was poisoned!", name); break;
+        case STATUS_PARALYSIS: snprintf(buf, sizeof(buf), "%s was paralyzed!", name); break;
+        case STATUS_SLEEP: snprintf(buf, sizeof(buf), "%s fell asleep!", name); break;
+        case STATUS_FREEZE: snprintf(buf, sizeof(buf), "%s was frozen solid!", name); break;
+        default: return;
+    }
+    battlePushMessage(state, buf);
+}
+
+static bool battleTryInflictStatus(BattleState *state, pokemonInBattle *target, bool targetOpposing, StatusCondition status) {
+    if (state == NULL || target == NULL) return false;
+    if (!target->alive) return false;
+    if (target->status != STATUS_NONE) return false;
+    if (!statusCanApplyToTarget(status, target)) return false;
+
+    applyStatusEffect(target, status);
+    if (target->status == status) {
+        battlePushStatusInflictedMessage(state, target, targetOpposing, status);
+        return true;
+    }
+    return false;
+}
+
+static int clampStageLocal(int stage) {
+    if (stage > 6) return 6;
+    if (stage < -6) return -6;
+    return stage;
+}
+
+static void battleApplyStageDelta(BattleState *state, pokemonInBattle *pokemon, bool opposing, const char *statName, int *stageField, int delta) {
+    if (state == NULL || pokemon == NULL || statName == NULL || stageField == NULL) return;
+    char name[64];
+    battleFormatPokemonName(name, sizeof(name), pokemon, opposing);
+
+    const int before = *stageField;
+    const int after = clampStageLocal(before + delta);
+    *stageField = after;
+
+    if (after == before) { //if maxed out a certain stat
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s's %s won't go any %s!", name, statName, (delta > 0) ? "higher" : "lower");
+        battlePushMessage(state, buf);
+        return;
+    }
+
+    const int actualDelta = after - before;
+    const int absDelta = (actualDelta < 0) ? -actualDelta : actualDelta;
+    const bool up = (actualDelta > 0);
+    const char *verb = up ? "rose" : "fell";
+    if (absDelta >= 2) verb = up ? "sharply rose" : "harshly fell";
+
+    char buf[96];
+    snprintf(buf, sizeof(buf), "%s's %s %s!", name, statName, verb);
+    battlePushMessage(state, buf);
+}
+
+static void battlePushCannotActMessage(BattleState *state, const pokemonInBattle *pokemon, bool opposing, StatusCondition reason) {
+    if (state == NULL || pokemon == NULL) return;
+    char name[64];
+    battleFormatPokemonName(name, sizeof(name), pokemon, opposing);
+    char buf[96];
+
+    switch (reason) {
+        case STATUS_SLEEP: snprintf(buf, sizeof(buf), "%s is fast asleep!", name); break;
+        case STATUS_FREEZE: snprintf(buf, sizeof(buf), "%s is frozen solid!", name); break;
+        case STATUS_PARALYSIS: snprintf(buf, sizeof(buf), "%s is paralyzed! It can't move!", name); break;
+        default: return;
+    }
+    battlePushMessage(state, buf);
+}
+
+static void battleTickStatusWithMessages(BattleState *state, pokemonInBattle *pokemon, bool opposing) {
+    if (state == NULL || pokemon == NULL) return;
+    if (!pokemon->alive) return;
+
+    const StatusCondition beforeStatus = pokemon->status;
+    const int beforeHp = pokemon->scaledStatsWithLevel[0];
+
+    tickStatusEffect(pokemon);
+
+    const int afterHp = pokemon->scaledStatsWithLevel[0];
+    const StatusCondition afterStatus = pokemon->status;
+
+    char name[64];
+    battleFormatPokemonName(name, sizeof(name), pokemon, opposing);
+
+    if (beforeStatus == STATUS_BURN && afterHp < beforeHp) {
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s is hurt by its burn!", name);
+        battlePushMessage(state, buf);
+        if (state->messageCount > 0) {
+            const int idx = state->messageCount - 1;
+            if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                if (opposing) state->hpAfterEnemy[idx] = afterHp;
+                else state->hpAfterPlayer[idx] = afterHp;
+            }
+        }
+    } else if (beforeStatus == STATUS_POISON && afterHp < beforeHp) {
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s is hurt by poison!", name);
+        battlePushMessage(state, buf);
+        if (state->messageCount > 0) {
+            const int idx = state->messageCount - 1;
+            if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                if (opposing) state->hpAfterEnemy[idx] = afterHp;
+                else state->hpAfterPlayer[idx] = afterHp;
+            }
+        }
+    }
+
+    if (beforeStatus == STATUS_SLEEP && afterStatus == STATUS_NONE) {
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s woke up!", name);
+        battlePushMessage(state, buf);
+    } else if (beforeStatus == STATUS_FREEZE && afterStatus == STATUS_NONE) {
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s thawed out!", name);
+        battlePushMessage(state, buf);
+    }
 }
 
 static int aiChooseMove(pokemonInBattle *pokemon) {
@@ -144,14 +312,24 @@ static void awardExpForDefeat(BattleState *state, pokemonInBattle *player, pokem
 
     battlePushFaintedMessage(state, defeated, defeatedWasOpposing);
     const int expGained = experienceGained(player->level, defeated->level);
+    const int prevLevel = player->level;
     gainExp(player, defeated);
     battlePushExpMessage(state, expGained);
+    if (player->level > prevLevel) {
+        const char *name = (player->id.data != NULL && player->id.data->name != NULL) ? player->id.data->name : "???";
+        char buf[96];
+        snprintf(buf, sizeof(buf), "%s grew to level %d!", name, player->level);
+        battlePushMessage(state, buf);
+    }
 }
 
-//add non damaging moves -> text indication, sound effects, stat changes/status updates
 static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemonInBattle *target, int moveIndex, bool opposing) {
     if (attacker == NULL || target == NULL) return false;
-    if (!canAct(attacker)) return false;
+    StatusCondition blockedBy = STATUS_NONE;
+    if (!canActThisTurn(attacker, &blockedBy)) { //like with status effects
+        battlePushCannotActMessage(state, attacker, opposing, blockedBy);
+        return false;
+    }
 
     const AttackData *move = (moveIndex >= 0 && moveIndex < 4) ? attacker->attacks[moveIndex] : NULL;
     const int usedMsgIndex = (state != NULL) ? state->messageCount : 0;
@@ -172,6 +350,99 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
         battlePushMissMessage(state);
     }
 
+    if (hit && move != NULL) {
+        const bool targetOpposing = !opposing;
+        const int damageDealt = (hpBefore > hpAfter) ? (hpBefore - hpAfter) : 0;
+
+        if (move->category == ATTACK_STATUS) {
+            switch (move->id) {
+                case 3: // Growl
+                    battleApplyStageDelta(state, target, targetOpposing, "Attack", &target->statStageAttack, -1);
+                    break;
+                case 5: // Scary Face
+                    battleApplyStageDelta(state, target, targetOpposing, "Speed", &target->statStageSpeed, -2);
+                    break;
+                case 6: // Smokescreen
+                    battleApplyStageDelta(state, target, targetOpposing, "accuracy", &target->statStageAccuracy, -1);
+                    break;
+                case 54: // Dragon Dance
+                    battleApplyStageDelta(state, attacker, opposing, "Attack", &attacker->statStageAttack, +1);
+                    battleApplyStageDelta(state, attacker, opposing, "Speed", &attacker->statStageSpeed, +1);
+                    break;
+                case 57: // Rest
+                    {
+                        if (attacker->scaledStatsWithLevel[0] >= attacker->maxHp) {
+                            battlePushFailedMessage(state);
+                            break;
+                        }
+                        // Rest: fully heal, cure status, then sleep for 2 turns.
+                        attacker->status = STATUS_NONE;
+                        attacker->sleepTurnsRemaining = 0;
+                        healPokemon(attacker, attacker->maxHp);
+                        attacker->status = STATUS_SLEEP;
+                        attacker->sleepTurnsRemaining = 2;
+                        battlePushStatusInflictedMessage(state, attacker, opposing, STATUS_SLEEP);
+                        battlePushMessage(state, "Recovered HP!");
+                        if (state->messageCount > 0) {
+                            const int idx = state->messageCount - 1;
+                            if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                                if (opposing) state->hpAfterEnemy[idx] = attacker->scaledStatsWithLevel[0];
+                                else state->hpAfterPlayer[idx] = attacker->scaledStatsWithLevel[0];
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    battlePushFailedMessage(state);
+                    break;
+            }
+        } else {
+            // Draining moves.
+            if (move->id == 71 && damageDealt > 0) { // Giga Drain
+                const int beforeHealHp = attacker->scaledStatsWithLevel[0];
+                int heal = damageDealt / 2;
+                if (heal < 1) heal = 1;
+                healPokemon(attacker, heal);
+                const int gained = attacker->scaledStatsWithLevel[0] - beforeHealHp;
+                if (gained > 0) {
+                    char attackerName[64];
+                    battleFormatPokemonName(attackerName, sizeof(attackerName), attacker, opposing);
+                    char buf[96];
+                    snprintf(buf, sizeof(buf), "%s absorbed %d HP!", attackerName, gained);
+                    battlePushMessage(state, buf);
+                    if (state->messageCount > 0) {
+                        const int idx = state->messageCount - 1;
+                        if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                            if (opposing) state->hpAfterEnemy[idx] = attacker->scaledStatsWithLevel[0];
+                            else state->hpAfterPlayer[idx] = attacker->scaledStatsWithLevel[0];
+                        }
+                    }
+                }
+            }
+
+            // Secondary status effects 
+            if (damageDealt > 0 && target->alive) {
+                StatusCondition status = STATUS_NONE;
+                int chance = 0;
+                switch (move->id) {
+                    case 20: status = STATUS_BURN; chance = 10; break; // Ember
+                    case 21: status = STATUS_BURN; chance = 10; break; // Fire Fang
+                    case 22: status = STATUS_BURN; chance = 10; break; // Flamethrower
+                    case 24: status = STATUS_BURN; chance = 100; break; // Inferno
+                    case 67: status = STATUS_FREEZE; chance = 10; break; // Ice Beam
+                    case 70: status = STATUS_POISON; chance = 30; break; // Sludge Bomb
+                    case 75: status = STATUS_POISON; chance = 30; break; // Poison Jab
+                    default: break;
+                }
+                if (status != STATUS_NONE && chance > 0) {
+                    if ((rand() % 100) < chance) {
+                        (void)battleTryInflictStatus(state, target, targetOpposing, status);
+                    }
+                }
+            }
+        }
+    }
+
     // Effectiveness message only when the move actually hits and is damaging.
     if (hit && move != NULL && move->category != ATTACK_STATUS) {
         const float eff = getTypeEffectiveness(move->type, target->type1, target->type2);
@@ -181,6 +452,11 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
     // check flag for damage in message 
     if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {
         state->messageFlags[usedMsgIndex] = (unsigned char)tookDamage;
+        // HP should change during the "used" message for better timing in the UI.
+        if (tookDamage) {
+            if (opposing) state->hpAfterPlayer[usedMsgIndex] = hpAfter;
+            else state->hpAfterEnemy[usedMsgIndex] = hpAfter;
+        }
     }
 
     return faintedNow;
@@ -282,6 +558,12 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                         healPokemon(player, heal);
                         battlePushMessage(state, "Recovered HP!");
                     }
+                    if (state->messageCount > 0) {
+                        const int idx = state->messageCount - 1;
+                        if (idx >= 0 && idx < BATTLE_MSG_MAX) {
+                            state->hpAfterPlayer[idx] = player->scaledStatsWithLevel[0];
+                        }
+                    }
                     break;
                 }
 
@@ -315,6 +597,7 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
 static void resolveEnemyTurn(BattleState *state) {
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
+    if (state->playerMustSwitch) return;
     if (state->playerParty == NULL || state->enemyParty == NULL) return;
 
     pokemonInBattle *enemy = getActivePokemon(state->enemyParty);
@@ -335,18 +618,18 @@ static void resolveEnemyTurn(BattleState *state) {
 static void resolveTurn(BattleState *state, BattleAction playerAction, int playerParam) {
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
+    if (state->playerMustSwitch) return;
     if (state->playerParty == NULL || state->enemyParty == NULL) return;
 
     pokemonInBattle *player = getActivePokemon(state->playerParty);
     pokemonInBattle *enemy = getActivePokemon(state->enemyParty);
     if (player == NULL || enemy == NULL) return;
 
-    // Ensure both sides have a live active before the turn.
+    // If player's active is fainted, require a manual switch (no auto-switch).
     if (!player->alive) {
-        handleFaint(state, state->playerParty, true);
-        if (state->result != BATTLE_RESULT_ONGOING) return;
-        player = getActivePokemon(state->playerParty);
-        if (player == NULL) return;
+        state->playerMustSwitch = true;
+        checkBattleOver(state);
+        return;
     }
     if (!enemy->alive) {
         handleFaint(state, state->enemyParty, false);
@@ -371,13 +654,19 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
             if (state->result == BATTLE_RESULT_ONGOING && enemy->alive) {
                 (void)resolveAttack(state, enemy, player, enemyMove, true);
                 if (!player->alive) {
-                    handleFaint(state, state->playerParty, true);
+                    battlePushFaintedMessage(state, player, false);
+                    state->playerMustSwitch = true;
+                    checkBattleOver(state);
+                    return;
                 }
             }
         } else {
             (void)resolveAttack(state, enemy, player, enemyMove, true);
             if (!player->alive) {
-                handleFaint(state, state->playerParty, true);
+                battlePushFaintedMessage(state, player, false);
+                state->playerMustSwitch = true;
+                checkBattleOver(state);
+                return;
             }
             if (state->result == BATTLE_RESULT_ONGOING && player->alive) {
                 const bool enemyFaintedNow = resolveAttack(state, player, enemy, playerParam, false);
@@ -395,7 +684,10 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         if (state->result != BATTLE_RESULT_ONGOING) return;
         player = getActivePokemon(state->playerParty);
         if (player != NULL && !player->alive) {
-            handleFaint(state, state->playerParty, true);
+            battlePushFaintedMessage(state, player, false);
+            state->playerMustSwitch = true;
+            checkBattleOver(state);
+            return;
         }
     }
 
@@ -404,8 +696,8 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
     enemy = getActivePokemon(state->enemyParty);
     const bool playerAliveBeforeTick = (player != NULL) ? player->alive : false;
     const bool enemyAliveBeforeTick = (enemy != NULL) ? enemy->alive : false;
-    if (player != NULL) tickStatusEffect(player);
-    if (enemy != NULL) tickStatusEffect(enemy);
+    if (player != NULL) battleTickStatusWithMessages(state, player, false);
+    if (enemy != NULL) battleTickStatusWithMessages(state, enemy, true);
 
     // Award EXP immediately if the opposing Pokemon faints due to status at end of turn.
     if (state->result != BATTLE_RESULT_ONGOING) return;
@@ -414,11 +706,12 @@ static void resolveTurn(BattleState *state, BattleAction playerAction, int playe
         handleFaint(state, state->enemyParty, false);
     }
 
-    // Keep behavior consistent: if player faints due to status, force a switch promptly.
     if (state->result != BATTLE_RESULT_ONGOING) return;
     if (player != NULL && playerAliveBeforeTick && !player->alive) {
         battlePushFaintedMessage(state, player, false);
-        handleFaint(state, state->playerParty, true);
+        state->playerMustSwitch = true;
+        checkBattleOver(state);
+        return;
     }
 }
 
@@ -430,15 +723,65 @@ void initBattleState(BattleState *state, Party *playerParty, Party *enemyParty, 
     state->type = type;
     state->result = BATTLE_RESULT_ONGOING;
     state->fleeAttempts = 0;
+    state->playerMustSwitch = false;
     battleClearMessages(state);
+
+    // clear stat stages at start of battle.
+    if (state->playerParty != NULL) {
+        for (int i = 0; i < state->playerParty->count; i++) {
+            if (state->playerParty->slots[i] != NULL) resetStatStages(state->playerParty->slots[i]);
+        }
+    }
+    if (state->enemyParty != NULL) {
+        for (int i = 0; i < state->enemyParty->count; i++) {
+            if (state->enemyParty->slots[i] != NULL) resetStatStages(state->enemyParty->slots[i]);
+        }
+    }
 }
 
 void battleApplyPlayerAction(BattleState *state, BattleAction action, int param) {
     if (state == NULL) return;
     if (state->result != BATTLE_RESULT_ONGOING) return;
     battleClearMessages(state);
+
+    if (state->playerMustSwitch) {
+        if (action != ACTION_SWITCH) {
+            battlePushMessage(state, "Choose a Pokemon!");
+            return;
+        }
+        if (state->playerParty == NULL) {
+            battlePushMessage(state, "No party!");
+            return;
+        }
+
+        const int before = state->playerParty->activeIndex;
+        (void)switchPokemon(state->playerParty, param);
+        const int after = state->playerParty->activeIndex;
+        if (after == before) {
+            battlePushMessage(state, "Can't switch to that Pokemon!");
+            return;
+        }
+
+        state->playerMustSwitch = false;
+        return;
+    }
+
     resolveTurn(state, action, param);
     checkBattleOver(state);
+
+    //clear stat stages when battle ends (win/lose/flee/caught).
+    if (state->result != BATTLE_RESULT_ONGOING) {
+        if (state->playerParty != NULL) {
+            for (int i = 0; i < state->playerParty->count; i++) {
+                if (state->playerParty->slots[i] != NULL) resetStatStages(state->playerParty->slots[i]);
+            }
+        }
+        if (state->enemyParty != NULL) {
+            for (int i = 0; i < state->enemyParty->count; i++) {
+                if (state->enemyParty->slots[i] != NULL) resetStatStages(state->enemyParty->slots[i]);
+            }
+        }
+    }
 }
 
 BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type) {

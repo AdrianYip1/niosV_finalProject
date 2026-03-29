@@ -1,9 +1,43 @@
 #include "pokemonObject.h"
 #include "learnSet.h"
-#include <stdio.h>
+
+static int clampStage(int stage) {
+    if (stage > 6) return 6;
+    if (stage < -6) return -6;
+    return stage;
+}
+
+static float stageMultiplierStat(int stage) {
+    stage = clampStage(stage);
+    if (stage >= 0) return (2.0f + (float)stage) / 2.0f;
+    return 2.0f / (2.0f - (float)stage);
+}
+
+static float stageMultiplierAccEva(int stage) {
+    stage = clampStage(stage);
+    if (stage >= 0) return (3.0f + (float)stage) / 3.0f;
+    return 3.0f / (3.0f - (float)stage);
+}
+
+static int applyStageToStat(int baseValue, int stage) {
+    int v = (int)((float)baseValue * stageMultiplierStat(stage) + 0.5f);
+    if (v < 1) v = 1;
+    return v;
+}
+
+void resetStatStages(pokemonInBattle *pokemon) {
+    if (pokemon == NULL) return;
+    pokemon->statStageAttack = 0;
+    pokemon->statStageDefense = 0;
+    pokemon->statStageSpAttack = 0;
+    pokemon->statStageSpDefense = 0;
+    pokemon->statStageSpeed = 0;
+    pokemon->statStageAccuracy = 0;
+    pokemon->statStageEvasion = 0;
+}
 
 
-//pokedex stuff to determine caught/seen -> grayscale the caughtIcon 
+//pokedex stuff to determine caught/seen -> grayscale the caughtIcon for seen but not caught
 void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, int level) {
     pokemon->id.data = template;
     pokemon->id.frontFrame_ID = template->id;
@@ -17,9 +51,16 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
     pokemon->sleepTurnsRemaining = 0;
     pokemon->type1 = template->type1;
     pokemon->type2 = template->type2;
+    resetStatStages(pokemon);
     initMovesFromLearnset(pokemon);
     scaleStatsWithLevel(pokemon);
     pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
+
+    for (int i = 0; i < 4; i++) pokemon->pendingLearnMoves[i] = NULL;
+    pokemon->pendingLearnMoveCount = 0;
+    for (int i = 0; i < 4; i++) pokemon->pendingLearnedMoves[i] = NULL;
+    for (int i = 0; i < 4; i++) pokemon->pendingForgottenMoves[i] = NULL;
+    pokemon->pendingLearnedMoveCount = 0;
 }
 
 void scaleStatsWithLevel(pokemonInBattle *pokemon) {
@@ -68,11 +109,9 @@ void levelUp(pokemonInBattle *pokemon) {
     if (newCurHp > pokemon->maxHp) newCurHp = pokemon->maxHp;
     if (newCurHp < 1 && pokemon->alive) newCurHp = 1;
     pokemon->scaledStatsWithLevel[0] = newCurHp;
-    printf("%s grew to level %d!\n", pokemon->id.data->name, pokemon->level);
     checkLevelUpMoves(pokemon, onLearnMove);
     const PokemonData *next = checkEvolution(pokemon->id.data, pokemon->level);
     if (next != NULL) {
-        printf("%s is evolving into %s!\n", pokemon->id.data->name, next->name);
         pokemon->id.data = next;
         pokemon->id.frontFrame_ID = next->id;
         pokemon->id.backFrame_ID = next->id;
@@ -89,7 +128,6 @@ void levelUp(pokemonInBattle *pokemon) {
         if (evoCurHp < 1 && pokemon->alive) evoCurHp = 1;
         pokemon->scaledStatsWithLevel[0] = evoCurHp;
         checkLevelUpMoves(pokemon, onLearnMove);
-        printf("%s evolved!\n", next->name);
     }
 }
 
@@ -118,24 +156,34 @@ void dealDamage(pokemonInBattle *attacker, pokemonInBattle *target, int baseDama
     if (attacker == NULL || target == NULL) return;
     if (baseDamage <= 0) return;
 
-    const int atkStat = (damageType == 0) ? attacker->scaledStatsWithLevel[1] : attacker->scaledStatsWithLevel[2];
-    const int defStat = (damageType == 0) ? target->scaledStatsWithLevel[3] : target->scaledStatsWithLevel[4];
+    const int atkBase = (damageType == 0) ? attacker->scaledStatsWithLevel[1] : attacker->scaledStatsWithLevel[2];
+    const int defBase = (damageType == 0) ? target->scaledStatsWithLevel[3] : target->scaledStatsWithLevel[4];
+    const int atkStage = (damageType == 0) ? attacker->statStageAttack : attacker->statStageSpAttack;
+    const int defStage = (damageType == 0) ? target->statStageDefense : target->statStageSpDefense;
+    const int atkStat = applyStageToStat(atkBase, atkStage);
+    const int defStat = applyStageToStat(defBase, defStage);
     const int def = (defStat > 0) ? defStat : 1;
 
-    // (((2L/5+2) * P * A / D) / 50) + 2
+    // Pokémon-style base damage:
+    // base = floor(floor(floor((2*L/5+2) * P * A / D) / 50) + 2)
     const int level = (attacker->level > 0) ? attacker->level : 1;
-    int dmg = (((((2 * level) / 5) + 2) * baseDamage * atkStat) / def) / 50 + 2;
+    const int levelFactor = ((2 * level) / 5) + 2;
+    int base = (levelFactor * baseDamage * atkStat) / def;
+    base = (base / 50) + 2;
 
     const float eff = getTypeEffectiveness(moveType, target->type1, target->type2);
     if (eff <= 0.0f) {
-        dmg = 0;
-    } else {
-        dmg = (int)((float)dmg * eff + 0.5f);
+        return; // no effect
     }
 
-    // Random 0.85..1.00
-    dmg = (dmg * (85 + (rand() % 16))) / 100;
-    if (dmg < 1 && eff > 0.0f) dmg = 1;
+    const bool stab = (moveType != TYPE_NONE) && ((attacker->type1 == moveType) || (attacker->type2 == moveType)); //does 1.5x more damage
+    const float stabMult = stab ? 1.5f : 1.0f;
+    const float randMult = (float)(85 + (rand() % 16)) / 100.0f; // 0.85..1.00
+    const float burnMult = (damageType == ATTACK_PHYSICAL && attacker->status == STATUS_BURN) ? 0.5f : 1.0f;
+
+    float modifier = stabMult * eff * randMult * burnMult;
+    int dmg = (int)((float)base * modifier);
+    if (dmg < 1) dmg = 1;
 
     takeDamage(target, dmg, damageType);
 }
@@ -161,16 +209,32 @@ bool useAttack(pokemonInBattle *attacker, pokemonInBattle *target, int attackInd
     if (attacker->currentPP[attackIndex] <= 0) return false;
     // PP is consumed even if the move misses.
     attacker->currentPP[attackIndex]--;
-    if ((rand() % 100) >= move->accuracy) return false;
+
+    // Accuracy check respects accuracy/evasion stat stages.
+    float finalAcc = (float)move->accuracy;
+    if (target != NULL) {
+        const float accMult = stageMultiplierAccEva(attacker->statStageAccuracy);
+        const float evaMult = stageMultiplierAccEva(target->statStageEvasion);
+        if (evaMult > 0.0f) finalAcc = finalAcc * (accMult / evaMult);
+    }
+    if (finalAcc < 1.0f) finalAcc = 1.0f;
+    if (finalAcc > 100.0f) finalAcc = 100.0f;
+    if ((rand() % 100) >= (int)(finalAcc + 0.5f)) return false;
     if (move->category != ATTACK_STATUS) {
-        dealDamage(attacker, target, move->power, move->category, move->type);
+        // Fixed-damage move: Dragon Rage (40 damage, still respects immunity).
+        if (move->id == 40) {
+            const float eff = getTypeEffectiveness(move->type, target->type1, target->type2);
+            if (eff > 0.0f) takeDamage(target, 40, move->category);
+        } else {
+            dealDamage(attacker, target, move->power, move->category, move->type);
+        }
     }
     return true;
 }
 
 int determineTurnOrder(pokemonInBattle *pokemon1, pokemonInBattle *pokemon2) {
-    int spd1 = pokemon1->scaledStatsWithLevel[5];
-    int spd2 = pokemon2->scaledStatsWithLevel[5];
+    int spd1 = applyStageToStat(pokemon1->scaledStatsWithLevel[5], pokemon1->statStageSpeed);
+    int spd2 = applyStageToStat(pokemon2->scaledStatsWithLevel[5], pokemon2->statStageSpeed);
     if (spd1 > spd2) return 1;
     if (spd2 > spd1) return 2;
     return 1;
@@ -213,10 +277,26 @@ void tickStatusEffect(pokemonInBattle *pokemon) {
 }
 
 bool canAct(pokemonInBattle *pokemon) {
+    return canActThisTurn(pokemon, NULL);
+}
+
+bool canActThisTurn(pokemonInBattle *pokemon, StatusCondition *blockedBy) {
+    if (blockedBy != NULL) *blockedBy = STATUS_NONE;
+    if (pokemon == NULL) return false;
     if (!pokemon->alive) return false;
-    if (pokemon->status == STATUS_SLEEP) return false;
-    if (pokemon->status == STATUS_FREEZE) return false;
-    if (pokemon->status == STATUS_PARALYSIS && rand() % 100 < 25) return false;
+
+    if (pokemon->status == STATUS_SLEEP) {
+        if (blockedBy != NULL) *blockedBy = STATUS_SLEEP;
+        return false;
+    }
+    if (pokemon->status == STATUS_FREEZE) {
+        if (blockedBy != NULL) *blockedBy = STATUS_FREEZE;
+        return false;
+    }
+    if (pokemon->status == STATUS_PARALYSIS && rand() % 100 < 25) {
+        if (blockedBy != NULL) *blockedBy = STATUS_PARALYSIS;
+        return false;
+    }
     return true;
 }
 
@@ -281,28 +361,33 @@ bool attemptCatchWithBall(pokemonInBattle *wildPokemon, PokeballType ball) {
 void onLearnMove(pokemonInBattle *pokemon, const AttackData *move) {
     if (pokemon == NULL || pokemon->id.data == NULL || move == NULL) return;
 
-    // Avoid interactive stdin (scanf) on the board: auto-learn/replace.
+    // Avoid scanf on the board.
     for (int i = 0; i < 4; i++) {
         if (pokemon->attacks[i] == move) return; // already knows
     }
+    for (int i = 0; i < pokemon->pendingLearnMoveCount; i++) {
+        if (pokemon->pendingLearnMoves[i] == move) return; // already pending
+    }
 
-    printf("%s wants to learn %s!\n", pokemon->id.data->name, move->name);
     for (int i = 0; i < 4; i++) {
         if (pokemon->attacks[i] == NULL) {
             learnMove(pokemon, move, -1);
-            printf("%s learned %s!\n", pokemon->id.data->name, move->name);
+            // Queue a UI message for "learned move" 
+            if (pokemon->pendingLearnedMoveCount < 4) {
+                pokemon->pendingLearnedMoves[pokemon->pendingLearnedMoveCount] = move;
+                pokemon->pendingForgottenMoves[pokemon->pendingLearnedMoveCount] = NULL;
+                pokemon->pendingLearnedMoveCount++;
+            }
             return;
         }
     }
 
-    // Replace slot 0 by default.
-    const int replaceSlot = 0;
-    if (pokemon->attacks[replaceSlot] != NULL) {
-        printf("%s forgot %s and learned %s!\n", pokemon->id.data->name, pokemon->attacks[replaceSlot]->name, move->name);
+    // Already has 4 moves: queue for UI-driven learn/forget flow in main.
+    if (pokemon->pendingLearnMoveCount < 4) {
+        pokemon->pendingLearnMoves[pokemon->pendingLearnMoveCount++] = move;
     } else {
-        printf("%s learned %s!\n", pokemon->id.data->name, move->name);
+        // If somehow multiple moves are learned at once, drop extras rather than blocking/crashing.
     }
-    learnMove(pokemon, move, replaceSlot);
 }
 
 bool isAlive(pokemonInBattle *pokemon) { return pokemon->alive; }

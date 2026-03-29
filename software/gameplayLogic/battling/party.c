@@ -36,6 +36,12 @@ bool switchPokemon(Party *party, int slot) {
     if (party->slots[slot] == NULL) return false;
     if (!party->slots[slot]->alive) return false;
     if (slot == party->activeIndex) return false;
+
+    // stat stages reset when switching.
+    pokemonInBattle *oldActive = getActivePokemon(party);
+    if (oldActive != NULL) resetStatStages(oldActive);
+    resetStatStages(party->slots[slot]);
+
     party->activeIndex = slot;
     return true;
 }
