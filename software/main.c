@@ -760,6 +760,31 @@ static int navBattleAttack4(int index, NavDir dir) {
     return next;
 }
 
+static bool is_mc_on_grass_patch(void) {
+    const McBounds bounds = getMCBounds();
+    if (!bounds.valid) return false;
+
+    const int foot_tile_x = ((bounds.x0 + bounds.x1) / 2) / TILE_SIZE;
+    const int foot_tile_y = bounds.y1 / TILE_SIZE;
+    if (foot_tile_x < 0 || foot_tile_x >= MAP_WIDTH || foot_tile_y < 0 || foot_tile_y >= MAP_HEIGHT) {
+        return false;
+    }
+
+    return map_overlay[foot_tile_y][foot_tile_x] == TILE_GRASS_PATCH;
+}
+
+static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
+                                        bool leftPressed, bool rightPressed) {
+    static unsigned int grassEncounterRng = 0x2432026u;
+    const bool movedInputPressed = upPressed || downPressed || leftPressed || rightPressed;
+    if (!movedInputPressed || !is_mc_on_grass_patch()) {
+        return false;
+    }
+
+    grassEncounterRng = grassEncounterRng * 1664525u + 1013904223u;
+    return (grassEncounterRng % 10u) == 0u;
+}
+
 //returns the address of the global pokemon structs for the pokemon
 static const PokemonData *speciesFromPokemonSpriteId(int pokemonId) {
     switch (pokemonId) {
@@ -1082,6 +1107,8 @@ int main(void)
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
     WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
+    int mapReturnX = 80;
+    int mapReturnY = 112;
     GameState activeBattleMenuState = GAME_STATE_WILD_BATTLE;
     int battleCursor = 0;
 
@@ -1354,8 +1381,9 @@ int main(void)
         if (wasOverworld != isOverworld) {
             if (isOverworld) {
                 play_bgm(map_audio, map_audio_len);
-                load_world_map(currentMapId, 80, 112, MC_FACING_S);
+                load_world_map(currentMapId, mapReturnX, mapReturnY, MC_FACING_S);
             } else {
+                getMCPosition(&mapReturnX, &mapReturnY);
                 play_bgm(battle_audio, battle_audio_len);
                 init_map();
                 load_map_preset(MAP_PRESET_BACKDROP1);
@@ -4207,6 +4235,7 @@ int main(void)
             {
                 draw_map();
                 const McMoveResult moveResult = mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
+                const McBounds mcBounds = getMCBounds();
                 WorldMapId targetMap;
                 int spawnX;
                 int spawnY;
@@ -4217,6 +4246,14 @@ int main(void)
                     currentMapId = targetMap;
                     load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
                     draw_map();
+                } else if (currentMapId == WORLD_MAP_ROUTE_B &&
+                           spacePressed &&
+                           map_can_talk_to_route_b_cynthia(&mcBounds)) {
+                    nextBattleType = BATTLE_TRAINER;
+                    currentGameState = GAME_STATE_TRAINER_BATTLE;
+                } else if (moveResult == MC_MOVE_OK && should_trigger_grass_battle(upPressed, downPressed, leftPressed, rightPressed)) {
+                    nextBattleType = BATTLE_WILD;
+                    currentGameState = GAME_STATE_WILD_BATTLE;
                 }
             }
             break;

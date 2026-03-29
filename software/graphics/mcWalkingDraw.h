@@ -25,6 +25,8 @@ void drawMCIdleAnimation(void);
 void initMCIdle(void);
 void drawMCAnimation(void);
 McBounds getMCBounds(void);
+void getMCPosition(int *x, int *y);
+void setMCScale(int numerator, int denominator);
 void goUp(void);
 void goDown(void);
 void goLeft(void);
