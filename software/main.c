@@ -134,6 +134,27 @@
 
 #define battleBackdropY 240 - 91
 
+// PC menu cursor
+#define PC_MENU_ARROW_Y 20
+#define PC_MENU_LEFT_ARROW_X 0
+#define PC_MENU_RIGHT_ARROW_X ((340 / 2) + 20)
+
+#define PC_MENU_GRID_COLS 5
+#define PC_MENU_GRID_ROWS 5
+#define PC_MENU_GRID_X0 14
+#define PC_MENU_GRID_Y0 48
+#define PC_MENU_GRID_STEP_X 42
+#define PC_MENU_GRID_STEP_Y 40
+
+#define PC_MENU_PARTY_BOX_X 200
+#define PC_MENU_PARTY_BOX_Y (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2))
+#define PC_MENU_PARTY_COLS 2
+#define PC_MENU_PARTY_ROWS 3
+#define PC_MENU_PARTY_X0 (PC_MENU_PARTY_BOX_X + 10)
+#define PC_MENU_PARTY_Y0 (PC_MENU_PARTY_BOX_Y + 10)
+#define PC_MENU_PARTY_STEP_X 53
+#define PC_MENU_PARTY_STEP_Y 50
+
 
 //location for drawing names, hp, level
 
@@ -550,6 +571,57 @@ static int navPCMenu33(int index, NavDir dir) {
     const int next = (int)nav[index][d];
     if (next < 0 || next > 32) return index;
     return next;
+}
+
+static void pcMenuCursorPos(int index, int *outX, int *outY) {
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outX == NULL || outY == NULL) return;
+
+    if (index < 0) index = 0;
+    if (index > 32) index = 32;
+
+    const int cursorW = PC_MENU_SELECT_CURSOR_WIDTH;
+    const int cursorH = PC_MENU_SELECT_CURSOR_HEIGHT;
+    (void)cursorH;
+
+    // Arrow icons
+    if (index == 0) {
+        // Left arrow sprite is drawn at (0, 20)
+        *outX = PC_MENU_LEFT_ARROW_X;
+        *outY = PC_MENU_ARROW_Y;
+        return;
+    }
+    if (index == 1) {
+        // Right arrow sprite is drawn at ((340 / 2) + 20, 20)
+        const int arrowX = PC_MENU_RIGHT_ARROW_X;
+        const int arrowW = PC_MENU_RIGHT_ARROW_WIDTH;
+        *outX = arrowX - (cursorW - arrowW) / 2;
+        *outY = PC_MENU_ARROW_Y;
+        return;
+    }
+
+    // PC storage grid: indices 2..26 (5 columns x 5 rows)
+    if (index >= 2 && index <= 26) {
+        const int gridIndex = index - 2;
+        const int row = gridIndex / PC_MENU_GRID_COLS;
+        const int col = gridIndex % PC_MENU_GRID_COLS;
+
+        *outX = PC_MENU_GRID_X0 + col * PC_MENU_GRID_STEP_X;
+        *outY = PC_MENU_GRID_Y0 + row * PC_MENU_GRID_STEP_Y;
+        return;
+    }
+
+    // Party slots: indices 27..32 (2 columns x 3 rows)
+    if (index >= 27 && index <= 32) {
+        const int partyIndex = index - 27;
+        const int row = partyIndex / PC_MENU_PARTY_COLS;
+        const int col = partyIndex % PC_MENU_PARTY_COLS;
+
+        *outX = PC_MENU_PARTY_X0 + col * PC_MENU_PARTY_STEP_X;
+        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y;
+        return;
+    }
 }
 
 static int navBattleAttack4(int index, NavDir dir) {
@@ -3799,16 +3871,25 @@ int main(void)
         draw_sprite_any(leftArrowSprite, PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT, 0, 20, TRANSPARENT_COLOUR);
         draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 20, 20, TRANSPARENT_COLOUR);
         draw_sprite_any(pcLabelSprite, PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT, 30, 20, TRANSPARENT_COLOUR );
-        draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, 200, 120 - (PC_MENU_PARTY_BOX_HEIGHT / 2), TRANSPARENT_COLOUR);
+        draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, PC_MENU_PARTY_BOX_X, PC_MENU_PARTY_BOX_Y, TRANSPARENT_COLOUR);
         bool didMovePcCursor = false;
-        
+         
         const int oldPcIndex = pcCursor;
         if (upPressed) pcCursor = navPCMenu33(pcCursor, DIR_UP);
         if (leftPressed) pcCursor = navPCMenu33(pcCursor, DIR_LEFT);
         if (downDown) pcCursor = navPCMenu33(pcCursor, DIR_DOWN);
         if (rightPressed) pcCursor = navPCMenu33(pcCursor, DIR_RIGHT);
         didMovePcCursor = (pcCursor != oldPcIndex);
-        
+
+        {
+            int cx = 0, cy = 0;
+            pcMenuCursorPos(pcCursor, &cx, &cy);
+            draw_sprite_any(selectCursorSprite,
+                            PC_MENU_SELECT_CURSOR_WIDTH, PC_MENU_SELECT_CURSOR_HEIGHT,
+                            cx, cy,
+                            TRANSPARENT_COLOUR);
+        }
+         
         if (escPressed) {
             currentGameState = GAME_STATE_MAP;
             break;
