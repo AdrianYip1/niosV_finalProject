@@ -142,7 +142,7 @@
 #define PC_MENU_GRID_COLS 5
 #define PC_MENU_GRID_ROWS 5
 #define PC_MENU_GRID_X0 10 + 2
-#define PC_MENU_GRID_Y0 40 +4
+#define PC_MENU_GRID_Y0 40 +4 - 5
 #define PC_MENU_GRID_STEP_X 42
 #define PC_MENU_GRID_STEP_Y 40 - 10
 
@@ -154,9 +154,13 @@
 #define PC_MENU_PARTY_Y0 (PC_MENU_PARTY_BOX_Y + 10) - 2
 #define PC_MENU_PARTY_STEP_X 53 - 3
 #define PC_MENU_PARTY_STEP_Y 50 - 10 - 5 - 5
-// Some party-box layouts have the right column vertically offset vs the left.
-// Positive moves the right column down.
+
 #define PC_MENU_PARTY_RIGHT_COL_DY (25)
+
+#define PC_MENU_PARTY_ROW1_DY (-7)
+#define PC_MENU_PARTY_ROW2_DY (-20)
+
+#define PC_MENU_PARTY_RIGHT_COL_DX (-3)
 
 
 //location for drawing names, hp, level
@@ -621,8 +625,11 @@ static void pcMenuCursorPos(int index, int *outX, int *outY) {
         const int row = partyIndex / PC_MENU_PARTY_COLS;
         const int col = partyIndex % PC_MENU_PARTY_COLS;
 
-        *outX = PC_MENU_PARTY_X0 + col * PC_MENU_PARTY_STEP_X;
-        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y + ((col == 1) ? PC_MENU_PARTY_RIGHT_COL_DY : 0);
+        const int rowDy = (row == 1) ? PC_MENU_PARTY_ROW1_DY : ((row == 2) ? PC_MENU_PARTY_ROW2_DY : 0);
+        const int colDx = (col == 1) ? PC_MENU_PARTY_RIGHT_COL_DX : 0;
+        const int colDy = (col == 1) ? PC_MENU_PARTY_RIGHT_COL_DY : 0;
+        *outX = PC_MENU_PARTY_X0 + col * PC_MENU_PARTY_STEP_X + colDx;
+        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y + rowDy + colDy;
         return;
     }
 }
@@ -3895,7 +3902,7 @@ int main(void)
             // Base UI
             draw_sprite_any(pcBoxBackgroundSprite,
                             PC_MENU_PC_BOX_BACKGROUND_WIDTH, PC_MENU_PC_BOX_BACKGROUND_HEIGHT,
-                            0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)) - 35 + 10 - 5,
+                            0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)) - 35 + 10 - 5 + 5,
                             TRANSPARENT_COLOUR);
 
             draw_sprite_any_rot90_cw(pcBoxBlueSprite,
@@ -3905,17 +3912,17 @@ int main(void)
 
             draw_sprite_any(leftArrowSprite,
                             PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT,
-                            PC_MENU_LEFT_ARROW_X, PC_MENU_ARROW_Y,
+                            PC_MENU_LEFT_ARROW_X, PC_MENU_ARROW_Y + 7,
                             TRANSPARENT_COLOUR);
 
             draw_sprite_any(rightArrowSprite,
                             PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT,
-                            PC_MENU_RIGHT_ARROW_X, PC_MENU_ARROW_Y,
+                            PC_MENU_RIGHT_ARROW_X - 4, PC_MENU_ARROW_Y + 7,
                             TRANSPARENT_COLOUR);
 
             draw_sprite_any(pcLabelSprite,
                             PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT,
-                            20, 20 + 3,
+                            20 + 3, 20 + 3,
                             TRANSPARENT_COLOUR);
 
             draw_sprite_any(partyBoxSprite,
