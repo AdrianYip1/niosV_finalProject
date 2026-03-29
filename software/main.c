@@ -142,7 +142,7 @@
 #define PC_MENU_GRID_COLS 5
 #define PC_MENU_GRID_ROWS 5
 #define PC_MENU_GRID_X0 10 + 2
-#define PC_MENU_GRID_Y0 40 +4
+#define PC_MENU_GRID_Y0 40 +4 - 5
 #define PC_MENU_GRID_STEP_X 42
 #define PC_MENU_GRID_STEP_Y 40 - 10
 
@@ -155,8 +155,12 @@
 #define PC_MENU_PARTY_STEP_X 53 - 3
 #define PC_MENU_PARTY_STEP_Y 50 - 10 - 5 - 5
 
+#define PC_MENU_PARTY_RIGHT_COL_DY (25)
 
-#define PC_MENU_PARTY_RIGHT_COL_DY (25) //down 25
+#define PC_MENU_PARTY_ROW1_DY (-7)
+#define PC_MENU_PARTY_ROW2_DY (-20)
+
+#define PC_MENU_PARTY_RIGHT_COL_DX (-3)
 
 
 //location for drawing names, hp, level
@@ -621,8 +625,11 @@ static void pcMenuCursorPos(int index, int *outX, int *outY) {
         const int row = partyIndex / PC_MENU_PARTY_COLS;
         const int col = partyIndex % PC_MENU_PARTY_COLS;
 
-        *outX = PC_MENU_PARTY_X0 + col * PC_MENU_PARTY_STEP_X;
-        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y + ((col == 1) ? PC_MENU_PARTY_RIGHT_COL_DY : 0);
+        const int rowDy = (row == 1) ? PC_MENU_PARTY_ROW1_DY : ((row == 2) ? PC_MENU_PARTY_ROW2_DY : 0);
+        const int colDx = (col == 1) ? PC_MENU_PARTY_RIGHT_COL_DX : 0;
+        const int colDy = (col == 1) ? PC_MENU_PARTY_RIGHT_COL_DY : 0;
+        *outX = PC_MENU_PARTY_X0 + col * PC_MENU_PARTY_STEP_X + colDx;
+        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y + rowDy + colDy;
         return;
     }
 }
@@ -3910,7 +3917,7 @@ int main(void)
 
             draw_sprite_any(rightArrowSprite,
                             PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT,
-                            PC_MENU_RIGHT_ARROW_X, PC_MENU_ARROW_Y + 7,
+                            PC_MENU_RIGHT_ARROW_X - 4, PC_MENU_ARROW_Y + 7,
                             TRANSPARENT_COLOUR);
 
             draw_sprite_any(pcLabelSprite,
