@@ -277,6 +277,8 @@
 
 #define SELECTED_POKEMON_DIFFERENCE_Y 1 //1 down from nonselected
 
+static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
+static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!";
 
 
 // Game States
@@ -289,6 +291,7 @@ typedef enum {
     GAME_STATE_TRAINER_BATTLE = 4,
     GAME_STATE_TRAINER_BATTLE_TRANSITION = 5,
     GAME_STATE_TRAINER_BATTLE_INTRO_TEXT = 6,
+    GAME_STATE_DIALOGUE = 19,
 
     GAME_STATE_BATTLE_ACTION_TEXT = 7,
     GAME_STATE_POKEBALL_THROW = 8,
@@ -331,8 +334,12 @@ static inline bool isBattleMenuState(GameState state) {
 }
 
 static inline bool isOverworldState(GameState state) {
-    return state == GAME_STATE_MAP || state == GAME_STATE_MENU || state == GAME_STATE_PC_MENU;
+    return state == GAME_STATE_MAP ||
+           state == GAME_STATE_MENU ||
+           state == GAME_STATE_PC_MENU ||
+           state == GAME_STATE_DIALOGUE;
 }
+
 
 static inline int clamp_int(int v, int lo, int hi) {
     if (v < lo) return lo;
@@ -652,24 +659,13 @@ static int navBattleAttack4(int index, NavDir dir) {
     return next;
 }
 
-static bool is_mc_on_grass_patch(void) {
-    const McBounds bounds = getMCBounds();
-    if (!bounds.valid) return false;
-
-    const int foot_tile_x = ((bounds.x0 + bounds.x1) / 2) / TILE_SIZE;
-    const int foot_tile_y = bounds.y1 / TILE_SIZE;
-    if (foot_tile_x < 0 || foot_tile_x >= MAP_WIDTH || foot_tile_y < 0 || foot_tile_y >= MAP_HEIGHT) {
-        return false;
-    }
-
-    return map_overlay[foot_tile_y][foot_tile_x] == TILE_GRASS_PATCH;
-}
 
 static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
                                         bool leftPressed, bool rightPressed) {
     static unsigned int grassEncounterRng = 0x2432026u;
     const bool movedInputPressed = upPressed || downPressed || leftPressed || rightPressed;
-    if (!movedInputPressed || !is_mc_on_grass_patch()) {
+    const McBounds bounds = getMCBounds();
+    if (!movedInputPressed || !map_is_mc_on_grass_patch(&bounds)) {
         return false;
     }
 
@@ -996,6 +992,8 @@ int main(void)
     GameState pokeballThrowReturnState = GAME_STATE_WILD_BATTLE;
 
     GameState currentGameState = GAME_STATE_MAP;
+    const char *dialogueText = NULL;
+    GameState dialogueReturnState = GAME_STATE_MAP;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
     WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
@@ -1241,6 +1239,7 @@ int main(void)
 
     while (1) {
         update_keyboard();
+        bool enterPressed = false;
         {
             char ch = 0;
             while (keyboard_pop_char(&ch)) {
@@ -1263,6 +1262,8 @@ int main(void)
                 } else if (ch == '5' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_PC_MENU;
                     pcCursor = 0;
+                } else if (ch == '\n') {
+                    enterPressed = true;
                 }
             }
         }
@@ -4121,6 +4122,14 @@ int main(void)
             
             break;
 
+        case GAME_STATE_DIALOGUE:
+            draw_map();
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, dialogueText ? dialogueText : "", BLACK);
+            if (spacePressed || enterPressed) {
+                currentGameState = dialogueReturnState;
+            }
+            break;
+
         case GAME_STATE_MAP:
         default:
             {
@@ -4137,11 +4146,24 @@ int main(void)
                     currentMapId = targetMap;
                     load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
                     draw_map();
+                } else if ((spacePressed || enterPressed) &&
+                           map_can_use_pokemon_center_pc(&mcBounds)) {
+                    currentGameState = GAME_STATE_PC_MENU;
+                    pcCursor = 0;
+                    pcSwapIndex = -1;
+                    pcHeldMon = NULL;
+                } else if ((spacePressed || enterPressed) &&
+                           map_can_talk_to_pokemon_center_nurse(&mcBounds)) {
+                    dialogueText = NURSE_GREETING_TEXT;
+                    dialogueReturnState = GAME_STATE_MAP;
+                    currentGameState = GAME_STATE_DIALOGUE;
                 } else if (currentMapId == WORLD_MAP_ROUTE_B &&
                            spacePressed &&
                            map_can_talk_to_route_b_cynthia(&mcBounds)) {
+                    dialogueText = CYNTHIA_GREETING_TEXT;
+                    dialogueReturnState = GAME_STATE_TRAINER_BATTLE;
                     nextBattleType = BATTLE_TRAINER;
-                    currentGameState = GAME_STATE_TRAINER_BATTLE;
+                    currentGameState = GAME_STATE_DIALOGUE;
                 } else if (moveResult == MC_MOVE_OK && should_trigger_grass_battle(upPressed, downPressed, leftPressed, rightPressed)) {
                     nextBattleType = BATTLE_WILD;
                     currentGameState = GAME_STATE_WILD_BATTLE;

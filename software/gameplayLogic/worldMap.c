@@ -35,7 +35,10 @@ typedef struct {
 
 static const MapTransition kRouteATransitions[] = {
     { MAP_TRANSITION_EDGE, MAP_TRANSITION_INPUT_LEFT, 0, 0, MC_MOVE_EXIT_LEFT, WORLD_MAP_ROUTE_B, (MAP_WIDTH * TILE_SIZE) - 24, 112, MC_FACING_W },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 8, 4, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 9, 4, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 9, 3, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 10, 4, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 3, MC_MOVE_OK, WORLD_MAP_POKE_MART_1, 144, 192, MC_FACING_N },
 };
 
@@ -44,7 +47,9 @@ static const MapTransition kRouteBTransitions[] = {
 };
 
 static const MapTransition kPokemonCenter1Transitions[] = {
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 8, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 152, 64, MC_FACING_S },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 9, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 152, 64, MC_FACING_S },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 10, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 152, 64, MC_FACING_S },
 };
 
 static const MapTransition kPokeMart1Transitions[] = {
@@ -99,9 +104,11 @@ bool resolve_map_transition(WorldMapId current_map,
                             int *out_spawn_x, int *out_spawn_y,
                             McFacing *out_spawn_facing) {
     const WorldMapDefinition *def = &kWorldMaps[(int)current_map];
-    const McBounds bounds = getMCBounds();
-    const int foot_tile_x = bounds.valid ? ((bounds.x0 + bounds.x1) / 2) / TILE_SIZE : -1;
-    const int foot_tile_y = bounds.valid ? (bounds.y1 / TILE_SIZE) : -1;
+    int mc_x = -1;
+    int mc_y = -1;
+    getMCPosition(&mc_x, &mc_y);
+    const int foot_tile_x = (mc_x >= 0) ? (mc_x / TILE_SIZE) : -1;
+    const int foot_tile_y = (mc_y >= 0) ? (mc_y / TILE_SIZE) : -1;
 
     for (int i = 0; i < def->transition_count; i++) {
         const MapTransition *transition = &def->transitions[i];

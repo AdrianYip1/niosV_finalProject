@@ -37,6 +37,12 @@ static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
 #define ROUTE_B_CYNTHIA_BBOX_Y 30
 #define ROUTE_B_CYNTHIA_BBOX_W 20
 #define ROUTE_B_CYNTHIA_BBOX_H 28
+#define POKEMON_CENTER_NURSE_X 142
+#define POKEMON_CENTER_NURSE_Y 60
+#define POKEMON_CENTER_NURSE_BBOX_X POKEMON_CENTER_NURSE_X
+#define POKEMON_CENTER_NURSE_BBOX_Y POKEMON_CENTER_NURSE_Y
+#define POKEMON_CENTER_NURSE_BBOX_W POKEMON_CENTER_NURSE_WIDTH
+#define POKEMON_CENTER_NURSE_BBOX_H POKEMON_CENTER_NURSE_HEIGHT
 #define POKEMON_CENTER_DESK_BBOX_X 58
 #define POKEMON_CENTER_DESK_BBOX_Y 47
 #define POKEMON_CENTER_DESK_BBOX_W POKEMON_CENTER_DESK_WIDTH
@@ -47,8 +53,8 @@ static bool is_within_interior_walkable_rect(int x0, int y0, int x1, int y1) {
     const int max_x = 310;
     const int min_y = 80;
     const int max_y = 220;
-    const int doorway_min_x = 145;
-    const int doorway_max_x = 175;
+    const int doorway_min_x = 129;
+    const int doorway_max_x = 191;
     const int doorway_max_y = (MAP_HEIGHT * TILE_SIZE) - 1;
 
     if (x0 < min_x || x1 > max_x || y0 < min_y) {
@@ -550,4 +556,46 @@ bool map_can_talk_to_route_b_cynthia(const McBounds *bounds) {
              (ROUTE_B_CYNTHIA_BBOX_X + ROUTE_B_CYNTHIA_BBOX_W - 1 + interaction_margin) < bounds->x0 ||
              bounds->y1 < (ROUTE_B_CYNTHIA_BBOX_Y - interaction_margin) ||
              (ROUTE_B_CYNTHIA_BBOX_Y + ROUTE_B_CYNTHIA_BBOX_H - 1 + interaction_margin) < bounds->y0);
+}
+
+bool map_can_talk_to_pokemon_center_nurse(const McBounds *bounds) {
+    const int horizontal_margin = 20;
+    const int vertical_margin = 28;
+
+    if (bounds == 0 || !bounds->valid) {
+        return false;
+    }
+    if (g_current_preset != MAP_PRESET_POKEMON_CENTER_INTERIOR) {
+        return false;
+    }
+
+    return !(bounds->x1 < (POKEMON_CENTER_NURSE_BBOX_X - horizontal_margin) ||
+             (POKEMON_CENTER_NURSE_BBOX_X + POKEMON_CENTER_NURSE_BBOX_W - 1 + horizontal_margin) < bounds->x0 ||
+             bounds->y1 < (POKEMON_CENTER_NURSE_BBOX_Y - vertical_margin) ||
+             (POKEMON_CENTER_NURSE_BBOX_Y + POKEMON_CENTER_NURSE_BBOX_H - 1 + vertical_margin) < bounds->y0);
+}
+
+bool map_is_mc_on_grass_patch(const McBounds *bounds) {
+    if (bounds == NULL || !bounds->valid) {
+        return false;
+    }
+
+    const int foot_tile_x = ((bounds->x0 + bounds->x1) / 2) / TILE_SIZE;
+    const int foot_tile_y = bounds->y1 / TILE_SIZE;
+    if (foot_tile_x < 0 || foot_tile_x >= MAP_WIDTH || foot_tile_y < 0 || foot_tile_y >= MAP_HEIGHT) {
+        return false;
+    }
+
+    return map_overlay[foot_tile_y][foot_tile_x] == TILE_GRASS_PATCH;
+}
+
+bool map_can_use_pokemon_center_pc(const McBounds *bounds) {
+    if (g_current_preset != MAP_PRESET_POKEMON_CENTER_INTERIOR || bounds == NULL || !bounds->valid) {
+        return false;
+    }
+
+    const int foot_x = (bounds->x0 + bounds->x1) / 2;
+    const int foot_y = bounds->y1;
+    // The PC (monitor area) is located around x=230..250, y=60..70 in the interior map coordinates.
+    return foot_x >= 230 && foot_x <= 250 && foot_y >= 60 && foot_y <= 70;
 }
