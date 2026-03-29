@@ -9,6 +9,7 @@
 #include "sprites/pokemonCenter/pokemonCenterDeskSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterNurseSprite.h"
 #include "sprites/trainerSprites/cynthiaFrontMapSprite.h"
+#include <stddef.h>
 
 TileId map[MAP_HEIGHT][MAP_WIDTH];
 int map_overlay[MAP_HEIGHT][MAP_WIDTH];
@@ -33,10 +34,10 @@ static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
 
 #define ROUTE_B_CYNTHIA_X 116
 #define ROUTE_B_CYNTHIA_Y 18
-#define ROUTE_B_CYNTHIA_BBOX_X 122
-#define ROUTE_B_CYNTHIA_BBOX_Y 30
-#define ROUTE_B_CYNTHIA_BBOX_W 20
-#define ROUTE_B_CYNTHIA_BBOX_H 28
+#define ROUTE_B_CYNTHIA_BBOX_X 120
+#define ROUTE_B_CYNTHIA_BBOX_Y 27
+#define ROUTE_B_CYNTHIA_BBOX_W 15
+#define ROUTE_B_CYNTHIA_BBOX_H 21
 #define POKEMON_CENTER_NURSE_X 142
 #define POKEMON_CENTER_NURSE_Y 60
 #define POKEMON_CENTER_NURSE_BBOX_X POKEMON_CENTER_NURSE_X

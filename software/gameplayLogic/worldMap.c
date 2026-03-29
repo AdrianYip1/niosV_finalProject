@@ -104,11 +104,9 @@ bool resolve_map_transition(WorldMapId current_map,
                             int *out_spawn_x, int *out_spawn_y,
                             McFacing *out_spawn_facing) {
     const WorldMapDefinition *def = &kWorldMaps[(int)current_map];
-    int mc_x = -1;
-    int mc_y = -1;
-    getMCPosition(&mc_x, &mc_y);
-    const int foot_tile_x = (mc_x >= 0) ? (mc_x / TILE_SIZE) : -1;
-    const int foot_tile_y = (mc_y >= 0) ? (mc_y / TILE_SIZE) : -1;
+    const McBounds bounds = getMCBounds();
+    const int foot_tile_x = bounds.valid ? (((bounds.x0 + bounds.x1) / 2) / TILE_SIZE) : -1;
+    const int foot_tile_y = bounds.valid ? (bounds.y1 / TILE_SIZE) : -1;
 
     for (int i = 0; i < def->transition_count; i++) {
         const MapTransition *transition = &def->transitions[i];
