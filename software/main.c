@@ -141,8 +141,8 @@
 
 #define PC_MENU_GRID_COLS 5
 #define PC_MENU_GRID_ROWS 5
-#define PC_MENU_GRID_X0 10
-#define PC_MENU_GRID_Y0 40
+#define PC_MENU_GRID_X0 10 + 2
+#define PC_MENU_GRID_Y0 40 +4
 #define PC_MENU_GRID_STEP_X 42
 #define PC_MENU_GRID_STEP_Y 40 - 10
 
@@ -153,7 +153,10 @@
 #define PC_MENU_PARTY_X0 (PC_MENU_PARTY_BOX_X + 10) + 20
 #define PC_MENU_PARTY_Y0 (PC_MENU_PARTY_BOX_Y + 10) - 2
 #define PC_MENU_PARTY_STEP_X 53 - 3
-#define PC_MENU_PARTY_STEP_Y 50 - 10 - 5
+#define PC_MENU_PARTY_STEP_Y 50 - 10 - 5 - 5
+// Some party-box layouts have the right column vertically offset vs the left.
+// Use a negative value to move the right column up.
+#define PC_MENU_PARTY_RIGHT_COL_DY (-25)
 
 
 //location for drawing names, hp, level
@@ -619,7 +622,7 @@ static void pcMenuCursorPos(int index, int *outX, int *outY) {
         const int col = partyIndex % PC_MENU_PARTY_COLS;
 
         *outX = PC_MENU_PARTY_X0 + col * PC_MENU_PARTY_STEP_X;
-        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y;
+        *outY = PC_MENU_PARTY_Y0 + row * PC_MENU_PARTY_STEP_Y + ((col == 1) ? PC_MENU_PARTY_RIGHT_COL_DY : 0);
         return;
     }
 }
@@ -1036,6 +1039,12 @@ int main(void)
     initPokemonBoxSprite(&partyBoxSprites[3], playerTeamSpriteIds[3], PARTY_4_X, PARTY_4_Y);
     initPokemonBoxSprite(&partyBoxSprites[4], playerTeamSpriteIds[4], PARTY_5_X, PARTY_5_Y);
     initPokemonBoxSprite(&partyBoxSprites[5], playerTeamSpriteIds[5], PARTY_6_X, PARTY_6_Y);
+
+    // PC menu box-sprites (drawn only in GAME_STATE_PC_MENU).
+    StaticSprite pcStorageBoxSprites[PC_MAX];
+    StaticSprite pcPartyBoxSprites[6];
+    memset(pcStorageBoxSprites, 0, sizeof(pcStorageBoxSprites));
+    memset(pcPartyBoxSprites, 0, sizeof(pcPartyBoxSprites));
 
     // init the roster and party (persistent).
     pcInit(&playerPc);
@@ -3814,6 +3823,15 @@ int main(void)
                                 play_sfx(caught_pokemon_audio, caught_pokemon_audio_len);
                                 battleUiSetSingleMessage(&battleState, "Gotcha!");
                                 battleState.result = BATTLE_RESULT_CAUGHT;
+
+                                // Add the caught Pokemon to the player's PC (dupes allowed).
+                                {
+                                    const pokemonInBattle *caughtPokemon = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+                                    if (caughtPokemon != NULL && caughtPokemon->id.data != NULL) {
+                                        int pcIndex = -1;
+                                        (void)pcAdd(&playerPc, caughtPokemon->id.data, caughtPokemon->level, &pcIndex);
+                                    }
+                                }
                                 actionTextReturnUi = BATTLE_UI_MENU;
                                 actionTextReturnCursor = 0;
                                 actionTextReturnGameState = activeBattleMenuState;
@@ -3861,54 +3879,84 @@ int main(void)
             break;
         }
 
-        case GAME_STATE_PC_MENU:
- 
-        draw_sprite_any_rot90_cw(pcBoxBlueSprite,
-                                 PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
-                                 340 - PC_MENU_PC_BOX_BLUE_WIDTH + 40, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)) - 20 + 3,
-                                 TRANSPARENT_COLOUR);
-        draw_sprite_any(pcBoxBackgroundSprite, PC_MENU_PC_BOX_BACKGROUND_WIDTH,PC_MENU_PC_BOX_BACKGROUND_HEIGHT, 0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)) - 35+ 10-5, TRANSPARENT_COLOUR );
-        draw_sprite_any(leftArrowSprite, PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT, 0, 20, TRANSPARENT_COLOUR);
-        draw_sprite_any(rightArrowSprite,PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT, (340 / 2) + 30, 20, TRANSPARENT_COLOUR);
-        draw_sprite_any(pcLabelSprite, PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT, 20, 20 + 3, TRANSPARENT_COLOUR );
-        draw_sprite_any(partyBoxSprite, PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT, PC_MENU_PARTY_BOX_X + 10, PC_MENU_PARTY_BOX_Y, TRANSPARENT_COLOUR);
+        case GAME_STATE_PC_MENU: {
 
-        for (int i = 0; i < PC_MAX; i++) { //skip over party members
-            pokemonInBattle *pokemon = pcGet(&playerPc, i);
-            if (pokemon != NULL && pokemon != &playerParty.slots[0] && pokemon != &playerParty.slots[1] &&
-                pokemon != &playerParty.slots[2] && pokemon != &playerParty.slots[3] &&
-                pokemon != &playerParty.slots[4] && pokemon != &playerParty.slots[5]) {
-                draw_sprite_any(partyBoxSprites[i].pixels, partyBoxSprites[i].width, partyBoxSprites[i].height, partyBoxSprites[i].x, partyBoxSprites[i].y, TRANSPARENT_COLOUR);
+            const int oldPcIndex = pcCursor;
+            if (upPressed) pcCursor = navPCMenu33(pcCursor, DIR_UP);
+            if (leftPressed) pcCursor = navPCMenu33(pcCursor, DIR_LEFT);
+            if (downPressed) pcCursor = navPCMenu33(pcCursor, DIR_DOWN);
+            if (rightPressed) pcCursor = navPCMenu33(pcCursor, DIR_RIGHT);
+            const bool didMovePcCursor = (pcCursor != oldPcIndex);
+            (void)didMovePcCursor;
+
+            if (escPressed) {
+                currentGameState = GAME_STATE_MAP;
+                break;
             }
-        }
 
-        for (int i = 0; i < 6; i++) { //party members
-            draw_sprite_any(partyBoxSprites[i].pixels, partyBoxSprites[i].width, partyBoxSprites[i].height, partyBoxSprites[i].x, partyBoxSprites[i].y, TRANSPARENT_COLOUR);
-        }
-
-        bool didMovePcCursor = false;
-         
-        const int oldPcIndex = pcCursor;
-        if (upPressed) pcCursor = navPCMenu33(pcCursor, DIR_UP);
-        if (leftPressed) pcCursor = navPCMenu33(pcCursor, DIR_LEFT);
-        if (downDown) pcCursor = navPCMenu33(pcCursor, DIR_DOWN);
-        if (rightPressed) pcCursor = navPCMenu33(pcCursor, DIR_RIGHT);
-        didMovePcCursor = (pcCursor != oldPcIndex);
-
-        {
-            int cx = 0, cy = 0;
-            pcMenuCursorPos(pcCursor, &cx, &cy);
-            draw_sprite_any(selectCursorSprite,
-                            PC_MENU_SELECT_CURSOR_WIDTH, PC_MENU_SELECT_CURSOR_HEIGHT,
-                            cx, cy,
+            // Base UI
+            draw_sprite_any(pcBoxBackgroundSprite,
+                            PC_MENU_PC_BOX_BACKGROUND_WIDTH, PC_MENU_PC_BOX_BACKGROUND_HEIGHT,
+                            0, (120 - (PC_MENU_PARTY_BOX_HEIGHT / 2)) - 35 + 10 - 5,
                             TRANSPARENT_COLOUR);
-        }
-         
-        if (escPressed) {
-            currentGameState = GAME_STATE_MAP;
+
+            draw_sprite_any_rot90_cw(pcBoxBlueSprite,
+                                     PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
+                                     (340 - PC_MENU_PC_BOX_BLUE_WIDTH) + 40, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)) - 20 + 3,
+                                     TRANSPARENT_COLOUR);
+
+            draw_sprite_any(leftArrowSprite,
+                            PC_MENU_LEFT_ARROW_WIDTH, PC_MENU_LEFT_ARROW_HEIGHT,
+                            PC_MENU_LEFT_ARROW_X, PC_MENU_ARROW_Y,
+                            TRANSPARENT_COLOUR);
+
+            draw_sprite_any(rightArrowSprite,
+                            PC_MENU_RIGHT_ARROW_WIDTH, PC_MENU_RIGHT_ARROW_HEIGHT,
+                            PC_MENU_RIGHT_ARROW_X, PC_MENU_ARROW_Y,
+                            TRANSPARENT_COLOUR);
+
+            draw_sprite_any(pcLabelSprite,
+                            PC_MENU_PC_LABEL_WIDTH, PC_MENU_PC_LABEL_HEIGHT,
+                            20, 20 + 3,
+                            TRANSPARENT_COLOUR);
+
+            draw_sprite_any(partyBoxSprite,
+                            PC_MENU_PARTY_BOX_WIDTH, PC_MENU_PARTY_BOX_HEIGHT,
+                            PC_MENU_PARTY_BOX_X + 10, PC_MENU_PARTY_BOX_Y,
+                            TRANSPARENT_COLOUR);
+
+            // PC storage slots (0..PC_MAX-1) map to cursor indices 2..26.
+            for (int i = 0; i < PC_MAX; i++) {
+                int x = 0, y = 0;
+                pcMenuCursorPos(2 + i, &x, &y);
+                const pokemonInBattle *mon = pcGet(&playerPc, i);
+                const int spriteId = (mon != NULL) ? mon->id.frontFrame_ID : 0;
+                (void)initPokemonBoxSprite(&pcStorageBoxSprites[i], spriteId, x, y);
+                drawStaticSprite(&pcStorageBoxSprites[i]);
+            }
+
+            // Party slots (0..5) map to cursor indices 27..32.
+            for (int i = 0; i < 6; i++) {
+                int x = 0, y = 0;
+                pcMenuCursorPos(27 + i, &x, &y);
+                const pokemonInBattle *mon = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
+                const int spriteId = (mon != NULL) ? mon->id.frontFrame_ID : 0;
+                (void)initPokemonBoxSprite(&pcPartyBoxSprites[i], spriteId, x, y);
+                drawStaticSprite(&pcPartyBoxSprites[i]);
+            }
+
+            // Selection cursor
+            {
+                int cx = 0, cy = 0;
+                pcMenuCursorPos(pcCursor, &cx, &cy);
+                draw_sprite_any(selectCursorSprite,
+                                PC_MENU_SELECT_CURSOR_WIDTH, PC_MENU_SELECT_CURSOR_HEIGHT,
+                                cx, cy,
+                                TRANSPARENT_COLOUR);
+            }
+
             break;
         }
-            break;
         case GAME_STATE_BATTLE_WIN:
         //check win/lose
         //get money from trainer battle, exp from wild battle if win
