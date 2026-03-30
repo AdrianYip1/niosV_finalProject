@@ -319,6 +319,8 @@ typedef enum {
     GAME_STATE_BATTLE_FORCE_SWITCH = 17,
 
     GAME_STATE_PC_MENU = 18,
+    GAME_STATE_POKEDEX_MENU = 19,
+    GAME_STATE_POKEDEX_INFO = 20,
 } GameState;
 
 typedef enum {
@@ -496,7 +498,7 @@ static int arrowCursorCount(ArrowContext ctx) {
 
 static bool isManualBattleMessage(const char *msg) {
     if (msg == NULL) return false;
-    // Type effectiveness messages get a longer on-screen delay.
+    // Type effectiveness messages get a longer on delay.
     return (strstr(msg, "super effective") != NULL) ||
            (strstr(msg, "not very effective") != NULL) ||
            (strstr(msg, "no effect") != NULL);

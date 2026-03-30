@@ -10,7 +10,8 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/gameplayLogic/worldMap.h \
  software/gameplayLogic/../graphics/mcWalkingDraw.h \
  software/graphics/tiles.h software/graphics/predefined_graphics.h \
- software/graphics/map.h software/graphics/sprites/pcMenu/pcMenuSprites.h \
+ software/graphics/map.h software/graphics/mcWalkingDraw.h \
+ software/graphics/sprites/pcMenu/pcMenuSprites.h \
  software/graphics/sprites/vsCynthia/vsCynthiaSprite.h \
  software/graphics/titleScreen/titleScreenDraw.h \
  software/graphics/textbox/textBoxSprite.h \
@@ -21,12 +22,18 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/../software/se/opening_audio.h \
  software/../software/se/introduction_audio.h \
  software/../software/se/battle_audio.h \
+ software/../software/se/cynthia_audio.h \
  software/../software/se/map_audio.h \
+ software/../software/se/poke_mart_audio.h \
+ software/../software/se/pokemon_center_audio.h \
  software/../software/se/plink_audio.h \
  software/../software/se/pokeball_audio.h \
  software/../software/se/pokeball_shaking_audio.h \
  software/../software/se/caught_pokemon_audio.h \
  software/../software/se/hit_normal_audio.h \
+ software/../software/se/super_effective_audio.h \
+ software/../software/se/not_effective_audio.h \
+ software/../software/se/pc_se_audio.h \
  software/../software/se/recover_audio.h \
  software/../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h \
  software/../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h \
@@ -84,6 +91,7 @@ software/gameplayLogic/../graphics/mcWalkingDraw.h:
 software/graphics/tiles.h:
 software/graphics/predefined_graphics.h:
 software/graphics/map.h:
+software/graphics/mcWalkingDraw.h:
 software/graphics/sprites/pcMenu/pcMenuSprites.h:
 software/graphics/sprites/vsCynthia/vsCynthiaSprite.h:
 software/graphics/titleScreen/titleScreenDraw.h:
@@ -96,12 +104,18 @@ software/../hardware/audio.h:
 software/../software/se/opening_audio.h:
 software/../software/se/introduction_audio.h:
 software/../software/se/battle_audio.h:
+software/../software/se/cynthia_audio.h:
 software/../software/se/map_audio.h:
+software/../software/se/poke_mart_audio.h:
+software/../software/se/pokemon_center_audio.h:
 software/../software/se/plink_audio.h:
 software/../software/se/pokeball_audio.h:
 software/../software/se/pokeball_shaking_audio.h:
 software/../software/se/caught_pokemon_audio.h:
 software/../software/se/hit_normal_audio.h:
+software/../software/se/super_effective_audio.h:
+software/../software/se/not_effective_audio.h:
+software/../software/se/pc_se_audio.h:
 software/../software/se/recover_audio.h:
 software/../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h:
 software/../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h:
