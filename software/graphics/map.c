@@ -38,14 +38,14 @@ static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
 #define ROUTE_B_CYNTHIA_BBOX_Y 27
 #define ROUTE_B_CYNTHIA_BBOX_W 15
 #define ROUTE_B_CYNTHIA_BBOX_H 21
-#define POKEMON_CENTER_NURSE_X 146
-#define POKEMON_CENTER_NURSE_Y 60
+#define POKEMON_CENTER_NURSE_X 152
+#define POKEMON_CENTER_NURSE_Y 58
 #define POKEMON_CENTER_NURSE_BBOX_X POKEMON_CENTER_NURSE_X
 #define POKEMON_CENTER_NURSE_BBOX_Y POKEMON_CENTER_NURSE_Y
 #define POKEMON_CENTER_NURSE_BBOX_W POKEMON_CENTER_NURSE_WIDTH
 #define POKEMON_CENTER_NURSE_BBOX_H POKEMON_CENTER_NURSE_HEIGHT
-#define POKE_MART_CLERK_X 187
-#define POKE_MART_CLERK_Y 91
+#define POKE_MART_CLERK_X 44
+#define POKE_MART_CLERK_Y 87
 #define POKE_MART_CLERK_BBOX_X POKE_MART_CLERK_X
 #define POKE_MART_CLERK_BBOX_Y POKE_MART_CLERK_Y
 #define POKE_MART_CLERK_BBOX_W POKEMON_CENTER_CLERK_WIDTH
@@ -623,5 +623,5 @@ bool map_can_use_pokemon_center_pc(const McBounds *bounds) {
     const int foot_x = (bounds->x0 + bounds->x1) / 2;
     const int foot_y = bounds->y1;
     // The PC (monitor area) is located around x=230..250, y=60..70 in the interior map coordinates.
-    return foot_x >= 230 && foot_x <= 250 && foot_y >= 60 && foot_y <= 70;
+    return foot_x >= 230 && foot_x <= 260 && foot_y >= 70 && foot_y <= 80;
 }

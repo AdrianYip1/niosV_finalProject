@@ -23,6 +23,7 @@
 #include "../software/se/battle_audio.h"
 #include "../software/se/cynthia_audio.h"
 #include "../software/se/map_audio.h"
+#include "../software/se/poke_mart_audio.h"
 #include "../software/se/pokemon_center_audio.h"
 #include "../software/se/plink_audio.h"
 #include "../software/se/pokeball_audio.h"
@@ -31,6 +32,7 @@
 #include "../software/se/hit_normal_audio.h"
 #include "../software/se/super_effective_audio.h"
 #include "../software/se/not_effective_audio.h"
+#include "../software/se/pc_se_audio.h"
 #include "../software/se/recover_audio.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h"
@@ -1269,6 +1271,7 @@ int main(void)
                 } else if (ch == '5' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_PC_MENU;
                     pcCursor = 0;
+                    play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (ch == '\n') {
                     enterPressed = true;
                 }
@@ -3463,6 +3466,7 @@ int main(void)
 
             if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
+                play_bgm(battle_audio, battle_audio_len);
                 pokeballThrowShowText = true;
                 pokeballThrowAutoAdvance = false;
                 pokeballThrowReturnState = activeBattleMenuState;
@@ -3508,6 +3512,7 @@ int main(void)
          
             if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
+                play_bgm(battle_audio, battle_audio_len);
                 pokeballThrowShowText = true;
                 pokeballThrowAutoAdvance = false;
                 pokeballThrowReturnState = activeBattleMenuState;
@@ -4169,6 +4174,7 @@ int main(void)
                     pcCursor = 0;
                     pcSwapIndex = -1;
                     pcHeldMon = NULL;
+                    play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if ((spacePressed || enterPressed) &&
                            map_can_talk_to_pokemon_center_nurse(&mcBounds)) {
                     dialogueText = NURSE_GREETING_TEXT;
@@ -4185,6 +4191,7 @@ int main(void)
                     dialogueText = CYNTHIA_GREETING_TEXT;
                     dialogueReturnState = GAME_STATE_TRAINER_BATTLE;
                     nextBattleType = BATTLE_TRAINER;
+                    play_bgm(cynthia_audio, cynthia_audio_len);
                     currentGameState = GAME_STATE_DIALOGUE;
                 } else if (moveResult == MC_MOVE_OK && should_trigger_grass_battle(upPressed, downPressed, leftPressed, rightPressed)) {
                     nextBattleType = BATTLE_WILD;
@@ -4202,6 +4209,10 @@ int main(void)
 static void play_world_map_bgm(WorldMapId map_id) {
     if (map_id == WORLD_MAP_POKEMON_CENTER_1) {
         play_bgm(pokemon_center_audio, pokemon_center_audio_len);
+        return;
+    }
+    if (map_id == WORLD_MAP_POKE_MART_1) {
+        play_bgm(poke_mart_audio, poke_mart_audio_len);
         return;
     }
 

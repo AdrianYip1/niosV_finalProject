@@ -98,6 +98,7 @@ SRCS := software/main.c \
         software/se/battle_audio.c \
         software/se/cynthia_audio.c \
         software/se/map_audio.c \
+        software/se/poke_mart_audio.c \
         software/se/pokemon_center_audio.c \
         software/se/plink_audio.c \
         software/se/wallbump_audio.c \
@@ -107,6 +108,7 @@ SRCS := software/main.c \
         software/se/hit_normal_audio.c \
         software/se/super_effective_audio.c \
         software/se/not_effective_audio.c \
+        software/se/pc_se_audio.c \
         software/se/recover_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \
         software/graphics/sprites/battleUIBackground/battleUIBackgroundSprite.c \
