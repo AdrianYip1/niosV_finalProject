@@ -24,6 +24,7 @@ void drawMCWalkingAnimation(void);
 void drawMCIdleAnimation(void);
 void initMCIdle(void);
 void drawMCAnimation(void);
+void drawMCAnimationPaused(void);
 McBounds getMCBounds(void);
 void getMCPosition(int *x, int *y);
 void setMCScale(int numerator, int denominator);

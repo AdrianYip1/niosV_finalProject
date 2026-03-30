@@ -144,6 +144,27 @@ void drawMCAnimation(void) {
     }
 }
 
+void drawMCAnimationPaused(void) {
+    Sprite* MCsprite = &mcWalkingSprite;
+    const unsigned short* frame = MCsprite->frames[MCsprite->frameIndex];
+    const int scaled_width = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
+    const int scaled_height = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
+    const int draw_x = MCsprite->x - ((scaled_width - MCsprite->tileSize) / 2);
+    const int draw_y = MCsprite->y - (scaled_height - MCsprite->tileSize);
+
+    for (int y = 0; y < scaled_height; y++) {
+        const int src_y = (y * g_mc_scale_den) / g_mc_scale_num;
+        for (int x = 0; x < scaled_width; x++) {
+            const int src_x = (x * g_mc_scale_den) / g_mc_scale_num;
+            unsigned short color = frame[src_y * MCsprite->tileSize + src_x];
+            if (color == TRANSPARENT_COLOUR) continue;
+            draw_pixel(draw_x + x, draw_y + y, color);
+        }
+    }
+
+    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, draw_x, draw_y);
+}
+
 void drawMCIdleAnimation(void) { drawMCAnimation(); }
 void drawMCWalkingAnimation(void) { drawMCAnimation(); }
 

@@ -3515,7 +3515,6 @@ int main(void)
          
             if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
-                play_bgm(battle_audio, battle_audio_len);
                 pokeballThrowShowText = true;
                 pokeballThrowAutoAdvance = false;
                 pokeballThrowReturnState = activeBattleMenuState;
@@ -4148,6 +4147,7 @@ int main(void)
 
         case GAME_STATE_DIALOGUE:
             draw_map();
+            drawMCAnimationPaused();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, dialogueText ? dialogueText : "", BLACK);
             if (spacePressed || enterPressed) {
                 currentGameState = dialogueReturnState;
