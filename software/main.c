@@ -4161,13 +4161,6 @@ int main(void)
             break;
 
 
-        case GAME_STATE_POKEDEX_MENU:
-            draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_INFO_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-            draw_sprite_any(pokedexSelectSprite,POKEDEX_MENU_SELECT_WIDTH,  POKEDEX_MENU_SELECT_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-            draw_sprite_any()
-            if (escPressed) currentGameState = GAME_STATE_MAP;
-            break;
-
 
         case GAME_STATE_MAP:
         default:
