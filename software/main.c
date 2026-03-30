@@ -4287,8 +4287,6 @@ int main(void)
                     }
                 }
 
-                
-                if ()
                 number++;
             }
 
