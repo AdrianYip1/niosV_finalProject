@@ -37,6 +37,7 @@
 #include "../software/se/stats_fall_audio.h"
 #include "../software/se/pc_se_audio.h"
 #include "../software/se/recover_audio.h"
+#include "../software/se/pokemon_healed_audio.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h"
 #include "textinput/getTextFromUser.h"
@@ -289,7 +290,7 @@
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
 static const char NURSE_HEALED_TEXT[] = "Nurse: We hope to see you again!";
-static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart! What would you like to buy today?";
+static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart!\nWhat would you like to buy today?";
 
 static void play_world_map_bgm(WorldMapId map_id);
 
@@ -353,8 +354,10 @@ static inline bool isOverworldState(GameState state) {
     return state == GAME_STATE_MAP ||
            state == GAME_STATE_MENU ||
            state == GAME_STATE_PC_MENU ||
-           state == GAME_STATE_DIALOGUE;
+           state == GAME_STATE_DIALOGUE ||
+           state == GAME_STATE_POKEMON_CENTER_HEAL;
 }
+
 
 
 static inline int clamp_int(int v, int lo, int hi) {
@@ -4212,11 +4215,10 @@ int main(void)
                 const int holdTicks = 3 * SHADE_PULSE_FRAME_COUNT * PC_HEAL_ANIM_SPEED; // = 96
                 const int totalTicks = numBalls * PC_HEAL_TICKS_PER_BALL + holdTicks;
 
-                // Advance animation timer
                 pcHealTimer++;
-                if (pcHealTimer == 1 && pcHealFrame == 0) {
-                    // Play recover SFX once at the start
-                    play_sfx(recover_audio, recover_audio_len);
+                // Trigger SFX once when shining phase starts (all balls placed)
+                if (pcHealTimer == 1 && pcHealFrame == numBalls * PC_HEAL_TICKS_PER_BALL) {
+                    play_sfx(pokemon_healed_audio, pokemon_healed_audio_len);
                 }
                 if (pcHealTimer >= PC_HEAL_ANIM_SPEED) {
                     pcHealTimer = 0;
