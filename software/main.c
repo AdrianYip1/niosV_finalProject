@@ -4438,8 +4438,16 @@ int main(void)
                     if (initPokemonFrontBattleSprite(&front, id, 17, 12)) {
                         if (caught) {
                             drawStaticSprite(&front);
+                            draw_sprite_any(menuPokemonSpriteForId(pokedexSelectedId),
+                                            MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                            130, 67,
+                                            TRANSPARENT_COLOUR);
                         } else {
                             make_sprite_black(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                            make_sprite_black(menuPokemonSpriteForId(pokedexSelectedId),
+                                            MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                            130, 67,
+                                            TRANSPARENT_COLOUR);
                         }
                     }
                 }
