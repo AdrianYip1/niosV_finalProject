@@ -2628,14 +2628,15 @@ int main(void)
                     const bool playerHpChanged = (battleState.hpAfterPlayer[idx] >= 0);
                     const bool enemyHpChanged = (battleState.hpAfterEnemy[idx] >= 0);
                     if (playerHpChanged || enemyHpChanged) {
-                        play_sfx(hit_normal_audio, hit_normal_audio_len);
+                        if (msg != NULL && strstr(msg, "super effective") != NULL) {
+                            play_sfx(super_effective_audio, super_effective_audio_len);
+                        } else if (msg != NULL && strstr(msg, "not very effective") != NULL) {
+                            play_sfx(not_effective_audio, not_effective_audio_len);
+                        } else {
+                            play_sfx(hit_normal_audio, hit_normal_audio_len);
+                        }
                         if (playerHpChanged) playerHitShakeFrame = -2; // start shake next frame at 0
                         if (enemyHpChanged) enemyHitShakeFrame = -2;
-                    }
-                    if (msg != NULL && strstr(msg, "super effective") != NULL) {
-                        play_sfx(super_effective_audio, super_effective_audio_len);
-                    } else if (msg != NULL && strstr(msg, "not very effective") != NULL) {
-                        play_sfx(not_effective_audio, not_effective_audio_len);
                     }
                 }
             }
