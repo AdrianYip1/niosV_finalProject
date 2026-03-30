@@ -1321,6 +1321,7 @@ int main(void)
     // Pokedex UI state
     int pokedexSelectedId = POKEMON_ID_CHARMANDER;
     int pokedexScrollIndex = POKEMON_ID_CHARMANDER;
+    int pokedexInfoCursor = 1; // 0=up arrow, 1=down arrow, 2=X
 
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
@@ -4361,22 +4362,70 @@ int main(void)
                     number++;
                 }
 
-                if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
+                if (spacePressed) {
+                    pokedexInfoCursor = 1; // default to "down" arrow
+                    currentGameState = GAME_STATE_POKEDEX_INFO;
+                }
                 if (escPressed) currentGameState = GAME_STATE_MAP;
             }
             break;
     
         case GAME_STATE_POKEDEX_INFO:
             {
+                // Cursor navigation across (up arrow, down arrow, X)
+                if (leftPressed) {
+                    pokedexInfoCursor--;
+                    if (pokedexInfoCursor < 0) pokedexInfoCursor = 2;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+                if (rightPressed) {
+                    pokedexInfoCursor++;
+                    if (pokedexInfoCursor > 2) pokedexInfoCursor = 0;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+
+                // Activate current selection
+                if (spacePressed || enterPressed) {
+                    if (pokedexInfoCursor == 2) {
+                        currentGameState = GAME_STATE_POKEDEX_MENU;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else {
+                        if (pokedexInfoCursor == 0) {
+                            // Up / previous entry
+                            if (pokedexSelectedId <= POKEMON_ID_CHARMANDER) pokedexSelectedId = POKEMON_ID_TOGEKISS;
+                            else pokedexSelectedId--;
+                        } else {
+                            // Down / next entry
+                            if (pokedexSelectedId >= POKEMON_ID_TOGEKISS) pokedexSelectedId = POKEMON_ID_CHARMANDER;
+                            else pokedexSelectedId++;
+                        }
+                        pokedexScrollIndex = pokedexSelectedId;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                }
+
                 draw_sprite_any(pokemonSelectedPokedexSprite,
                                 POKEDEX_MENU_POKEMON_SELECTED_POKEDEX_WIDTH, POKEDEX_MENU_POKEMON_SELECTED_POKEDEX_HEIGHT,
                                 0, 0,
                                 TRANSPARENT_COLOUR);
                 draw_sprite_any(pokedexDescriptionSprite, POKEDEX_MENU_DESCRIPTION_WIDTH, POKEDEX_MENU_DESCRIPTION_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
                 draw_sprite_any(pokedexBottomSprite, POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-                draw_sprite_any(pokedexDownArrowSprite, POKEDEX_MENU_DOWN_ARROW_WIDTH, POKEDEX_MENU_DOWN_ARROW_HEIGHT, 59, 208, TRANSPARENT_COLOUR);
-                draw_sprite_any(pokedexUpArrowSprite, POKEDEX_MENU_UP_ARROW_WIDTH, POKEDEX_MENU_UP_ARROW_HEIGHT, 11, 208, TRANSPARENT_COLOUR);
-                draw_sprite_any(pokedexXSprite, POKEDEX_MENU_X_WIDTH, POKEDEX_MENU_X_HEIGHT, 288, 210, TRANSPARENT_COLOUR);
+
+                // Pulse the selected button (up, down, X) instead of drawing a box.
+                shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+                if (pokedexInfoCursor == 0) {
+                    draw_sprite_any_shade_pulse(pokedexUpArrowSprite, POKEDEX_MENU_UP_ARROW_WIDTH, POKEDEX_MENU_UP_ARROW_HEIGHT, 11, 208, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any(pokedexDownArrowSprite, POKEDEX_MENU_DOWN_ARROW_WIDTH, POKEDEX_MENU_DOWN_ARROW_HEIGHT, 59, 208, TRANSPARENT_COLOUR);
+                    draw_sprite_any(pokedexXSprite, POKEDEX_MENU_X_WIDTH, POKEDEX_MENU_X_HEIGHT, 288, 210, TRANSPARENT_COLOUR);
+                } else if (pokedexInfoCursor == 1) {
+                    draw_sprite_any(pokedexUpArrowSprite, POKEDEX_MENU_UP_ARROW_WIDTH, POKEDEX_MENU_UP_ARROW_HEIGHT, 11, 208, TRANSPARENT_COLOUR);
+                    draw_sprite_any_shade_pulse(pokedexDownArrowSprite, POKEDEX_MENU_DOWN_ARROW_WIDTH, POKEDEX_MENU_DOWN_ARROW_HEIGHT, 59, 208, TRANSPARENT_COLOUR, shadePulseFrame);
+                    draw_sprite_any(pokedexXSprite, POKEDEX_MENU_X_WIDTH, POKEDEX_MENU_X_HEIGHT, 288, 210, TRANSPARENT_COLOUR);
+                } else {
+                    draw_sprite_any(pokedexUpArrowSprite, POKEDEX_MENU_UP_ARROW_WIDTH, POKEDEX_MENU_UP_ARROW_HEIGHT, 11, 208, TRANSPARENT_COLOUR);
+                    draw_sprite_any(pokedexDownArrowSprite, POKEDEX_MENU_DOWN_ARROW_WIDTH, POKEDEX_MENU_DOWN_ARROW_HEIGHT, 59, 208, TRANSPARENT_COLOUR);
+                    draw_sprite_any_shade_pulse(pokedexXSprite, POKEDEX_MENU_X_WIDTH, POKEDEX_MENU_X_HEIGHT, 288, 210, TRANSPARENT_COLOUR, shadePulseFrame);
+                }
 
                 const int id = pokedexSelectedId;
                 const PokemonData *species = speciesFromPokemonSpriteId(id);
