@@ -4283,13 +4283,26 @@ int main(void)
                             } else {
                                 draw_sprite_any(pokedexCaughtSprite,
                                                 POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT,
-                                                167, 30 + (30 * number),
+                                                167, (30 * number),
                                                 TRANSPARENT_COLOUR);
                             }
                         }
                     }
 
                     number++;
+                }
+
+                if (upPressed) {
+                    if (pokedexScrollIndex == 1) pokedexScrollIndex = 1;
+                    else {
+                        pokedexScrollIndex--;
+                    }
+                }
+                if (downPressed) {
+                    if (pokedexScrollIndex == POKEMON_ID_TOGEKISS) pokedexScrollIndex = 1;
+                    else {
+                        pokedexScrollIndex++;
+                    }
                 }
 
                 if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
