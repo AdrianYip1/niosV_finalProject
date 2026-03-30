@@ -55,5 +55,7 @@ bool map_can_use_pokemon_center_pc(const McBounds *bounds);
 
 void init_map(void); 
 void draw_map(void);
+void map_set_nurse_facing_left(bool left);
+
 
 #endif

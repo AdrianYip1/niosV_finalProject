@@ -18,6 +18,7 @@
 #include "graphics/textbox/textMessages.h"
 #include "graphics/sprites/spacebar/spacebar_frames.h"
 #include "graphics/sprites/arrowGif/arrowGif_frames.h"
+#include "graphics/sprites/pokeballSprites/smallPokeballSprite.h"
 #include "../hardware/keyboard.h"
 #include "../hardware/audio.h"
 #include "../software/se/opening_audio.h"
@@ -4212,7 +4213,7 @@ int main(void)
                 // Total ticks = one ball per PC_HEAL_TICKS_PER_BALL, then hold
                 // Hold long enough for 3 full shade_pulse cycles after all balls appear
                 // SHADE_PULSE_FRAME_COUNT=16 frames, each advances every PC_HEAL_ANIM_SPEED ticks
-                const int holdTicks = 3 * SHADE_PULSE_FRAME_COUNT * PC_HEAL_ANIM_SPEED; // = 96
+                const int holdTicks = SHADE_PULSE_FRAME_COUNT * PC_HEAL_ANIM_SPEED; // = 96
                 const int totalTicks = numBalls * PC_HEAL_TICKS_PER_BALL + holdTicks;
 
                 pcHealTimer++;
@@ -4230,22 +4231,37 @@ int main(void)
                 int visibleBalls = pcHealFrame / PC_HEAL_TICKS_PER_BALL;
                 if (visibleBalls > numBalls) visibleBalls = numBalls;
 
-                // Draw each visible pokeball with shade_pulse glow
+                // Draw each visible pokeball:
+                // - placing phase: plain sprite (no glow)
+                // - shining phase: shade_pulse glow
+                const bool isShiningPhase = (pcHealFrame >= numBalls * PC_HEAL_TICKS_PER_BALL);
                 for (int b = 0; b < visibleBalls; b++) {
-                    draw_sprite_any_shade_pulse(
-                        pokeballThrowFrames[0],
-                        POKEBALLTHROW_WIDTH, POKEBALLTHROW_HEIGHT,
-                        PC_HEAL_POKEBALL_PX[b],
-                        PC_HEAL_POKEBALL_PY[b],
-                        TRANSPARENT_COLOUR,
-                        pcHealPulseFrame
-                    );
+                    if (isShiningPhase) {
+                        draw_sprite_any_shade_pulse(
+                            smallPokeballSprite,
+                            SMALL_POKEBALL_SPRITE_WIDTH, SMALL_POKEBALL_SPRITE_HEIGHT,
+                            PC_HEAL_POKEBALL_PX[b],
+                            PC_HEAL_POKEBALL_PY[b],
+                            TRANSPARENT_COLOUR,
+                            pcHealPulseFrame
+                        );
+                    } else {
+                        draw_sprite_any(
+                            smallPokeballSprite,
+                            SMALL_POKEBALL_SPRITE_WIDTH, SMALL_POKEBALL_SPRITE_HEIGHT,
+                            PC_HEAL_POKEBALL_PX[b],
+                            PC_HEAL_POKEBALL_PY[b],
+                            TRANSPARENT_COLOUR
+                        );
+                    }
                 }
+
 
                 if (pcHealFrame >= totalTicks) {
                     // Animation done: heal the party
                     healParty(&playerParty);
                     pcHealDone = true;
+                    map_set_nurse_facing_left(false);  // Nurse turns back to face the player
                     dialogueText = NURSE_HEALED_TEXT;
                     dialogueReturnState = GAME_STATE_MAP;
                     currentGameState = GAME_STATE_DIALOGUE;
@@ -4290,6 +4306,7 @@ int main(void)
                     pcHealTimer = 0;
                     pcHealPulseFrame = 0;
                     pcHealDone = false;
+                    map_set_nurse_facing_left(true);  // Nurse turns to face the healing tray
                 } else if ((spacePressed || enterPressed) &&
                            map_can_talk_to_poke_mart_clerk(&mcBounds)) {
                     dialogueText = CLERK_GREETING_TEXT;

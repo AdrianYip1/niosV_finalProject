@@ -78,6 +78,7 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterClerkSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterDeskSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.c \
+        software/graphics/sprites/pokemonCenter/pokemonCenterNurseLeftSprite.c \
         software/graphics/sprites/trainerSprites/cynthiaFrontMapSprite.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
@@ -91,6 +92,7 @@ SRCS := software/main.c \
         software/graphics/sprites/pokedexTypes/pokedexTypesSprites.c \
         software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
+        software/graphics/sprites/pokeballSprites/smallPokeballSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
         software/gameplayLogic/worldMap.c \
@@ -111,6 +113,7 @@ SRCS := software/main.c \
         software/se/not_effective_audio.c \
         software/se/stats_up_audio.c \
         software/se/stats_fall_audio.c \
+        software/se/pokemon_healed_audio.c \
         software/se/pc_se_audio.c \
         software/se/recover_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \

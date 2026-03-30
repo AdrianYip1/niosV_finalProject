@@ -1,0 +1,6 @@
+#pragma once
+
+#define POKEMON_CENTER_NURSE_LEFT_WIDTH  24
+#define POKEMON_CENTER_NURSE_LEFT_HEIGHT 31
+
+extern const unsigned short pokemonCenterNurseLeftSprite[POKEMON_CENTER_NURSE_LEFT_WIDTH * POKEMON_CENTER_NURSE_LEFT_HEIGHT];

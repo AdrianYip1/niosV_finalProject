@@ -8,6 +8,7 @@
 #include "sprites/pokemonCenter/pokemonCenterClerkSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterDeskSprite.h"
 #include "sprites/pokemonCenter/pokemonCenterNurseSprite.h"
+#include "sprites/pokemonCenter/pokemonCenterNurseLeftSprite.h"
 #include "sprites/trainerSprites/cynthiaFrontMapSprite.h"
 #include <stddef.h>
 
@@ -31,6 +32,11 @@ static DecorEntry g_decor_entries[MAP_WIDTH * MAP_HEIGHT * 2];
 static int g_decor_entry_count = 0;
 static MapPresetId g_current_preset = MAP_PRESET_ROUTE;
 static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
+static bool g_nurse_facing_left = false;
+
+void map_set_nurse_facing_left(bool left) {
+    g_nurse_facing_left = left;
+}
 
 #define ROUTE_B_CYNTHIA_X 116
 #define ROUTE_B_CYNTHIA_Y 18
@@ -538,10 +544,17 @@ void draw_map(void) {
                         TRANSPARENT_COLOUR);
     }
     if (g_current_preset == MAP_PRESET_POKEMON_CENTER_INTERIOR) {
-        draw_sprite_any(pokemonCenterNurseSprite,
-                        POKEMON_CENTER_NURSE_WIDTH, POKEMON_CENTER_NURSE_HEIGHT,
-                        POKEMON_CENTER_NURSE_X, POKEMON_CENTER_NURSE_Y,
-                        TRANSPARENT_COLOUR);
+        if (g_nurse_facing_left) {
+            draw_sprite_any(pokemonCenterNurseLeftSprite,
+                            POKEMON_CENTER_NURSE_LEFT_WIDTH, POKEMON_CENTER_NURSE_LEFT_HEIGHT,
+                            POKEMON_CENTER_NURSE_X, POKEMON_CENTER_NURSE_Y,
+                            TRANSPARENT_COLOUR);
+        } else {
+            draw_sprite_any(pokemonCenterNurseSprite,
+                            POKEMON_CENTER_NURSE_WIDTH, POKEMON_CENTER_NURSE_HEIGHT,
+                            POKEMON_CENTER_NURSE_X, POKEMON_CENTER_NURSE_Y,
+                            TRANSPARENT_COLOUR);
+        }
         draw_sprite_any(pokemonCenterDeskSprite,
                         POKEMON_CENTER_DESK_WIDTH, POKEMON_CENTER_DESK_HEIGHT,
                         95, 47,
