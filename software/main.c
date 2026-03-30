@@ -712,55 +712,6 @@ static inline bool pokedex_is_caught(int pokemon_id) {
     return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) ? g_pokedexCaught[pokemon_id] : false;
 }
 
-static const PokemonData *const g_pokedexSpecies[] = {
-    &CHARMANDER,
-    &CHARMELEON,
-    &CHARIZARD,
-    &RAYQUAZA,
-    &GARCHOMP,
-    &LUCARIO,
-    &MILOTIC,
-    &ROSERADE,
-    &SPIRITOMB,
-    &TOGEKISS,
-};
-
-
-#define POKEDEX_SPECIES_COUNT ((int)(sizeof(g_pokedexSpecies) / sizeof(g_pokedexSpecies[0])))
-
-static const unsigned short *pokedexTypeSpriteFor(PokemonType t, int *outW, int *outH) {
-    if (outW) *outW = 0;
-    if (outH) *outH = 0;
-    PokedexTypeSpriteId sid;
-    switch (t) {
-        case TYPE_BUG: sid = POKEDEX_TYPE_SPRITE_BUG; break;
-        case TYPE_DARK: sid = POKEDEX_TYPE_SPRITE_DARK; break;
-        case TYPE_DRAGON: sid = POKEDEX_TYPE_SPRITE_DRAGON; break;
-        case TYPE_ELECTRIC: sid = POKEDEX_TYPE_SPRITE_ELECTRIC; break;
-        case TYPE_FAIRY: sid = POKEDEX_TYPE_SPRITE_FAIRY; break;
-        case TYPE_FIGHTING: sid = POKEDEX_TYPE_SPRITE_FIGHTING; break;
-        case TYPE_FIRE: sid = POKEDEX_TYPE_SPRITE_FIRE; break;
-        case TYPE_FLYING: sid = POKEDEX_TYPE_SPRITE_FLYING; break;
-        case TYPE_GHOST: sid = POKEDEX_TYPE_SPRITE_GHOST; break;
-        case TYPE_GRASS: sid = POKEDEX_TYPE_SPRITE_GRASS; break;
-        case TYPE_GROUND: sid = POKEDEX_TYPE_SPRITE_GROUND; break;
-        case TYPE_ICE: sid = POKEDEX_TYPE_SPRITE_ICE; break;
-        case TYPE_NORMAL: sid = POKEDEX_TYPE_SPRITE_NORMAL; break;
-        case TYPE_POISON: sid = POKEDEX_TYPE_SPRITE_POISON; break;
-        case TYPE_PSYCHIC: sid = POKEDEX_TYPE_SPRITE_PSY; break;
-        case TYPE_ROCK: sid = POKEDEX_TYPE_SPRITE_ROCK; break;
-        case TYPE_STEEL: sid = POKEDEX_TYPE_SPRITE_STEEL; break;
-        case TYPE_WATER: sid = POKEDEX_TYPE_SPRITE_WATER; break;
-        case TYPE_NONE:
-        default:
-            return NULL;
-    }
-    if ((int)sid < 0 || (int)sid >= POKEDEX_TYPE_SPRITE_COUNT) return NULL;
-    if (outW) *outW = (int)pokedexTypesSpritesWidths[sid];
-    if (outH) *outH = (int)pokedexTypesSpritesHeights[sid];
-    return pokedexTypesSprites[sid];
-}
-
 //returns the address of the global pokemon structs for the pokemon
 static const PokemonData *speciesFromPokemonSpriteId(int pokemonId) {
     switch (pokemonId) {
@@ -1317,10 +1268,6 @@ int main(void)
     int pcSwapIndex = -1; //first picked index for swapping in pc
     pokemonInBattle *pcHeldMon = NULL;
 
-    // Pokedex UI state
-    int pokedexCursor = 0;
-    int pokedexTopIndex = 0;
-
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
@@ -1363,8 +1310,6 @@ int main(void)
                     play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (ch == '6' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_POKEDEX_MENU;
-                    pokedexCursor = 0;
-                    pokedexTopIndex = 0;
                     play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (ch == '\n') {
                     enterPressed = true;
@@ -4255,44 +4200,60 @@ int main(void)
 
 
         case GAME_STATE_POKEDEX_MENU:
-           
+            {
+                int pokedexScrollIndex = 1;
+                int pokedexScrollIndexBottom = pokedexScrollIndex + 7;
+                int number = 0;
 
-            int pokedexScrollIndex = 1;
-            int pokedexScrollIndexBottom = pokedexScrollIndex + 7;
-            int number = 0;
+                draw_sprite_any(pokedexPokemonSprite, POKEDEX_MENU_POKEMON_WIDTH, POKEDEX_MENU_POKEMON_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+                draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, -1, TRANSPARENT_COLOUR);
+                draw_sprite_any(pokedexSelectSprite, POKEDEX_MENU_SELECT_WIDTH, POKEDEX_MENU_SELECT_HEIGHT, 3, 3, TRANSPARENT_COLOUR);
+                draw_sprite_any(pokedexBottomSprite, POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+                draw_sprite_any(scrollMenuSprite, POKEDEX_MENU_SCROLL_MENU_WIDTH, POKEDEX_MENU_SCROLL_MENU_HEIGHT, 320 - POKEDEX_MENU_SCROLL_MENU_WIDTH, 3, TRANSPARENT_COLOUR);
 
-            draw_sprite_any(pokedexPokemonSprite, POKEDEX_MENU_POKEMON_WIDTH, POKEDEX_MENU_POKEMON_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-            draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, -1, TRANSPARENT_COLOUR);
-            draw_sprite_any(pokedexSelectSprite, POKEDEX_MENU_SELECT_WIDTH,POKEDEX_MENU_SELECT_HEIGHT, 3, 3, TRANSPARENT_COLOUR);
-            draw_sprite_any(pokedexBottomSprite,POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR );
-            draw_sprite_any(scrollMenuSprite, POKEDEX_MENU_SCROLL_MENU_WIDTH, POKEDEX_MENU_SCROLL_MENU_HEIGHT,320 - POKEDEX_MENU_SCROLL_MENU_WIDTH, 3, TRANSPARENT_COLOUR );
-            draw_sprite_any(pokedexCaughtSelectedSprite, POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT, 167, 0, TRANSPARENT_COLOUR);
+                // For non-selected, they go down by 30 pixels
+                // Draw text, pokemon, seen, etc
+                for (int i = pokedexScrollIndex; i < pokedexScrollIndexBottom; i++) {
+                    const PokemonData *species = speciesFromPokemonSpriteId(i);
+                    const char *name = (species != NULL && species->name != NULL) ? species->name : "???";
 
-            //for non selected, they go down my 30 pixels
+                    if (pokedex_is_seen(i)) {
+                        // Small list sprite
+                        draw_sprite_any(menuPokemonSpriteForId(i),
+                                        MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                        120, -5 + (30 * number),
+                                        TRANSPARENT_COLOUR);
+                        draw_string_f(197, 8 + (30 * number), name, WHITE, FONT_5X9);
 
-            draw_sprite_any(pokedexCaughtSprite,POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, 167, 30, TRANSPARENT_COLOUR);
-            //draw text, pokemon, seen, etc
 
-            for (int i = pokedexScrollIndex; i < pokedexScrollIndexBottom; i++) {
-                if (pokedex_is_seen(i)) {
-                    draw_sprite_any(menuPokemonSpriteForId(i),MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT, 120, -5 + (30 * number), TRANSPARENT_COLOUR);
-                    draw_string_f(197, 8 + (30 * number), g_pokedexSpecies[i]->name ,WHITE, FONT_5X9);
-                    if (pokedex_is_caught(i)) {
                         if (number == 0) {
-                            draw_sprite_any(pokedexCaughtSelectedSprite, POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT, 167, 0, TRANSPARENT_COLOUR);
-                            
+                            StaticSprite front = (StaticSprite){0};
+                            if (initPokemonFrontBattleSprite(&front, i, 11, 15)) {
+                                drawStaticSprite(&front);
+                            }
                         }
-                        else draw_sprite_any(pokedexCaughtSprite,POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, 167, 30 + (30 * number), TRANSPARENT_COLOUR);
-    
+
+                        if (pokedex_is_caught(i)) {
+                            if (number == 0) {
+                                draw_sprite_any(pokedexCaughtSelectedSprite,
+                                                POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT,
+                                                167, 0,
+                                                TRANSPARENT_COLOUR);
+                            } else {
+                                draw_sprite_any(pokedexCaughtSprite,
+                                                POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT,
+                                                167, 30 + (30 * number),
+                                                TRANSPARENT_COLOUR);
+                            }
+                        }
                     }
+
+                    number++;
                 }
 
-                number++;
+                if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
+                if (escPressed) currentGameState = GAME_STATE_MAP;
             }
-
-
-            if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
-            if (escPressed) currentGameState = GAME_STATE_MAP;
             break;
     
         case GAME_STATE_POKEDEX_INFO:
