@@ -295,34 +295,34 @@ static void play_world_map_bgm(WorldMapId map_id);
 // Game States
 typedef enum {
     GAME_STATE_MAP = 0,
-    GAME_STATE_WILD_BATTLE = 1,
-    GAME_STATE_WILD_BATTLE_TRANSITION = 2,
-    GAME_STATE_WILD_BATTLE_INTRO_TEXT = 3,
+    GAME_STATE_WILD_BATTLE,
+    GAME_STATE_WILD_BATTLE_TRANSITION,
+    GAME_STATE_WILD_BATTLE_INTRO_TEXT,
 
-    GAME_STATE_TRAINER_BATTLE = 4,
-    GAME_STATE_TRAINER_BATTLE_TRANSITION = 5,
-    GAME_STATE_TRAINER_BATTLE_INTRO_TEXT = 6,
-    GAME_STATE_DIALOGUE = 19,
+    GAME_STATE_TRAINER_BATTLE,
+    GAME_STATE_TRAINER_BATTLE_TRANSITION,
+    GAME_STATE_TRAINER_BATTLE_INTRO_TEXT,
 
-    GAME_STATE_BATTLE_ACTION_TEXT = 7,
-    GAME_STATE_POKEBALL_THROW = 8,
-    GAME_STATE_POKEBALL_CATCH = 9,
-    GAME_STATE_BATTLE_WIN = 10,
-    GAME_STATE_BATTLE_LOSE = 11,
-    GAME_STATE_MENU = 12,
+    GAME_STATE_BATTLE_ACTION_TEXT,
+    GAME_STATE_POKEBALL_THROW,
+    GAME_STATE_POKEBALL_CATCH,
+    GAME_STATE_BATTLE_WIN,
+    GAME_STATE_BATTLE_LOSE,
+    GAME_STATE_MENU,
 
     // Learn-move
-    GAME_STATE_LEARN_MOVE_PROMPT = 13,
-    GAME_STATE_LEARN_MOVE_YESNO = 14,
-    GAME_STATE_LEARN_MOVE_FORGET = 15,
-    GAME_STATE_LEARN_MOVE_MESSAGE = 16,
+    GAME_STATE_LEARN_MOVE_PROMPT,
+    GAME_STATE_LEARN_MOVE_YESNO,
+    GAME_STATE_LEARN_MOVE_FORGET,
+    GAME_STATE_LEARN_MOVE_MESSAGE,
 
     // Forced switch after player's Pokemon faints.
-    GAME_STATE_BATTLE_FORCE_SWITCH = 17,
+    GAME_STATE_BATTLE_FORCE_SWITCH,
 
-    GAME_STATE_PC_MENU = 18,
-    GAME_STATE_POKEDEX_MENU = 19,
-    GAME_STATE_POKEDEX_INFO = 20,
+    GAME_STATE_PC_MENU,
+    GAME_STATE_POKEDEX_MENU,
+    GAME_STATE_POKEDEX_INFO,
+    GAME_STATE_DIALOGUE,
 } GameState;
 
 typedef enum {
@@ -350,6 +350,8 @@ static inline bool isOverworldState(GameState state) {
     return state == GAME_STATE_MAP ||
            state == GAME_STATE_MENU ||
            state == GAME_STATE_PC_MENU ||
+           state == GAME_STATE_POKEDEX_MENU ||
+           state == GAME_STATE_POKEDEX_INFO ||
            state == GAME_STATE_DIALOGUE;
 }
 
@@ -684,6 +686,78 @@ static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
 
     grassEncounterRng = grassEncounterRng * 1664525u + 1013904223u;
     return (grassEncounterRng % 10u) == 0u;
+}
+
+// -------------------- Pokedex state --------------------
+
+static bool g_pokedexSeen[POKEMON_ID_TOGEKISS + 1];
+static bool g_pokedexCaught[POKEMON_ID_TOGEKISS + 1];
+
+static inline void pokedex_mark_seen(int pokemon_id) {
+    if (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) g_pokedexSeen[pokemon_id] = true;
+}
+
+static inline void pokedex_mark_caught(int pokemon_id) {
+    if (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) {
+        g_pokedexSeen[pokemon_id] = true;
+        g_pokedexCaught[pokemon_id] = true;
+    }
+}
+
+static inline bool pokedex_is_seen(int pokemon_id) {
+    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) ? g_pokedexSeen[pokemon_id] : false;
+}
+
+static inline bool pokedex_is_caught(int pokemon_id) {
+    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) ? g_pokedexCaught[pokemon_id] : false;
+}
+
+static const PokemonData *const g_pokedexSpecies[] = {
+    &CHARMANDER,
+    &CHARMELEON,
+    &CHARIZARD,
+    &RAYQUAZA,
+    &GARCHOMP,
+    &LUCARIO,
+    &MILOTIC,
+    &ROSERADE,
+    &SPIRITOMB,
+    &TOGEKISS,
+};
+
+#define POKEDEX_SPECIES_COUNT ((int)(sizeof(g_pokedexSpecies) / sizeof(g_pokedexSpecies[0])))
+
+static const unsigned short *pokedexTypeSpriteFor(PokemonType t, int *outW, int *outH) {
+    if (outW) *outW = 0;
+    if (outH) *outH = 0;
+    PokedexTypeSpriteId sid;
+    switch (t) {
+        case TYPE_BUG: sid = POKEDEX_TYPE_SPRITE_BUG; break;
+        case TYPE_DARK: sid = POKEDEX_TYPE_SPRITE_DARK; break;
+        case TYPE_DRAGON: sid = POKEDEX_TYPE_SPRITE_DRAGON; break;
+        case TYPE_ELECTRIC: sid = POKEDEX_TYPE_SPRITE_ELECTRIC; break;
+        case TYPE_FAIRY: sid = POKEDEX_TYPE_SPRITE_FAIRY; break;
+        case TYPE_FIGHTING: sid = POKEDEX_TYPE_SPRITE_FIGHTING; break;
+        case TYPE_FIRE: sid = POKEDEX_TYPE_SPRITE_FIRE; break;
+        case TYPE_FLYING: sid = POKEDEX_TYPE_SPRITE_FLYING; break;
+        case TYPE_GHOST: sid = POKEDEX_TYPE_SPRITE_GHOST; break;
+        case TYPE_GRASS: sid = POKEDEX_TYPE_SPRITE_GRASS; break;
+        case TYPE_GROUND: sid = POKEDEX_TYPE_SPRITE_GROUND; break;
+        case TYPE_ICE: sid = POKEDEX_TYPE_SPRITE_ICE; break;
+        case TYPE_NORMAL: sid = POKEDEX_TYPE_SPRITE_NORMAL; break;
+        case TYPE_POISON: sid = POKEDEX_TYPE_SPRITE_POISON; break;
+        case TYPE_PSYCHIC: sid = POKEDEX_TYPE_SPRITE_PSY; break;
+        case TYPE_ROCK: sid = POKEDEX_TYPE_SPRITE_ROCK; break;
+        case TYPE_STEEL: sid = POKEDEX_TYPE_SPRITE_STEEL; break;
+        case TYPE_WATER: sid = POKEDEX_TYPE_SPRITE_WATER; break;
+        case TYPE_NONE:
+        default:
+            return NULL;
+    }
+    if ((int)sid < 0 || (int)sid >= POKEDEX_TYPE_SPRITE_COUNT) return NULL;
+    if (outW) *outW = (int)pokedexTypesSpritesWidths[sid];
+    if (outH) *outH = (int)pokedexTypesSpritesHeights[sid];
+    return pokedexTypesSprites[sid];
 }
 
 //returns the address of the global pokemon structs for the pokemon
@@ -1111,6 +1185,14 @@ int main(void)
         }
     }
 
+    // Initialize pokedex state from owned Pokemon.
+    memset(g_pokedexSeen, 0, sizeof(g_pokedexSeen));
+    memset(g_pokedexCaught, 0, sizeof(g_pokedexCaught));
+    for (int i = 0; i < playerPc.count; i++) {
+        const int id = playerPc.mons[i].id.frontFrame_ID;
+        pokedex_mark_caught(id);
+    }
+
     initParty(&enemyParty);
     initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
     addPokemonToParty(&enemyParty, &wildEnemy);
@@ -1236,6 +1318,10 @@ int main(void)
     int pcSwapIndex = -1; //first picked index for swapping in pc
     pokemonInBattle *pcHeldMon = NULL;
 
+    // Pokedex UI state
+    int pokedexCursor = 0;
+    int pokedexTopIndex = 0;
+
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
@@ -1278,7 +1364,8 @@ int main(void)
                     play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (ch == '6' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_POKEDEX_MENU;
-                    pcCursor = 0;
+                    pokedexCursor = 0;
+                    pokedexTopIndex = 0;
                     play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (ch == '\n') {
                     enterPressed = true;
@@ -1322,6 +1409,12 @@ int main(void)
                     if (firstAlive >= 0) playerParty.activeIndex = firstAlive;
                 }
                 initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, nextBattleType);
+
+                // Mark encountered Pokemon as "seen" in the pokedex.
+                for (int i = 0; i < enemyParty.count; i++) {
+                    const pokemonInBattle *mon = enemyParty.slots[i];
+                    if (mon != NULL) pokedex_mark_seen(mon->id.frontFrame_ID);
+                }
 
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
@@ -3890,6 +3983,7 @@ int main(void)
                                     if (caughtPokemon != NULL && caughtPokemon->id.data != NULL) {
                                         int pcIndex = -1;
                                         (void)pcAdd(&playerPc, caughtPokemon->id.data, caughtPokemon->level, &pcIndex);
+                                        pokedex_mark_caught(caughtPokemon->id.frontFrame_ID);
                                     }
                                 }
                                 actionTextReturnUi = BATTLE_UI_MENU;
@@ -4162,12 +4256,78 @@ int main(void)
 
 
         case GAME_STATE_POKEDEX_MENU:
-            draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_INFO_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-            draw_sprite_any(pokedexSelectSprite,POKEDEX_MENU_SELECT_WIDTH,  POKEDEX_MENU_SELECT_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-            draw_sprite_any()
-            if (escPressed) currentGameState = GAME_STATE_MAP;
-            break;
+            {
+                if (pokedexCursor < 0) pokedexCursor = 0;
+                if (pokedexCursor >= POKEDEX_SPECIES_COUNT) pokedexCursor = POKEDEX_SPECIES_COUNT - 1;
+                if (pokedexTopIndex < 0) pokedexTopIndex = 0;
 
+                const int visibleCount = 8;
+                const int prevCursor = pokedexCursor;
+                if (upPressed && pokedexCursor > 0) pokedexCursor--;
+                if (downPressed && pokedexCursor < (POKEDEX_SPECIES_COUNT - 1)) pokedexCursor++;
+                if (pokedexCursor != prevCursor) play_sfx(plink_audio, plink_audio_len);
+
+                if (pokedexTopIndex > pokedexCursor) pokedexTopIndex = pokedexCursor;
+                if (pokedexTopIndex < pokedexCursor - (visibleCount - 1)) {
+                    pokedexTopIndex = pokedexCursor - (visibleCount - 1);
+                }
+                const int maxTop = (POKEDEX_SPECIES_COUNT > visibleCount) ? (POKEDEX_SPECIES_COUNT - visibleCount) : 0;
+                if (pokedexTopIndex > maxTop) pokedexTopIndex = maxTop;
+
+                if (spacePressed || enterPressed) {
+                    currentGameState = GAME_STATE_POKEDEX_INFO;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (escPressed) {
+                    currentGameState = GAME_STATE_MAP;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+
+                draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+
+                const int listX = 28;
+                const int listY = 34;
+                const int lineH = 22;
+                const int rowW = 255;
+                for (int row = 0; row < visibleCount; row++) {
+                    const int idx = pokedexTopIndex + row;
+                    if (idx < 0 || idx >= POKEDEX_SPECIES_COUNT) continue;
+                    const PokemonData *species = g_pokedexSpecies[idx];
+                    if (species == NULL) continue;
+                    const int pokemonId = species->id;
+                    const bool seen = pokedex_is_seen(pokemonId);
+                    const bool caught = pokedex_is_caught(pokemonId);
+
+                    const int y = listY + row * lineH;
+                    if (idx == pokedexCursor) {
+                        draw_rect_outline(listX - 6, y - 3, rowW, lineH, RED);
+                    }
+
+                    char line[48];
+                    if (seen) {
+                        snprintf(line, sizeof(line), "%03d  %s", pokemonId, species->name ? species->name : "");
+                    } else {
+                        snprintf(line, sizeof(line), "%03d  ???", pokemonId);
+                    }
+                    draw_string(listX, y, line, BLACK);
+
+                    const int iconX = 278;
+                    const int iconY = y - 4;
+                    if (caught) {
+                        draw_sprite_any(pokedexCaughtSprite, POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, iconX, iconY, TRANSPARENT_COLOUR);
+                    } else if (seen) {
+                        draw_sprite_any_greyscale(pokedexCaughtSprite, POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, iconX, iconY, TRANSPARENT_COLOUR);
+                    }
+                }
+
+                draw_sprite_any(scrollMenuSprite,
+                                POKEDEX_MENU_SCROLL_MENU_WIDTH,
+                                POKEDEX_MENU_SCROLL_MENU_HEIGHT,
+                                308,
+                                20,
+                                TRANSPARENT_COLOUR);
+            }
+            break;
+    
 
         case GAME_STATE_MAP:
         default:
