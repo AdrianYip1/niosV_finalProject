@@ -4507,20 +4507,31 @@ int main(void)
 
                 // Pokedex database info
                 const PokedexEntry *dex = getPokedexEntry(id);
-                if (dex != NULL && seen) {
-                    if (dex->category != NULL) {
-                        draw_string_f(174, 43, dex->category, WHITE, FONT_5X9);
+                if (dex != NULL) {
+                    const bool hasDexInfo = seen || caught;
+
+                    if (hasDexInfo && dex->category != NULL) {
+                        draw_string_f(174, 43, dex->category, BLACK, FONT_5X9);
+                    } else {
+                        draw_string_f(174, 43, "???", BLACK, FONT_5X9);
                     }
 
                     char sizeBufW[48];
-                    snprintf(sizeBufW, sizeof(sizeBufW), "W:%ukg", (unsigned)dex->width_kg);
-                    draw_string_f(186, 65, sizeBuf, BLACK, FONT_5X9);
                     char sizeBufH[48];
-                    snprintf(sizeBufH, sizeof(sizeBufH), "H:%ucm", (unsigned)dex->height_cm);
+                    if (hasDexInfo) {
+                        snprintf(sizeBufW, sizeof(sizeBufW), "W:%ukg", (unsigned)dex->width_kg);
+                        snprintf(sizeBufH, sizeof(sizeBufH), "H:%ucm", (unsigned)dex->height_cm);
+                    } else {
+                        snprintf(sizeBufW, sizeof(sizeBufW), "W:???");
+                        snprintf(sizeBufH, sizeof(sizeBufH), "H:???");
+                    }
+                    draw_string_f(186, 65, sizeBufW, BLACK, FONT_5X9);
                     draw_string_f(186, 85, sizeBufH, BLACK, FONT_5X9);
 
-                    if (dex->entry != NULL) {
+                    if (hasDexInfo && dex->entry != NULL) {
                         draw_multiline_string_f(16, 147, dex->entry, WHITE, FONT_5X9, 12);
+                    } else {
+                        draw_multiline_string_f(16, 147, "???", WHITE, FONT_5X9, 12);
                     }
                 }
 
