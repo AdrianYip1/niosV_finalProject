@@ -454,7 +454,7 @@ static inline bool popNextLearnedMoveMsg(Party *party, pokemonInBattle **outPoke
     return false;
 }
 
-// Money system (simple, persistent per program run).
+//Money, perssistant for player
 #define STARTING_MONEY 3000
 #define TRAINER_WIN_MONEY_BASE 200
 #define TRAINER_WIN_MONEY_PER_LEVEL 25
@@ -724,6 +724,7 @@ static const PokemonData *const g_pokedexSpecies[] = {
     &SPIRITOMB,
     &TOGEKISS,
 };
+
 
 #define POKEDEX_SPECIES_COUNT ((int)(sizeof(g_pokedexSpecies) / sizeof(g_pokedexSpecies[0])))
 
@@ -4255,6 +4256,11 @@ int main(void)
 
         case GAME_STATE_POKEDEX_MENU:
            
+
+            int pokedexScrollIndex = 1;
+            int pokedexScrollIndexBottom = pokedexScrollIndex + 7;
+            int number = 0;
+
             draw_sprite_any(pokedexPokemonSprite, POKEDEX_MENU_POKEMON_WIDTH, POKEDEX_MENU_POKEMON_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
             draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, -1, TRANSPARENT_COLOUR);
             draw_sprite_any(pokedexSelectSprite, POKEDEX_MENU_SELECT_WIDTH,POKEDEX_MENU_SELECT_HEIGHT, 3, 3, TRANSPARENT_COLOUR);
@@ -4266,6 +4272,26 @@ int main(void)
 
             draw_sprite_any(pokedexCaughtSprite,POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, 167, 30, TRANSPARENT_COLOUR);
             //draw text, pokemon, seen, etc
+
+            for (int i = pokedexScrollIndex; i < pokedexScrollIndexBottom; i++) {
+                if (pokedex_is_seen(i)) {
+                    draw_sprite_any(menuPokemonSpriteForId(i),MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT, 120, -5 + (30 * number), TRANSPARENT_COLOUR);
+                    draw_string_f(197, 8 + (30 * number), g_pokedexSpecies[i]->name ,WHITE, FONT_5X9);
+                    if (pokedex_is_caught(i)) {
+                        if (number == 0) {
+                            draw_sprite_any(pokedexCaughtSelectedSprite, POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT, 167, 0, TRANSPARENT_COLOUR);
+                            
+                        }
+                        else draw_sprite_any(pokedexCaughtSprite,POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, 167, 30 + (30 * number), TRANSPARENT_COLOUR);
+    
+                    }
+                }
+
+                
+                if ()
+                number++;
+            }
+
 
             if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
             if (escPressed) currentGameState = GAME_STATE_MAP;
@@ -4283,6 +4309,7 @@ int main(void)
             if(escPressed) currentGameState = GAME_STATE_POKEDEX_MENU;
 
             break;
+
         case GAME_STATE_MAP:
         default:
             {
@@ -4339,7 +4366,7 @@ int main(void)
     return 0;
 }
 static void play_world_map_bgm(WorldMapId map_id) {
-    if (map_id == WORLD_MAP_POKEMON_CENTER_1) {
+    if (map_id == WORLD_MAP_POKEMON_CENTER_1) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
         play_bgm(pokemon_center_audio, pokemon_center_audio_len);
         return;
     }
