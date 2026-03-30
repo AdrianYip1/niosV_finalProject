@@ -54,6 +54,10 @@ static MapDecorLayout g_current_decor_layout = MAP_DECOR_ROUTE_A;
 #define POKEMON_CENTER_DESK_BBOX_Y 47
 #define POKEMON_CENTER_DESK_BBOX_W POKEMON_CENTER_DESK_WIDTH
 #define POKEMON_CENTER_DESK_BBOX_H POKEMON_CENTER_DESK_HEIGHT
+#define POKEMON_CENTER_PC_BBOX_X 230
+#define POKEMON_CENTER_PC_BBOX_Y 70
+#define POKEMON_CENTER_PC_BBOX_W 30
+#define POKEMON_CENTER_PC_BBOX_H 10
 
 static bool is_within_interior_walkable_rect(int x0, int y0, int x1, int y1) {
     const int min_x = 10;
@@ -616,11 +620,14 @@ bool map_is_mc_on_grass_patch(const McBounds *bounds) {
 }
 
 bool map_can_use_pokemon_center_pc(const McBounds *bounds) {
+    const int horizontal_margin = 0;
+    const int vertical_margin = 0;
+
     if (g_current_preset != MAP_PRESET_POKEMON_CENTER_INTERIOR || bounds == NULL || !bounds->valid) {
         return false;
     }
-
-    const int foot_x = (bounds->x0 + bounds->x1) / 2;
-    const int foot_y = bounds->y1;
-    return foot_x >= 230 && foot_x <= 260 && foot_y >= 70 && foot_y <= 80;
+    return !(bounds->x1 < (POKEMON_CENTER_PC_BBOX_X - horizontal_margin) ||
+             (POKEMON_CENTER_PC_BBOX_X + POKEMON_CENTER_PC_BBOX_W - 1 + horizontal_margin) < bounds->x0 ||
+             bounds->y1 < (POKEMON_CENTER_PC_BBOX_Y - vertical_margin) ||
+             (POKEMON_CENTER_PC_BBOX_Y + POKEMON_CENTER_PC_BBOX_H - 1 + vertical_margin) < bounds->y0);
 }
