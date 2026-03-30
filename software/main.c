@@ -4287,23 +4287,37 @@ int main(void)
                         pokedexSelectedId = i;
                     }
 
-                    if (pokedex_is_seen(i)) {
+                    const bool seen = pokedex_is_seen(i);
+                    const bool caught = pokedex_is_caught(i);
+
+                    if (seen) {
                         // Small list sprite
-                        draw_sprite_any(menuPokemonSpriteForId(i),
-                                        MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
-                                        120, -5 + (30 * number),
-                                        TRANSPARENT_COLOUR);
+                        if (caught) {
+                            draw_sprite_any(menuPokemonSpriteForId(i),
+                                            MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                            120, -5 + (30 * number),
+                                            TRANSPARENT_COLOUR);
+                        } else {
+                            make_sprite_black(menuPokemonSpriteForId(i),
+                                              MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                              120, -5 + (30 * number),
+                                              TRANSPARENT_COLOUR);
+                        }
                         draw_string_f(197, 8 + (30 * number), name, WHITE, FONT_5X9);
 
 
                         if (number == 0) {
                             StaticSprite front = (StaticSprite){0};
                             if (initPokemonFrontBattleSprite(&front, i, 11, 15)) {
-                                drawStaticSprite(&front);
+                                if (caught) {
+                                    drawStaticSprite(&front);
+                                } else {
+                                    make_sprite_black(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                                }
                             }
                         }
 
-                        if (pokedex_is_caught(i)) {
+                        if (caught) {
                             if (number == 0) {
                                 draw_sprite_any(pokedexCaughtSelectedSprite,
                                                 POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT,
@@ -4330,8 +4344,18 @@ int main(void)
                             }
                         }
                     } else {
+                        // Not seen: show black silhouette sprite(s) + placeholder name.
+                        make_sprite_black(menuPokemonSpriteForId(i),
+                                          MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                          120, -5 + (30 * number),
+                                          TRANSPARENT_COLOUR);
+                        if (number == 0) {
+                            StaticSprite front = (StaticSprite){0};
+                            if (initPokemonFrontBattleSprite(&front, i, 11, 15)) {
+                                make_sprite_black(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                            }
+                        }
                         draw_string_f(197, 8 + (30 * number), "???", WHITE, FONT_5X9);
-                        make_sprite_black(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
                     }
 
                     number++;
