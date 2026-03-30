@@ -4351,9 +4351,9 @@ int main(void)
                 if (species != NULL && seen) {
                     char header[32];
                     snprintf(header, sizeof(header), "#%03d %s", id, species->name ? species->name : "");
-                    draw_string_f(171, 22, header, WHITE, FONT_5X9);
+                    draw_string_f(171, 22, header, BLACK, FONT_5X9);
                 } else {
-                    draw_string_f(171, 22, "???", WHITE, FONT_5X9);
+                    draw_string_f(171, 22, "???", BLACK, FONT_5X9);
                 }
 
                 // Types
