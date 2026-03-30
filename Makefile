@@ -118,6 +118,7 @@ SRCS := software/main.c \
         software/gameplayLogic/battling/battleLoop.c \
         software/gameplayLogic/bag.c \
         software/gameplayLogic/itemDatabase.c \
+        software/gameplayLogic/entities/pokedexDatabase.c \
         software/gameplayLogic/entities/pokemonDataBase.c \
         software/gameplayLogic/entities/learnSet.c \
         software/gameplayLogic/storage/pc.c \

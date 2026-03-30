@@ -61,6 +61,7 @@
 #include "graphics/sprites/battleUIBackground/battleUIBackgroundSprite.h"
 #include "gameplayLogic/battling/battleLoop.h"
 #include "gameplayLogic/entities/pokemonDataBase.h"
+#include "gameplayLogic/entities/pokedexDatabase.h"
 #include "gameplayLogic/bag.h"
 #include "gameplayLogic/itemDatabase.h"
 #include "gameplayLogic/storage/pc.h"
@@ -704,6 +705,34 @@ static void make_sprite_black(const unsigned short *sprite,
             const unsigned short c = sprite[sy * width + sx];
             if (c == (unsigned short)transparent) continue;
             draw_pixel(x + sx, y + sy, BLACK);
+        }
+    }
+}
+
+static void draw_multiline_string_f(int x, int y, const char *text, short colour, FontId font, int line_step) {
+    if (text == NULL) return;
+    if (line_step <= 0) line_step = 12;
+
+    char buf[96];
+    int bi = 0;
+    int cy = y;
+
+    for (const char *p = text; ; p++) {
+        const char ch = *p;
+        const bool at_end = (ch == '\0');
+        if (at_end || ch == '\n') {
+            buf[bi] = '\0';
+            if (bi > 0) {
+                draw_string_f(x, cy, buf, colour, font);
+            }
+            cy += line_step;
+            bi = 0;
+            if (at_end) break;
+            continue;
+        }
+
+        if (bi < (int)(sizeof(buf) - 1)) {
+            buf[bi++] = ch;
         }
     }
 }
@@ -4411,7 +4440,7 @@ int main(void)
                 draw_sprite_any(pokedexDescriptionSprite, POKEDEX_MENU_DESCRIPTION_WIDTH, POKEDEX_MENU_DESCRIPTION_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
                 draw_sprite_any(pokedexBottomSprite, POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
 
-                // Pulse the selected button (up, down, X) instead of drawing a box.
+
                 shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
                 if (pokedexInfoCursor == 0) {
                     draw_sprite_any_shade_pulse(pokedexUpArrowSprite, POKEDEX_MENU_UP_ARROW_WIDTH, POKEDEX_MENU_UP_ARROW_HEIGHT, 11, 208, TRANSPARENT_COLOUR, shadePulseFrame);
@@ -4465,6 +4494,25 @@ int main(void)
                         if (t2 != NULL) {
                             draw_sprite_any(t2, tw, th, 242, 108, TRANSPARENT_COLOUR);
                         }
+                    }
+                }
+
+                // Pokedex database info
+                const PokedexEntry *dex = getPokedexEntry(id);
+                if (dex != NULL && seen) {
+                    if (dex->category != NULL) {
+                        draw_string_f(174, 43, dex->category, WHITE, FONT_5X9);
+                    }
+
+                    char sizeBufW[48];
+                    snprintf(sizeBufW, sizeof(sizeBufW), "W:%ukg", (unsigned)dex->width_kg);
+                    draw_string_f(186, 65, sizeBuf, BLACK, FONT_5X9);
+                    char sizeBufH[48];
+                    snprintf(sizeBufH, sizeof(sizeBufH), "H:%ucm", (unsigned)dex->height_cm);
+                    draw_string_f(186, 85, sizeBufH, BLACK, FONT_5X9);
+
+                    if (dex->entry != NULL) {
+                        draw_multiline_string_f(16, 147, dex->entry, WHITE, FONT_5X9, 12);
                     }
                 }
 
