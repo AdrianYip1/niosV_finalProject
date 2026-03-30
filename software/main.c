@@ -9,6 +9,8 @@
 #include "gameplayLogic/worldMap.h"
 #include "graphics/tiles.h"
 #include "graphics/map.h"
+#include "graphics/sprites/pokedexMenu/pokedexMenuSprites.h"
+#include "graphics/sprites/pokedexTypes/pokedexTypesSprites.h"
 #include "graphics/sprites/pcMenu/pcMenuSprites.h"
 #include "graphics/sprites/vsCynthia/vsCynthiaSprite.h"
 #include "graphics/titleScreen/titleScreenDraw.h"
@@ -1272,6 +1274,10 @@ int main(void)
                     menuSwapIndex = -1;
                 } else if (ch == '5' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_PC_MENU;
+                    pcCursor = 0;
+                    play_sfx(pc_se_audio, pc_se_audio_len);
+                } else if (ch == '6' && currentGameState == GAME_STATE_MAP) {
+                    currentGameState = GAME_STATE_POKEDEX_MENU;
                     pcCursor = 0;
                     play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (ch == '\n') {
@@ -4153,6 +4159,15 @@ int main(void)
                 currentGameState = dialogueReturnState;
             }
             break;
+
+
+        case GAME_STATE_POKEDEX_MENU:
+            draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_INFO_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexSelectSprite,POKEDEX_MENU_SELECT_WIDTH,  POKEDEX_MENU_SELECT_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+            draw_sprite_any()
+            if (escPressed) currentGameState = GAME_STATE_MAP;
+            break;
+
 
         case GAME_STATE_MAP:
         default:
