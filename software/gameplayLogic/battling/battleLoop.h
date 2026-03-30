@@ -26,6 +26,14 @@ typedef enum {
     ACTION_RUN
 } BattleAction;
 
+typedef enum {
+    BATTLE_HIT_EFFECT_NORMAL = 0,
+    BATTLE_HIT_EFFECT_NOT_EFFECTIVE,
+    BATTLE_HIT_EFFECT_SUPER_EFFECTIVE,
+    BATTLE_HIT_EFFECT_STATS_UP,
+    BATTLE_HIT_EFFECT_STATS_DOWN
+} BattleHitEffect;
+
 typedef struct {
     Party *playerParty;
     Party *enemyParty;
@@ -40,6 +48,7 @@ typedef struct {
 #endif
     char messages[BATTLE_MSG_MAX][96];
     unsigned char messageFlags[BATTLE_MSG_MAX];  // 1 if this message displays a damaging hit (exclude no effect)
+    signed char hitEffects[BATTLE_MSG_MAX];
 
     //timing damage with shake animations
     int hpAfterPlayer[BATTLE_MSG_MAX];

@@ -1,0 +1,6 @@
+#pragma once
+
+#define SMALL_POKEBALL_SPRITE_WIDTH  6
+#define SMALL_POKEBALL_SPRITE_HEIGHT 6
+
+extern const unsigned short smallPokeballSprite[SMALL_POKEBALL_SPRITE_WIDTH * SMALL_POKEBALL_SPRITE_HEIGHT];

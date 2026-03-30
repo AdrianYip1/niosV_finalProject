@@ -109,6 +109,8 @@ SRCS := software/main.c \
         software/se/hit_normal_audio.c \
         software/se/super_effective_audio.c \
         software/se/not_effective_audio.c \
+        software/se/stats_up_audio.c \
+        software/se/stats_fall_audio.c \
         software/se/pc_se_audio.c \
         software/se/recover_audio.c \
 		software/graphics/sprites/battleIcons/attackTypes/attackTypeSprites.c \

@@ -18,6 +18,7 @@ static void battleClearMessages(BattleState *state) {
     for (int i = 0; i < BATTLE_MSG_MAX; i++) {
         state->messages[i][0] = '\0';
         state->messageFlags[i] = 0;
+        state->hitEffects[i] = (signed char)BATTLE_HIT_EFFECT_NORMAL;
         state->hpAfterPlayer[i] = -1;
         state->hpAfterEnemy[i] = -1;
         state->displayPlayerIndex[i] = -1;
@@ -32,6 +33,7 @@ static void battlePushMessage(BattleState *state, const char *msg) {
     const int idx = state->messageCount;
     snprintf(state->messages[idx], sizeof(state->messages[idx]), "%s", msg);
     state->messageFlags[idx] = 0;
+    state->hitEffects[idx] = (signed char)BATTLE_HIT_EFFECT_NORMAL;
     state->hpAfterPlayer[idx] = -1;
     state->hpAfterEnemy[idx] = -1;
     state->displayPlayerIndex[idx] = (state->playerParty != NULL) ? (signed char)state->playerParty->activeIndex : (signed char)-1;
@@ -141,8 +143,8 @@ static int clampStageLocal(int stage) {
     return stage;
 }
 
-static void battleApplyStageDelta(BattleState *state, pokemonInBattle *pokemon, bool opposing, const char *statName, int *stageField, int delta) {
-    if (state == NULL || pokemon == NULL || statName == NULL || stageField == NULL) return;
+static BattleHitEffect battleApplyStageDelta(BattleState *state, pokemonInBattle *pokemon, bool opposing, const char *statName, int *stageField, int delta) {
+    if (state == NULL || pokemon == NULL || statName == NULL || stageField == NULL) return BATTLE_HIT_EFFECT_NORMAL;
     char name[64];
     battleFormatPokemonName(name, sizeof(name), pokemon, opposing);
 
@@ -154,7 +156,7 @@ static void battleApplyStageDelta(BattleState *state, pokemonInBattle *pokemon, 
         char buf[96];
         snprintf(buf, sizeof(buf), "%s's %s won't go any %s!", name, statName, (delta > 0) ? "higher" : "lower");
         battlePushMessage(state, buf);
-        return;
+        return BATTLE_HIT_EFFECT_NORMAL;
     }
 
     const int actualDelta = after - before;
@@ -166,6 +168,7 @@ static void battleApplyStageDelta(BattleState *state, pokemonInBattle *pokemon, 
     char buf[96];
     snprintf(buf, sizeof(buf), "%s's %s %s!", name, statName, verb);
     battlePushMessage(state, buf);
+    return up ? BATTLE_HIT_EFFECT_STATS_UP : BATTLE_HIT_EFFECT_STATS_DOWN;
 }
 
 static void battlePushCannotActMessage(BattleState *state, const pokemonInBattle *pokemon, bool opposing, StatusCondition reason) {
@@ -344,6 +347,7 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
     const int hpAfter = target->scaledStatsWithLevel[0];
     const int tookDamage = (hpBefore > hpAfter) ? 1 : 0;
     const bool faintedNow = aliveBefore && (!target->alive);
+    BattleHitEffect usedMsgEffect = BATTLE_HIT_EFFECT_NORMAL;
 
     // Miss message (PP is still consumed).
     if (!hit && move != NULL && ppBefore > 0 && ppAfter == ppBefore - 1) {
@@ -357,17 +361,21 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
         if (move->category == ATTACK_STATUS) {
             switch (move->id) {
                 case 3: // Growl
-                    battleApplyStageDelta(state, target, targetOpposing, "Attack", &target->statStageAttack, -1);
+                    usedMsgEffect = battleApplyStageDelta(state, target, targetOpposing, "Attack", &target->statStageAttack, -1);
                     break;
                 case 5: // Scary Face
-                    battleApplyStageDelta(state, target, targetOpposing, "Speed", &target->statStageSpeed, -2);
+                    usedMsgEffect = battleApplyStageDelta(state, target, targetOpposing, "Speed", &target->statStageSpeed, -2);
                     break;
                 case 6: // Smokescreen
-                    battleApplyStageDelta(state, target, targetOpposing, "accuracy", &target->statStageAccuracy, -1);
+                    usedMsgEffect = battleApplyStageDelta(state, target, targetOpposing, "accuracy", &target->statStageAccuracy, -1);
                     break;
                 case 54: // Dragon Dance
-                    battleApplyStageDelta(state, attacker, opposing, "Attack", &attacker->statStageAttack, +1);
-                    battleApplyStageDelta(state, attacker, opposing, "Speed", &attacker->statStageSpeed, +1);
+                    usedMsgEffect = battleApplyStageDelta(state, attacker, opposing, "Attack", &attacker->statStageAttack, +1);
+                    {
+                        const BattleHitEffect speedEffect =
+                            battleApplyStageDelta(state, attacker, opposing, "Speed", &attacker->statStageSpeed, +1);
+                        if (usedMsgEffect == BATTLE_HIT_EFFECT_NORMAL) usedMsgEffect = speedEffect;
+                    }
                     break;
                 case 57: // Rest
                     {
@@ -452,6 +460,13 @@ static bool resolveAttack(BattleState *state, pokemonInBattle *attacker, pokemon
     // check flag for damage in message 
     if (state != NULL && usedMsgIndex >= 0 && usedMsgIndex < BATTLE_MSG_MAX) {
         state->messageFlags[usedMsgIndex] = (unsigned char)tookDamage;
+        state->hitEffects[usedMsgIndex] = (signed char)usedMsgEffect;
+        if (tookDamage && hit && move != NULL && move->category != ATTACK_STATUS) {
+            const float eff = getTypeEffectiveness(move->type, target->type1, target->type2);
+            if (eff > 1.01f) state->hitEffects[usedMsgIndex] = (signed char)BATTLE_HIT_EFFECT_SUPER_EFFECTIVE;
+            else if (eff < 0.99f) state->hitEffects[usedMsgIndex] = (signed char)BATTLE_HIT_EFFECT_NOT_EFFECTIVE;
+            else state->hitEffects[usedMsgIndex] = (signed char)BATTLE_HIT_EFFECT_NORMAL;
+        }
         // HP should change during the "used" message for better timing in the UI.
         if (tookDamage) {
             if (opposing) state->hpAfterPlayer[usedMsgIndex] = hpAfter;
@@ -797,4 +812,3 @@ BattleResult runBattle(Party *playerParty, Party *enemyParty, BattleType type) {
 
     return state.result;
 }
-

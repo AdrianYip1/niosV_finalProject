@@ -74,7 +74,7 @@ void load_world_map(WorldMapId map_id, int start_x, int start_y, McFacing facing
     const WorldMapDefinition *def = &kWorldMaps[(int)map_id];
     if (def->preset == MAP_PRESET_POKEMON_CENTER_INTERIOR ||
         def->preset == MAP_PRESET_POKE_MART_INTERIOR) {
-        setMCScale(1.5, 1);
+        setMCScale(3, 2);
     } else {
         setMCScale(1, 1);
     }

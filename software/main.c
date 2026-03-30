@@ -31,9 +31,10 @@
 #include "../software/se/pokeball_audio.h"
 #include "../software/se/pokeball_shaking_audio.h"  
 #include "../software/se/caught_pokemon_audio.h"
-#include "../software/se/hit_normal_audio.h"
 #include "../software/se/super_effective_audio.h"
 #include "../software/se/not_effective_audio.h"
+#include "../software/se/stats_up_audio.h"
+#include "../software/se/stats_fall_audio.h"
 #include "../software/se/pc_se_audio.h"
 #include "../software/se/recover_audio.h"
 #include "../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h"
@@ -286,7 +287,8 @@
 #define SELECTED_POKEMON_DIFFERENCE_Y 1 //1 down from nonselected
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
-static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!";
+static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
+static const char NURSE_HEALED_TEXT[] = "Nurse: We hope to see you again!";
 static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart! What would you like to buy today?";
 
 static void play_world_map_bgm(WorldMapId map_id);
@@ -323,6 +325,7 @@ typedef enum {
     GAME_STATE_PC_MENU = 18,
     GAME_STATE_POKEDEX_MENU = 19,
     GAME_STATE_POKEDEX_INFO = 20,
+    GAME_STATE_POKEMON_CENTER_HEAL = 21,
 } GameState;
 
 typedef enum {
@@ -807,6 +810,7 @@ static void battleUiSetSingleMessage(BattleState *state, const char *msg) {
     for (int i = 0; i < BATTLE_MSG_MAX; i++) {
         state->messages[i][0] = '\0';
         state->messageFlags[i] = 0;
+        state->hitEffects[i] = (signed char)BATTLE_HIT_EFFECT_NORMAL;
         state->hpAfterPlayer[i] = -1;
         state->hpAfterEnemy[i] = -1;
         state->displayPlayerIndex[i] = -1;
@@ -1007,6 +1011,37 @@ int main(void)
     GameState currentGameState = GAME_STATE_MAP;
     const char *dialogueText = NULL;
     GameState dialogueReturnState = GAME_STATE_MAP;
+
+    // Pokemon Center heal animation state
+    int pcHealFrame = 0;
+    int pcHealTimer = 0;
+    int pcHealPulseFrame = 0;
+    bool pcHealDone = false;
+    // SHADE_PULSE_FRAME_COUNT = 16 total frames, run ~3 full cycles (~48 ticks)
+    static const int PC_HEAL_ANIM_TICKS = 48;
+    static const int PC_HEAL_ANIM_SPEED = 2; // ticks per pulse frame advance
+    static const int PC_HEAL_POKEBALL_BASE_X = 125;
+    static const int PC_HEAL_POKEBALL_BASE_Y = 158;
+    static const int PC_HEAL_ROW_H = 20; // vertical spacing between rows
+    static const int PC_HEAL_POKEBALL_PX[6] = {
+        125,       // pb1: base X
+        135,       // pb2: base X + 10
+        125,       // pb3: base X as pb1
+        135,       // pb4: same X as pb2
+        125,       // pb5: same X as pb1
+        135,       // pb6: same X as pb2
+    };
+    static const int PC_HEAL_POKEBALL_PY[6] = {
+        52,       // pb1: row 1
+        52,       // pb2: row 1
+        56,       // pb3: row 2
+        56,       // pb4: row 2
+        60,       // pb5: row 3
+        60,       // pb6: row 3
+    };
+    // Ticks each pokeball stays before the next appears
+    static const int PC_HEAL_TICKS_PER_BALL = 8;
+    (void)PC_HEAL_POKEBALL_BASE_X; (void)PC_HEAL_POKEBALL_BASE_Y; (void)PC_HEAL_ROW_H;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
     WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
@@ -2635,14 +2670,18 @@ int main(void)
 
                     const bool playerHpChanged = (battleState.hpAfterPlayer[idx] >= 0);
                     const bool enemyHpChanged = (battleState.hpAfterEnemy[idx] >= 0);
-                    if (playerHpChanged || enemyHpChanged) {
-                        if (msg != NULL && strstr(msg, "super effective") != NULL) {
+                    if (battleState.hitEffects[idx] == (signed char)BATTLE_HIT_EFFECT_STATS_UP) {
+                        play_sfx(stats_up_audio, stats_up_audio_len);
+                    } else if (battleState.hitEffects[idx] == (signed char)BATTLE_HIT_EFFECT_STATS_DOWN) {
+                        play_sfx(stats_fall_audio, stats_fall_audio_len);
+                    } else if (playerHpChanged || enemyHpChanged) {
+                        if (battleState.hitEffects[idx] == (signed char)BATTLE_HIT_EFFECT_SUPER_EFFECTIVE) {
                             play_sfx(super_effective_audio, super_effective_audio_len);
-                        } else if (msg != NULL && strstr(msg, "not very effective") != NULL) {
+                        } else if (battleState.hitEffects[idx] == (signed char)BATTLE_HIT_EFFECT_NOT_EFFECTIVE) {
                             play_sfx(not_effective_audio, not_effective_audio_len);
-                        } else {
-                            play_sfx(hit_normal_audio, hit_normal_audio_len);
                         }
+                    }
+                    if (playerHpChanged || enemyHpChanged) {
                         if (playerHpChanged) playerHitShakeFrame = -2; // start shake next frame at 0
                         if (enemyHpChanged) enemyHitShakeFrame = -2;
                     }
@@ -4160,6 +4199,59 @@ int main(void)
             }
             break;
 
+        case GAME_STATE_POKEMON_CENTER_HEAL: {
+            draw_map();
+            drawMCAnimationPaused();
+
+            if (!pcHealDone) {
+                // How many pokeballs to show (capped at 6)
+                const int numBalls = (playerParty.count < 6) ? playerParty.count : 6;
+                // Total ticks = one ball per PC_HEAL_TICKS_PER_BALL, then hold
+                // Hold long enough for 3 full shade_pulse cycles after all balls appear
+                // SHADE_PULSE_FRAME_COUNT=16 frames, each advances every PC_HEAL_ANIM_SPEED ticks
+                const int holdTicks = 3 * SHADE_PULSE_FRAME_COUNT * PC_HEAL_ANIM_SPEED; // = 96
+                const int totalTicks = numBalls * PC_HEAL_TICKS_PER_BALL + holdTicks;
+
+                // Advance animation timer
+                pcHealTimer++;
+                if (pcHealTimer == 1 && pcHealFrame == 0) {
+                    // Play recover SFX once at the start
+                    play_sfx(recover_audio, recover_audio_len);
+                }
+                if (pcHealTimer >= PC_HEAL_ANIM_SPEED) {
+                    pcHealTimer = 0;
+                    pcHealPulseFrame = (pcHealPulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+                    pcHealFrame++;
+                }
+
+                // How many pokeballs are visible now
+                int visibleBalls = pcHealFrame / PC_HEAL_TICKS_PER_BALL;
+                if (visibleBalls > numBalls) visibleBalls = numBalls;
+
+                // Draw each visible pokeball with shade_pulse glow
+                for (int b = 0; b < visibleBalls; b++) {
+                    draw_sprite_any_shade_pulse(
+                        pokeballThrowFrames[0],
+                        POKEBALLTHROW_WIDTH, POKEBALLTHROW_HEIGHT,
+                        PC_HEAL_POKEBALL_PX[b],
+                        PC_HEAL_POKEBALL_PY[b],
+                        TRANSPARENT_COLOUR,
+                        pcHealPulseFrame
+                    );
+                }
+
+                if (pcHealFrame >= totalTicks) {
+                    // Animation done: heal the party
+                    healParty(&playerParty);
+                    pcHealDone = true;
+                    dialogueText = NURSE_HEALED_TEXT;
+                    dialogueReturnState = GAME_STATE_MAP;
+                    currentGameState = GAME_STATE_DIALOGUE;
+                }
+            }
+            break;
+        }
+
 
 
         case GAME_STATE_MAP:
@@ -4189,8 +4281,13 @@ int main(void)
                 } else if ((spacePressed || enterPressed) &&
                            map_can_talk_to_pokemon_center_nurse(&mcBounds)) {
                     dialogueText = NURSE_GREETING_TEXT;
-                    dialogueReturnState = GAME_STATE_MAP;
+                    // After greeting, go to heal animation (not back to map)
+                    dialogueReturnState = GAME_STATE_POKEMON_CENTER_HEAL;
                     currentGameState = GAME_STATE_DIALOGUE;
+                    pcHealFrame = 0;
+                    pcHealTimer = 0;
+                    pcHealPulseFrame = 0;
+                    pcHealDone = false;
                 } else if ((spacePressed || enterPressed) &&
                            map_can_talk_to_poke_mart_clerk(&mcBounds)) {
                     dialogueText = CLERK_GREETING_TEXT;

@@ -54,3 +54,13 @@ int getFirstAlivePokemon(Party *party) {
     return -1;
 }
  
+void healParty(Party *party) {
+    if (party == NULL) return;
+    for (int i = 0; i < party->count; i++) {
+        pokemonInBattle *mon = party->slots[i];
+        if (mon == NULL) continue;
+        mon->alive = true;
+        fullRestore(mon);
+        restoreAllPP(mon);
+    }
+}
