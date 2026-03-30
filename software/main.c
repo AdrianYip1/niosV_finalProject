@@ -1028,20 +1028,20 @@ int main(void)
     static const int PC_HEAL_POKEBALL_BASE_Y = 158;
     static const int PC_HEAL_ROW_H = 20; // vertical spacing between rows
     static const int PC_HEAL_POKEBALL_PX[6] = {
-        125,       // pb1: base X
-        135,       // pb2: base X + 10
-        125,       // pb3: base X as pb1
-        135,       // pb4: same X as pb2
-        125,       // pb5: same X as pb1
-        135,       // pb6: same X as pb2
+        124,       // pb1: base X
+        134,       // pb2: base X + 10
+        124,       // pb3: base X as pb1
+        134,       // pb4: same X as pb2
+        124,       // pb5: same X as pb1
+        134,       // pb6: same X as pb2
     };
     static const int PC_HEAL_POKEBALL_PY[6] = {
-        52,       // pb1: row 1
-        52,       // pb2: row 1
-        56,       // pb3: row 2
-        56,       // pb4: row 2
-        60,       // pb5: row 3
-        60,       // pb6: row 3
+        54,       // pb1: row 1
+        54,       // pb2: row 1
+        58,       // pb3: row 2
+        58,       // pb4: row 2
+        62,       // pb5: row 3
+        62,       // pb6: row 3
     };
     // Ticks each pokeball stays before the next appears
     static const int PC_HEAL_TICKS_PER_BALL = 8;

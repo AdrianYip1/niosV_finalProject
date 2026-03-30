@@ -85,7 +85,7 @@ def main() -> None:
         cynthia_out_h,
     )
 
-    nurse_src = Path("ImageConvertHelpers/pokemon_center/pokemon_center_nurse.png")
+    nurse_src = Path("ImageConvertHelpers/buildings/pokemon_center/pokemon_center_nurse.png")
     nurse_out_w = 24
     nurse_out_h = 33
     nurse_header = Path("software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.h")

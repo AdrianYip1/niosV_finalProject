@@ -7,8 +7,8 @@ TRANSPARENT_RGB = (255, 0, 255)
 TRANSPARENT_565 = 0xF81F
 TREE_SRC = Path("ImageConvertHelpers/tree_pink.png")
 GRASS_SRC = Path("ImageConvertHelpers/grass_pink.png")
-POKEMON_CENTER_SRC = Path("ImageConvertHelpers/pokemon_center/pokemon_center.png")
-POKE_MART_SRC = Path("ImageConvertHelpers/poke_mart.png")
+POKEMON_CENTER_SRC = Path("ImageConvertHelpers/buildings/pokemon_center/pokemon_center.png")
+POKE_MART_SRC = Path("ImageConvertHelpers/buildings/poke_mart.png")
 OUT_C = Path("software/graphics/backdrops/decor_tiles.c")
 OUT_H = Path("software/graphics/backdrops/decor_tiles.h")
 
