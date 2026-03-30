@@ -693,6 +693,21 @@ static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
 static bool g_pokedexSeen[POKEMON_ID_TOGEKISS + 1];
 static bool g_pokedexCaught[POKEMON_ID_TOGEKISS + 1];
 
+static void make_sprite_black(const unsigned short *sprite,
+                              int width, int height,
+                              int x, int y,
+                              short transparent)
+{
+    if (sprite == NULL || width <= 0 || height <= 0) return;
+    for (int sy = 0; sy < height; sy++) {
+        for (int sx = 0; sx < width; sx++) {
+            const unsigned short c = sprite[sy * width + sx];
+            if (c == (unsigned short)transparent) continue;
+            draw_pixel(x + sx, y + sy, BLACK);
+        }
+    }
+}
+
 static const unsigned short *pokedex_type_sprite_for(PokemonType t, int *outW, int *outH) {
     if (outW) *outW = 0;
     if (outH) *outH = 0;
@@ -4242,6 +4257,18 @@ int main(void)
 
         case GAME_STATE_POKEDEX_MENU:
             {
+                // Handle scrolling before drawing 
+                if (upPressed) {
+                    if (pokedexScrollIndex <= POKEMON_ID_CHARMANDER) pokedexScrollIndex = POKEMON_ID_TOGEKISS;
+                    else pokedexScrollIndex--;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+                if (downPressed) {
+                    if (pokedexScrollIndex >= POKEMON_ID_TOGEKISS) pokedexScrollIndex = POKEMON_ID_CHARMANDER;
+                    else pokedexScrollIndex++;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+
                 int pokedexScrollIndexBottom = pokedexScrollIndex + 7;
                 int number = 0;
 
@@ -4253,7 +4280,7 @@ int main(void)
 
                 // For non-selected, they go down by 30 pixels
                 // Draw text, pokemon, seen, etc
-                for (int i = pokedexScrollIndex; i < pokedexScrollIndexBottom && i <= POKEMON_ID_TOGEKISS; i++) {
+                for (int i = pokedexScrollIndex; i < pokedexScrollIndexBottom; i++) {
                     const PokemonData *species = speciesFromPokemonSpriteId(i);
                     const char *name = (species != NULL && species->name != NULL) ? species->name : "???";
                     if (number == 0) {
@@ -4304,18 +4331,10 @@ int main(void)
                         }
                     } else {
                         draw_string_f(197, 8 + (30 * number), "???", WHITE, FONT_5X9);
+                        make_sprite_black(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
                     }
 
                     number++;
-                }
-
-                if (upPressed) {
-                    if (pokedexScrollIndex > POKEMON_ID_CHARMANDER) pokedexScrollIndex--;
-                }
-                if (downPressed) {
-                    // Wrap to the start when reaching the end 
-                    if (pokedexScrollIndex >= POKEMON_ID_TOGEKISS) pokedexScrollIndex = POKEMON_ID_CHARMANDER;
-                    else pokedexScrollIndex++;
                 }
 
                 if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
@@ -4338,12 +4357,17 @@ int main(void)
                 const int id = pokedexSelectedId;
                 const PokemonData *species = speciesFromPokemonSpriteId(id);
                 const bool seen = pokedex_is_seen(id);
+                const bool caught = pokedex_is_caught(id);
 
                 // Selected pokemon front sprite
                 if (seen) {
                     StaticSprite front = (StaticSprite){0};
                     if (initPokemonFrontBattleSprite(&front, id, 17, 12)) {
-                        drawStaticSprite(&front);
+                        if (caught) {
+                            drawStaticSprite(&front);
+                        } else {
+                            make_sprite_black(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                        }
                     }
                 }
 
