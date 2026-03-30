@@ -688,7 +688,7 @@ static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
     return (grassEncounterRng % 10u) == 0u;
 }
 
-// -------------------- Pokedex state --------------------
+//pokedex state
 
 static bool g_pokedexSeen[POKEMON_ID_TOGEKISS + 1];
 static bool g_pokedexCaught[POKEMON_ID_TOGEKISS + 1];
@@ -861,8 +861,6 @@ static void draw_sprite_any_rot90_cw(const unsigned short *sprite,
     if (sprite == NULL || width <= 0 || height <= 0) return;
 
     // 90° clockwise rotation.
-    // Source (sx, sy) maps to dest (dx, dy):
-    // dx = (height - 1 - sy), dy = sx
     for (int sy = 0; sy < height; sy++) {
         for (int sx = 0; sx < width; sx++) {
             const unsigned short colour = sprite[sy * width + sx];
@@ -4256,79 +4254,35 @@ int main(void)
 
 
         case GAME_STATE_POKEDEX_MENU:
-            {
-                if (pokedexCursor < 0) pokedexCursor = 0;
-                if (pokedexCursor >= POKEDEX_SPECIES_COUNT) pokedexCursor = POKEDEX_SPECIES_COUNT - 1;
-                if (pokedexTopIndex < 0) pokedexTopIndex = 0;
+           
+            draw_sprite_any(pokedexPokemonSprite, POKEDEX_MENU_POKEMON_WIDTH, POKEDEX_MENU_POKEMON_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, -1, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexSelectSprite, POKEDEX_MENU_SELECT_WIDTH,POKEDEX_MENU_SELECT_HEIGHT, 3, 3, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexBottomSprite,POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR );
+            draw_sprite_any(scrollMenuSprite, POKEDEX_MENU_SCROLL_MENU_WIDTH, POKEDEX_MENU_SCROLL_MENU_HEIGHT,320 - POKEDEX_MENU_SCROLL_MENU_WIDTH, 3, TRANSPARENT_COLOUR );
+            draw_sprite_any(pokedexCaughtSelectedSprite, POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT, 167, 0, TRANSPARENT_COLOUR);
 
-                const int visibleCount = 8;
-                const int prevCursor = pokedexCursor;
-                if (upPressed && pokedexCursor > 0) pokedexCursor--;
-                if (downPressed && pokedexCursor < (POKEDEX_SPECIES_COUNT - 1)) pokedexCursor++;
-                if (pokedexCursor != prevCursor) play_sfx(plink_audio, plink_audio_len);
+            //for non selected, they go down my 30 pixels
 
-                if (pokedexTopIndex > pokedexCursor) pokedexTopIndex = pokedexCursor;
-                if (pokedexTopIndex < pokedexCursor - (visibleCount - 1)) {
-                    pokedexTopIndex = pokedexCursor - (visibleCount - 1);
-                }
-                const int maxTop = (POKEDEX_SPECIES_COUNT > visibleCount) ? (POKEDEX_SPECIES_COUNT - visibleCount) : 0;
-                if (pokedexTopIndex > maxTop) pokedexTopIndex = maxTop;
+            draw_sprite_any(pokedexCaughtSprite,POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, 167, 30, TRANSPARENT_COLOUR);
+            //draw text, pokemon, seen, etc
 
-                if (spacePressed || enterPressed) {
-                    currentGameState = GAME_STATE_POKEDEX_INFO;
-                    play_sfx(plink_audio, plink_audio_len);
-                } else if (escPressed) {
-                    currentGameState = GAME_STATE_MAP;
-                    play_sfx(plink_audio, plink_audio_len);
-                }
-
-                draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-
-                const int listX = 28;
-                const int listY = 34;
-                const int lineH = 22;
-                const int rowW = 255;
-                for (int row = 0; row < visibleCount; row++) {
-                    const int idx = pokedexTopIndex + row;
-                    if (idx < 0 || idx >= POKEDEX_SPECIES_COUNT) continue;
-                    const PokemonData *species = g_pokedexSpecies[idx];
-                    if (species == NULL) continue;
-                    const int pokemonId = species->id;
-                    const bool seen = pokedex_is_seen(pokemonId);
-                    const bool caught = pokedex_is_caught(pokemonId);
-
-                    const int y = listY + row * lineH;
-                    if (idx == pokedexCursor) {
-                        draw_rect_outline(listX - 6, y - 3, rowW, lineH, RED);
-                    }
-
-                    char line[48];
-                    if (seen) {
-                        snprintf(line, sizeof(line), "%03d  %s", pokemonId, species->name ? species->name : "");
-                    } else {
-                        snprintf(line, sizeof(line), "%03d  ???", pokemonId);
-                    }
-                    draw_string(listX, y, line, BLACK);
-
-                    const int iconX = 278;
-                    const int iconY = y - 4;
-                    if (caught) {
-                        draw_sprite_any(pokedexCaughtSprite, POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, iconX, iconY, TRANSPARENT_COLOUR);
-                    } else if (seen) {
-                        draw_sprite_any_greyscale(pokedexCaughtSprite, POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT, iconX, iconY, TRANSPARENT_COLOUR);
-                    }
-                }
-
-                draw_sprite_any(scrollMenuSprite,
-                                POKEDEX_MENU_SCROLL_MENU_WIDTH,
-                                POKEDEX_MENU_SCROLL_MENU_HEIGHT,
-                                308,
-                                20,
-                                TRANSPARENT_COLOUR);
-            }
+            if (spacePressed) currentGameState = GAME_STATE_POKEDEX_INFO;
+            if (escPressed) currentGameState = GAME_STATE_MAP;
             break;
     
+        case GAME_STATE_POKEDEX_INFO:
+            draw_sprite_any(pokemonSelectedPokedexSprite,POKEDEX_MENU_POKEMON_SELECTED_POKEDEX_WIDTH,POKEDEX_MENU_POKEMON_SELECTED_POKEDEX_HEIGHT, 0,0, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexDescriptionSprite,POKEDEX_MENU_DESCRIPTION_WIDTH, POKEDEX_MENU_DESCRIPTION_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexBottomSprite,POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR );
+            draw_sprite_any(pokedexDownArrowSprite, POKEDEX_MENU_DOWN_ARROW_WIDTH,POKEDEX_MENU_DOWN_ARROW_HEIGHT, 59, 208, TRANSPARENT_COLOUR);
+            draw_sprite_any(pokedexUpArrowSprite, POKEDEX_MENU_UP_ARROW_WIDTH, POKEDEX_MENU_UP_ARROW_HEIGHT, 11, 208, TRANSPARENT_COLOUR);
 
+            draw_sprite_any(pokedexXSprite, POKEDEX_MENU_X_WIDTH, POKEDEX_MENU_X_HEIGHT, 288, 210, TRANSPARENT_COLOUR);
+
+            if(escPressed) currentGameState = GAME_STATE_POKEDEX_MENU;
+
+            break;
         case GAME_STATE_MAP:
         default:
             {

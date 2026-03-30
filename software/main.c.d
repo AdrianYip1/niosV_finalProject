@@ -11,6 +11,8 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/gameplayLogic/../graphics/mcWalkingDraw.h \
  software/graphics/tiles.h software/graphics/predefined_graphics.h \
  software/graphics/map.h software/graphics/mcWalkingDraw.h \
+ software/graphics/sprites/pokedexMenu/pokedexMenuSprites.h \
+ software/graphics/sprites/pokedexTypes/pokedexTypesSprites.h \
  software/graphics/sprites/pcMenu/pcMenuSprites.h \
  software/graphics/sprites/vsCynthia/vsCynthiaSprite.h \
  software/graphics/titleScreen/titleScreenDraw.h \
@@ -92,6 +94,8 @@ software/graphics/tiles.h:
 software/graphics/predefined_graphics.h:
 software/graphics/map.h:
 software/graphics/mcWalkingDraw.h:
+software/graphics/sprites/pokedexMenu/pokedexMenuSprites.h:
+software/graphics/sprites/pokedexTypes/pokedexTypesSprites.h:
 software/graphics/sprites/pcMenu/pcMenuSprites.h:
 software/graphics/sprites/vsCynthia/vsCynthiaSprite.h:
 software/graphics/titleScreen/titleScreenDraw.h:
