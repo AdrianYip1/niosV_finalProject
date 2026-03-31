@@ -75,6 +75,7 @@ SRCS := software/main.c \
         software/graphics/sprites/spacebar/spacebar_frames.c \
         software/graphics/sprites/arrowGif/arrowGif_frames.c \
         software/graphics/sprites/pokeballThrow/pokeballThrow_frames.c \
+        software/graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterClerkSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterDeskSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.c \
