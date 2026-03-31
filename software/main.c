@@ -1418,7 +1418,7 @@ int main(void)
     int pokedexScrollIndex = POKEMON_ID_CHARMANDER;
     int pokedexInfoCursor = 1; // 0=up arrow, 1=down arrow, 2=X
 
-    // Main menu UI + evolution placeholder state
+    // Main menu UI + evolution placeholder
     int evolutionFrame = 0;
     int evolutionTimer = 0;
 
