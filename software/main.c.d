@@ -66,6 +66,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/gameplayLogic/battling/../entities/learnSet.h \
  software/gameplayLogic/battling/../bag.h \
  software/gameplayLogic/battling/party.h \
+ software/gameplayLogic/entities/pokedexDatabase.h \
  software/gameplayLogic/itemDatabase.h \
  software/gameplayLogic/storage/pc.h \
  software/graphics/sprites/battleItemsUI/useLastItem.h \
@@ -150,6 +151,7 @@ software/gameplayLogic/battling/../entities/pokemonDataBase.h:
 software/gameplayLogic/battling/../entities/learnSet.h:
 software/gameplayLogic/battling/../bag.h:
 software/gameplayLogic/battling/party.h:
+software/gameplayLogic/entities/pokedexDatabase.h:
 software/gameplayLogic/itemDatabase.h:
 software/gameplayLogic/storage/pc.h:
 software/graphics/sprites/battleItemsUI/useLastItem.h:
