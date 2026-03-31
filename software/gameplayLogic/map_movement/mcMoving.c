@@ -123,7 +123,7 @@ McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift)
         }
     }
 
-    int speed_multiplier = shift ? 3 : 1;
+    int speed_multiplier = shift ? 6 : 2;
     bool movedThisTick = false;
     for (int i = 0; i < speed_multiplier; i++) {
         stepCounter++;

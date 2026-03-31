@@ -28,6 +28,7 @@ void drawMCAnimationPaused(void);
 McBounds getMCBounds(void);
 void getMCPosition(int *x, int *y);
 void setMCScale(int numerator, int denominator);
+void startMCJumpEffect(void);
 void goUp(void);
 void goDown(void);
 void goLeft(void);

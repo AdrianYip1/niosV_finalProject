@@ -13,6 +13,14 @@
 
 short tiles[TILE_COUNT][TILE_SIZE * TILE_SIZE] = {0};
 
+static void rotate_tile_clockwise(const short *src, short *dst) {
+    for (int y = 0; y < TILE_SIZE; y++) {
+        for (int x = 0; x < TILE_SIZE; x++) {
+            dst[x * TILE_SIZE + (TILE_SIZE - 1 - y)] = src[y * TILE_SIZE + x];
+        }
+    }
+}
+
 void init_predefined_graphics(void)
 {
    //precompute graphics for tiles maybe
@@ -63,6 +71,9 @@ void init_predefined_graphics(void)
     memcpy(tiles[TILE_CLIFF_LEFT], cliff_left_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_CLIFF_MIDDLE], cliff_middle_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_CLIFF_RIGHT], cliff_right_tile, sizeof(tiles[0]));
+    rotate_tile_clockwise(cliff_left_tile, tiles[TILE_CLIFF_TOP]);
+    rotate_tile_clockwise(cliff_middle_tile, tiles[TILE_CLIFF_MIDDLE_VERTICAL]);
+    rotate_tile_clockwise(cliff_right_tile, tiles[TILE_CLIFF_BOTTOM]);
 
     for (int i = 0; i < BACKDROP1_TILE_COUNT; i++) {
         memcpy(tiles[TILE_BACKDROP1_START + i], backdrop1_tiles[i], sizeof(tiles[0]));

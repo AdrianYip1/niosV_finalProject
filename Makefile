@@ -84,6 +84,14 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseLeftSprite.c \
         software/graphics/sprites/trainerSprites/cynthiaFrontMapSprite.c \
+        software/graphics/sprites/trainerSprites/professorOakFrontMapSprite.c \
+        software/graphics/sprites/trainerSprites/professorOakBackMapSprite.c \
+        software/graphics/sprites/trainerSprites/professorOakLeftMapSprite.c \
+        software/graphics/sprites/trainerSprites/professorOakRightMapSprite.c \
+        software/graphics/sprites/trainerSprites/npc1FrontMapSprite.c \
+        software/graphics/sprites/trainerSprites/npc1BackMapSprite.c \
+        software/graphics/sprites/trainerSprites/npc1LeftMapSprite.c \
+        software/graphics/sprites/trainerSprites/npc1RightMapSprite.c \
         software/graphics/sprites/trainerSprites/trainerLeftMapSprite.c \
         software/graphics/sprites/trainerSprites/trainerWalking_frames.c \
         software/graphics/titleScreen/titleScreen_frames.c \

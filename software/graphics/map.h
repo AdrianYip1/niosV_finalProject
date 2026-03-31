@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "predefined_graphics.h"
 #include "mcWalkingDraw.h"
+#include <stddef.h>
 
 // Map size in tiles (320x240 = 20x15 tiles)
 #define MAP_WIDTH  20
@@ -52,12 +53,19 @@ void apply_map_decor(void);
 void apply_map_decor_layout(MapDecorLayout layout);
 void draw_map_cell(int x, int y);
 bool map_can_talk_to_route_b_cynthia(const McBounds *bounds);
+bool map_can_talk_to_gym_cynthia(const McBounds *bounds);
 bool map_can_talk_to_pokemon_center_nurse(const McBounds *bounds);
+bool map_can_talk_to_pokemon_center_npc1(const McBounds *bounds);
+void map_face_pokemon_center_npc1_toward(const McBounds *bounds);
 bool map_can_talk_to_poke_mart_clerk(const McBounds *bounds);
 bool map_is_mc_on_grass_patch(const McBounds *bounds);
 bool map_can_use_pokemon_center_pc(const McBounds *bounds);
+bool map_get_route_a_pokemon_center_position(MapTilePosition *out_position);
+bool map_get_route_a_poke_mart_position(MapTilePosition *out_position);
 bool map_get_route_a_house_position(MapTilePosition *out_position);
 bool map_get_route_b_gym_position(MapTilePosition *out_position);
+void map_set_route_b_trainer_defeated(bool defeated);
+bool map_is_route_b_trainer_defeated(void);
 void map_reset_route_b_trainer(void);
 bool map_tick_route_b_trainer_event(const McBounds *bounds);
 bool map_consume_route_b_trainer_arrival(void);
