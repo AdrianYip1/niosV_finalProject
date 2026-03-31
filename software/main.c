@@ -329,6 +329,11 @@ typedef enum {
     GAME_STATE_POKEDEX_INFO,
     GAME_STATE_DIALOGUE,
     GAME_STATE_POKEMON_CENTER_HEAL,
+    GAME_STATE_BAG_MENU_ITEMS,
+    GAME_STATE_BAG_MENU_POKEBALLS,
+    GAME_STATE_BAG_MENU_TMS,
+    GAME_STATE_BAG_MENU_BERRIES,
+    GAME_STATE_BAG_MENU_KEY_ITEMS,
 } GameState;
 
 typedef enum {
@@ -359,7 +364,12 @@ static inline bool isOverworldState(GameState state) {
            state == GAME_STATE_POKEDEX_MENU ||
            state == GAME_STATE_POKEDEX_INFO ||
            state == GAME_STATE_DIALOGUE || 
-           state == GAME_STATE_POKEMON_CENTER_HEAL;
+           state == GAME_STATE_POKEMON_CENTER_HEAL || 
+           state == GAME_STATE_BAG_MENU_ITEMS || 
+           state == GAME_STATE_BAG_MENU_POKEBALLS|| 
+           state == GAME_STATE_BAG_MENU_TMS|| 
+           state == GAME_STATE_BAG_MENU_BERRIES|| 
+           state == GAME_STATE_BAG_MENU_KEY_ITEMS;
 }
 
 
@@ -1555,8 +1565,8 @@ int main(void)
         switch (currentGameState) {
         case GAME_STATE_MENU: {
             // Global menu UI offset tweak.
-            const int menuX = ((SCREEN_WIDTH - MENU_PARTY_MENU_WIDTH) / 2) - 4;
-            const int menuY = ((SCREEN_HEIGHT - MENU_PARTY_MENU_HEIGHT) / 2) - 4;
+            const int menuX = 0;
+            const int menuY = 0;
 
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 6) menuCursor = 6;
@@ -1595,7 +1605,7 @@ int main(void)
             draw_map();
             draw_sprite_any(partyMenuSprite,
                             MENU_PARTY_MENU_WIDTH, MENU_PARTY_MENU_HEIGHT,
-                            menuX, menuY,
+                            0, 0,
                             TRANSPARENT_COLOUR);
 
             const int slotW = 128;
@@ -1610,31 +1620,38 @@ int main(void)
             for (int i = 0; i < 6; i++) {
                 const int slotX = menuX + (i % 2) * slotW;
                 const int slotY = menuY + (i / 2) * slotH;
-                const int colYOffset = ((i % 2) == 1) ? 8 : 0;
+                const int colYOffset = ((i % 2) == 1) ? 9 : 0;
                 const bool isSelected = (i == menuCursor) || (i == menuSwapIndex);
                 const bool isLeaderSlot = (i == 0);
+                int dy;
+                if (i == 0 || i == 1) dy = 0;
+                else if (i == 2 || i ==3) dy == 48;
+                else if ( i == 4 ||i==5) dy == 48 + 48;
+  
+                const int dx = ((i % 2) == 1) ? (161 - 33) : 0; 
+                const int selected_dy;
                 if (isLeaderSlot) {
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
                                         MENU_PARTY_LEADER_SELECTED_WIDTH, MENU_PARTY_LEADER_SELECTED_HEIGHT,
-                                        slotX + leaderSelectedDx - 4, slotY + leaderSelectedDy + colYOffset -8,
+                                        32, 24,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(partyLeaderUnselectedSprite,
                                         MENU_PARTY_LEADER_UNSELECTED_WIDTH, MENU_PARTY_LEADER_UNSELECTED_HEIGHT,
-                                        slotX + leaderUnselectedDx - 4, slotY + leaderUnselectedDy + colYOffset - 4,
+                                        33, 27,
                                         TRANSPARENT_COLOUR);
                     }
                 } else {
                     if (isSelected) {
                         draw_sprite_any(pokemonSelectedSprite,
                                         MENU_POKEMON_SELECTED_WIDTH, MENU_POKEMON_SELECTED_HEIGHT,
-                                        slotX, slotY + colYOffset,
+                                        32 + dx, 24 + colYOffset + dy,
                                         TRANSPARENT_COLOUR);
                     } else {
                         draw_sprite_any(pokemonUnselectedSprite,
                                         MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
-                                        slotX + unselectedDx - 4, slotY + unselectedDy + colYOffset - 4,
+                                       33 + dx, 27 + colYOffset + dy,
                                         TRANSPARENT_COLOUR);
                     }
                 }
@@ -1728,8 +1745,8 @@ int main(void)
 
             // Cancel button (replaces ESC-to-exit).
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
-            const int cancelX = menuX + CANCEL_X;
-            const int cancelY = menuY + CANCEL_Y;
+            const int cancelX = 232;
+            const int cancelY = 188;
             if (menuCursor == 6) {
                 draw_sprite_any_shade_pulse(cancelSprite,
                                             CANCEL_SPRITE_WIDTH, CANCEL_SPRITE_HEIGHT,
@@ -1746,7 +1763,7 @@ int main(void)
             {
                 char moneyBuf[32];
                 snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
-                draw_string_f(menuX + 8, menuY + MENU_PARTY_MENU_HEIGHT - 12 - 40 + 10, moneyBuf, BLACK, 1);
+                draw_string_f(39, 174, moneyBuf, BLACK, 1);
             }
 
             // Space selects a pokemon to swap; pressing Space on another swaps the two.
@@ -4105,6 +4122,21 @@ int main(void)
 
             break;
         }
+
+        case GAME_STATE_BAG_MENU_ITEMS:
+        break;
+
+        case GAME_STATE_BAG_MENU_POKEBALLS:
+        break;
+
+        case GAME_STATE_BAG_MENU_TMS:
+        break;
+
+        case GAME_STATE_BAG_MENU_BERRIES:
+        break;
+
+        case GAME_STATE_BAG_MENU_KEY_ITEMS:
+        break;
 
         case GAME_STATE_PC_MENU: {
 

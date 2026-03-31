@@ -20,6 +20,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/textbox/textMessages.h \
  software/graphics/sprites/spacebar/spacebar_frames.h \
  software/graphics/sprites/arrowGif/arrowGif_frames.h \
+ software/graphics/sprites/pokeballSprites/smallPokeballSprite.h \
  software/../hardware/keyboard.h software/../hardware/audio.h \
  software/../software/se/opening_audio.h \
  software/../software/se/introduction_audio.h \
@@ -32,11 +33,13 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/../software/se/pokeball_audio.h \
  software/../software/se/pokeball_shaking_audio.h \
  software/../software/se/caught_pokemon_audio.h \
- software/../software/se/hit_normal_audio.h \
  software/../software/se/super_effective_audio.h \
  software/../software/se/not_effective_audio.h \
+ software/../software/se/stats_up_audio.h \
+ software/../software/se/stats_fall_audio.h \
  software/../software/se/pc_se_audio.h \
  software/../software/se/recover_audio.h \
+ software/../software/se/pokemon_healed_audio.h \
  software/../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h \
  software/../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h \
  software/textinput/getTextFromUser.h \
@@ -104,6 +107,7 @@ software/graphics/textbox/textBoxSprite.h:
 software/graphics/textbox/textMessages.h:
 software/graphics/sprites/spacebar/spacebar_frames.h:
 software/graphics/sprites/arrowGif/arrowGif_frames.h:
+software/graphics/sprites/pokeballSprites/smallPokeballSprite.h:
 software/../hardware/keyboard.h:
 software/../hardware/audio.h:
 software/../software/se/opening_audio.h:
@@ -117,11 +121,13 @@ software/../software/se/plink_audio.h:
 software/../software/se/pokeball_audio.h:
 software/../software/se/pokeball_shaking_audio.h:
 software/../software/se/caught_pokemon_audio.h:
-software/../software/se/hit_normal_audio.h:
 software/../software/se/super_effective_audio.h:
 software/../software/se/not_effective_audio.h:
+software/../software/se/stats_up_audio.h:
+software/../software/se/stats_fall_audio.h:
 software/../software/se/pc_se_audio.h:
 software/../software/se/recover_audio.h:
+software/../software/se/pokemon_healed_audio.h:
 software/../software/graphics/sprites/pokemonAreas/pokemonAreaBack.h:
 software/../software/graphics/sprites/pokemonAreas/pokemonAreaFront.h:
 software/textinput/getTextFromUser.h:

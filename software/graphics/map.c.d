@@ -10,6 +10,7 @@ software/graphics/map.c.o: software/graphics/map.c \
  software/graphics/sprites/pokemonCenter/pokemonCenterClerkSprite.h \
  software/graphics/sprites/pokemonCenter/pokemonCenterDeskSprite.h \
  software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.h \
+ software/graphics/sprites/pokemonCenter/pokemonCenterNurseLeftSprite.h \
  software/graphics/sprites/trainerSprites/cynthiaFrontMapSprite.h
 software/graphics/map.h:
 software/graphics/predefined_graphics.h:
@@ -25,4 +26,5 @@ software/graphics/backdrops/poke_mart_interior_tiles.h:
 software/graphics/sprites/pokemonCenter/pokemonCenterClerkSprite.h:
 software/graphics/sprites/pokemonCenter/pokemonCenterDeskSprite.h:
 software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.h:
+software/graphics/sprites/pokemonCenter/pokemonCenterNurseLeftSprite.h:
 software/graphics/sprites/trainerSprites/cynthiaFrontMapSprite.h:
