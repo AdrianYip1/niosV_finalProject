@@ -9,6 +9,8 @@ static const ItemData ITEM_DB[ITEM_ID_COUNT] = {
     [ITEM_SUPER_POTION] = {ITEM_SUPER_POTION, "Super Potion", "Restores 60 HP."},
     [ITEM_HYPER_POTION] = {ITEM_HYPER_POTION, "Hyper Potion", "Restores 120 HP."},
     [ITEM_FULL_RESTORE] = {ITEM_FULL_RESTORE, "Full Restore", "Fully restores HP and cures any status condition of a Pokémon."},
+    [ITEM_REVIVE] = {ITEM_REVIVE, "Revive", "A medicine that can be used to revive a Pokémon that has fainted. It also restores half the Pokémon's max HP."},
+    [ITEM_MAX_REVIVE] = {ITEM_MAX_REVIVE, "Max Revive", "A medicine that can revive fainted Pokémon. It also fully restores a fainted Pokémon's maximum HP"},
 
     // Balls
     [ITEM_POKEBALL] = {ITEM_POKEBALL, "Poke Ball", "Catches wild Pokemon."},

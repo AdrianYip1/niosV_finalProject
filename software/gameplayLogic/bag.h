@@ -9,6 +9,8 @@ typedef enum {
     ITEM_SUPER_POTION,
     ITEM_HYPER_POTION,
     ITEM_FULL_RESTORE,
+    ITEM_REVIVE,
+    ITEM_MAX_REVIVE,
 
     // Pokeballs
     ITEM_POKEBALL,

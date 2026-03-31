@@ -1287,6 +1287,9 @@ int main(void)
     bagAdd(&playerBag, ITEM_ULTRA_BALL, 1);
     bagAdd(&playerBag, ITEM_PREMIER_BALL, 1);
     bagAdd(&playerBag, ITEM_MASTER_BALL, 99);
+    bagAdd(&playerBag, ITEM_REVIVE, 3);
+    bagAdd(&playerBag, ITEM_MAX_REVIVE, 3);
+
 
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
@@ -1305,7 +1308,7 @@ int main(void)
     }
 
     initParty(&enemyParty);
-    initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
+    initPokemonInBattle(&wildEnemy, &CHARMANDER, 15);
     addPokemonToParty(&enemyParty, &wildEnemy);
     initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, BATTLE_WILD);
 
@@ -2657,6 +2660,8 @@ int main(void)
                     else if (item == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_REVIVE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
 
                     if (icon != NULL) {
                         draw_sprite_any(icon,
@@ -2727,6 +2732,8 @@ int main(void)
                                 else if (item == ITEM_SUPER_POTION) icon = healingItemIcon_superPotion;
                                 else if (item == ITEM_HYPER_POTION) icon = healingItemIcon_hyperPotion;
                                 else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
+                                else if (item == ITEM_REVIVE) icon = healingItemIcon_hyperPotion;
+                                else if (item == ITEM_MAX_REVIVE) icon = healingItemIcon_fullRestore;
 
                                 if (icon != NULL) {
                                     draw_sprite_any(icon,
@@ -2769,6 +2776,8 @@ int main(void)
                         else if (bagDescItem == ITEM_SUPER_POTION) itemIcon = healingItemIcon_superPotion;
                         else if (bagDescItem == ITEM_HYPER_POTION) itemIcon = healingItemIcon_hyperPotion;
                         else if (bagDescItem == ITEM_FULL_RESTORE) itemIcon = healingItemIcon_fullRestore;
+                        else if (bagDescItem == ITEM_REVIVE) itemIcon = healingItemIcon_hyperPotion;
+                        else if (bagDescItem == ITEM_MAX_REVIVE) itemIcon = healingItemIcon_fullRestore;
                         if (itemIcon != NULL) {
                             itemIconW = HEALING_ITEM_ICON_WIDTH;
                             itemIconH = HEALING_ITEM_ICON_HEIGHT;
