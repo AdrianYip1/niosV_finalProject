@@ -374,6 +374,14 @@ static inline bool isOverworldState(GameState state) {
            state == GAME_STATE_BAG_MENU_KEY_ITEMS;
 }
 
+static inline bool isBagMenuState(GameState state) {
+    return state == GAME_STATE_BAG_MENU_ITEMS ||
+           state == GAME_STATE_BAG_MENU_POKEBALLS ||
+           state == GAME_STATE_BAG_MENU_TMS ||
+           state == GAME_STATE_BAG_MENU_BERRIES ||
+           state == GAME_STATE_BAG_MENU_KEY_ITEMS;
+}
+
 
 
 static inline int clamp_int(int v, int lo, int hi) {
@@ -1422,11 +1430,11 @@ int main(void)
         bool enterPressed = false;
         {
             char ch = 0;
-            while (keyboard_pop_char(&ch)) {
-                if (ch == '2') {
-                    currentGameState = GAME_STATE_MAP;
-                    nextBattleType = BATTLE_WILD;
-                } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
+                while (keyboard_pop_char(&ch)) {
+                    if (ch == '2') {
+                        currentGameState = GAME_STATE_MAP;
+                        nextBattleType = BATTLE_WILD;
+                    } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
                     nextBattleType = BATTLE_WILD;
                     currentGameState = GAME_STATE_WILD_BATTLE;
                 } else if (ch == '3' && currentGameState == GAME_STATE_MAP) {
@@ -1443,16 +1451,23 @@ int main(void)
                     currentGameState = GAME_STATE_PC_MENU;
                     pcCursor = 0;
                     play_sfx(pc_se_audio, pc_se_audio_len);
-                } else if (ch == '6' && currentGameState == GAME_STATE_MAP) {
-                    currentGameState = GAME_STATE_POKEDEX_MENU;
-                    pokedexScrollIndex = POKEMON_ID_CHARMANDER;
-                    pokedexSelectedId = POKEMON_ID_CHARMANDER;
-                    play_sfx(pc_se_audio, pc_se_audio_len);
-                } else if (ch == '\n') {
-                    enterPressed = true;
+                    } else if (ch == '6' && currentGameState == GAME_STATE_MAP) {
+                        currentGameState = GAME_STATE_POKEDEX_MENU;
+                        pokedexScrollIndex = POKEMON_ID_CHARMANDER;
+                        pokedexSelectedId = POKEMON_ID_CHARMANDER;
+                        play_sfx(pc_se_audio, pc_se_audio_len);
+                    } else if (ch == '7') {
+                        
+                        if (currentGameState == GAME_STATE_MAP) {
+                            currentGameState = GAME_STATE_BAG_MENU_ITEMS;
+                        } else if (isBagMenuState(currentGameState)) {
+                            currentGameState = GAME_STATE_MAP;
+                        }
+                    } else if (ch == '\n') {
+                        enterPressed = true;
+                    }
                 }
             }
-        }
 
         const bool wasOverworld = isOverworldState(previousGameState);
         const bool isOverworld = isOverworldState(currentGameState);
