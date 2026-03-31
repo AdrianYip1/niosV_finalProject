@@ -33,7 +33,12 @@ bool bagAdd(Bag *bag, ItemId item, int amount);
 bool bagRemove(Bag *bag, ItemId item, int amount);
 
 static inline bool itemIsHealing(ItemId item) {
-    return item == ITEM_POTION || item == ITEM_SUPER_POTION || item == ITEM_HYPER_POTION || item == ITEM_FULL_RESTORE;
+    return item == ITEM_POTION || item == ITEM_SUPER_POTION || item == ITEM_HYPER_POTION || item == ITEM_FULL_RESTORE ||
+           item == ITEM_REVIVE || item == ITEM_MAX_REVIVE;
+}
+
+static inline bool itemIsRevive(ItemId item) {
+    return item == ITEM_REVIVE || item == ITEM_MAX_REVIVE;
 }
 
 static inline bool itemIsBall(ItemId item) {

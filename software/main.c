@@ -328,6 +328,8 @@ typedef enum {
 
     // Forced switch after player's Pokemon faints.
     GAME_STATE_BATTLE_FORCE_SWITCH,
+    // Target select for Revive/Max Revive in battle.
+    GAME_STATE_BATTLE_ITEM_TARGET,
 
     GAME_STATE_PC_MENU,
     GAME_STATE_POKEDEX_MENU,
@@ -1444,6 +1446,10 @@ int main(void)
     int evolutionPhaseTimer = 0;
     int evolutionPokemonIndex = -1;
     GameState evolutionReturnState = GAME_STATE_MAP;
+    char evolutionFromName[64];
+    char evolutionIntoName[64];
+    evolutionFromName[0] = '\0';
+    evolutionIntoName[0] = '\0';
 
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
@@ -1458,6 +1464,13 @@ int main(void)
 
     // Forced switch UI state.
     int forcedSwitchIndex = 0;
+
+    // Item target select (Revive/Max Revive) state.
+    ItemId itemTargetItem = ITEM_NONE;
+    int itemTargetIndex = 0;
+    BattleUiState itemTargetReturnUi = BATTLE_UI_MENU;
+    int itemTargetReturnCursor = 0;
+    int itemTargetReturnPage = 0;
 
     while (1) {
         update_keyboard();
@@ -2189,18 +2202,28 @@ int main(void)
                                 actionTextTargetExp = actionTextShownExp;
                                 actionTextExpAnimating = false;
 
-                                battleActionPending = true;
-                                pendingBattleAction = ACTION_ITEM;
-                                pendingBattleParam = (int)last;
-                                battleUi = BATTLE_UI_MENU;
-                                battleCursor = 0;
+                                if (itemIsRevive(last)) {
+                                    itemTargetItem = last;
+                                    itemTargetIndex = 0;
+                                    itemTargetReturnUi = battleUi;
+                                    itemTargetReturnCursor = battleCursor;
+                                    itemTargetReturnPage = 0;
+                                    currentGameState = GAME_STATE_BATTLE_ITEM_TARGET;
+                                    previousGameState = GAME_STATE_BATTLE_ITEM_TARGET;
+                                } else {
+                                    battleActionPending = true;
+                                    pendingBattleAction = ACTION_ITEM;
+                                    pendingBattleParam = (int)last;
+                                    battleUi = BATTLE_UI_MENU;
+                                    battleCursor = 0;
 
-                                actionTextReturnUi = BATTLE_UI_MENU;
-                                actionTextReturnCursor = 0;
-                                actionTextReturnGameState = activeBattleMenuState;
-                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                                actionTextAwaitSpaceRelease = true;
+                                    actionTextReturnUi = BATTLE_UI_MENU;
+                                    actionTextReturnCursor = 0;
+                                    actionTextReturnGameState = activeBattleMenuState;
+                                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                    actionTextAwaitSpaceRelease = true;
+                                }
                             }
                         } else {
                             battleUiSetSingleMessage(&battleState, "No last item yet!");
@@ -2283,18 +2306,28 @@ int main(void)
                             actionTextTargetExp = actionTextShownExp;
                             actionTextExpAnimating = false;
 
-                            battleActionPending = true;
-                            pendingBattleAction = ACTION_ITEM;
-                            pendingBattleParam = (int)item;
-                            battleUi = BATTLE_UI_MENU;
-                            battleCursor = 0;
+                            if (itemIsRevive(item)) {
+                                itemTargetItem = item;
+                                itemTargetIndex = 0;
+                                itemTargetReturnUi = bagDescReturnUi;
+                                itemTargetReturnCursor = bagDescReturnCursor;
+                                itemTargetReturnPage = bagDescReturnPage;
+                                currentGameState = GAME_STATE_BATTLE_ITEM_TARGET;
+                                previousGameState = GAME_STATE_BATTLE_ITEM_TARGET;
+                            } else {
+                                battleActionPending = true;
+                                pendingBattleAction = ACTION_ITEM;
+                                pendingBattleParam = (int)item;
+                                battleUi = BATTLE_UI_MENU;
+                                battleCursor = 0;
 
-                            actionTextReturnUi = BATTLE_UI_MENU;
-                            actionTextReturnCursor = 0;
-                            actionTextReturnGameState = activeBattleMenuState;
-                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
-                            actionTextAwaitSpaceRelease = true;
+                                actionTextReturnUi = BATTLE_UI_MENU;
+                                actionTextReturnCursor = 0;
+                                actionTextReturnGameState = activeBattleMenuState;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
+                            }
                         }
                     } else {
                         battleUi = bagDescReturnUi;
@@ -2660,8 +2693,8 @@ int main(void)
                     else if (item == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
-                    else if (item == ITEM_REVIVE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
-                    else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_REVIVE) { icon = healingItemIcon_revive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
 
                     if (icon != NULL) {
                         draw_sprite_any(icon,
@@ -2728,12 +2761,12 @@ int main(void)
                                 }
                             } else if (battleUi == BATTLE_UI_BAG_HP_LIST) {
                                 const unsigned short *icon = NULL;
-                                if (item == ITEM_POTION) icon = healingItemIcon_potion;
-                                else if (item == ITEM_SUPER_POTION) icon = healingItemIcon_superPotion;
-                                else if (item == ITEM_HYPER_POTION) icon = healingItemIcon_hyperPotion;
-                                else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
-                                else if (item == ITEM_REVIVE) icon = healingItemIcon_hyperPotion;
-                                else if (item == ITEM_MAX_REVIVE) icon = healingItemIcon_fullRestore;
+                                 if (item == ITEM_POTION) icon = healingItemIcon_potion;
+                                 else if (item == ITEM_SUPER_POTION) icon = healingItemIcon_superPotion;
+                                 else if (item == ITEM_HYPER_POTION) icon = healingItemIcon_hyperPotion;
+                                 else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
+                                 else if (item == ITEM_REVIVE) icon = healingItemIcon_revive;
+                                 else if (item == ITEM_MAX_REVIVE) icon = healingItemIcon_maxRevive;
 
                                 if (icon != NULL) {
                                     draw_sprite_any(icon,
@@ -2772,16 +2805,16 @@ int main(void)
                         itemIconW = POKEBALL_ICON_WIDTH;
                         itemIconH = POKEBALL_ICON_HEIGHT;
                     } else {
-                        if (bagDescItem == ITEM_POTION) itemIcon = healingItemIcon_potion;
-                        else if (bagDescItem == ITEM_SUPER_POTION) itemIcon = healingItemIcon_superPotion;
-                        else if (bagDescItem == ITEM_HYPER_POTION) itemIcon = healingItemIcon_hyperPotion;
-                        else if (bagDescItem == ITEM_FULL_RESTORE) itemIcon = healingItemIcon_fullRestore;
-                        else if (bagDescItem == ITEM_REVIVE) itemIcon = healingItemIcon_hyperPotion;
-                        else if (bagDescItem == ITEM_MAX_REVIVE) itemIcon = healingItemIcon_fullRestore;
-                        if (itemIcon != NULL) {
-                            itemIconW = HEALING_ITEM_ICON_WIDTH;
-                            itemIconH = HEALING_ITEM_ICON_HEIGHT;
-                        }
+                         if (bagDescItem == ITEM_POTION) itemIcon = healingItemIcon_potion;
+                         else if (bagDescItem == ITEM_SUPER_POTION) itemIcon = healingItemIcon_superPotion;
+                         else if (bagDescItem == ITEM_HYPER_POTION) itemIcon = healingItemIcon_hyperPotion;
+                         else if (bagDescItem == ITEM_FULL_RESTORE) itemIcon = healingItemIcon_fullRestore;
+                         else if (bagDescItem == ITEM_REVIVE) itemIcon = healingItemIcon_revive;
+                         else if (bagDescItem == ITEM_MAX_REVIVE) itemIcon = healingItemIcon_maxRevive;
+                         if (itemIcon != NULL) {
+                             itemIconW = HEALING_ITEM_ICON_WIDTH;
+                             itemIconH = HEALING_ITEM_ICON_HEIGHT;
+                         }
                     }
 
                     if (itemIcon != NULL) {
@@ -3376,13 +3409,36 @@ int main(void)
         }
 
         case GAME_STATE_LEARN_MOVE_PROMPT: {
-           
+            if (learnMoveReturnState == GAME_STATE_EVOLUTION) {
+                draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
+                                EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
+                                0, 0,
+                                TRANSPARENT_COLOUR);
+
+                const int evolutionSpeedFrames = 10;
+                evolutionTimer++;
+                if (evolutionTimer >= evolutionSpeedFrames) {
+                    evolutionTimer = 0;
+                    evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
+                }
+
+                const int evoAreaH = TEXTBOX_Y;
+                const int pokeId = (learnMovePokemon != NULL) ? learnMovePokemon->id.frontFrame_ID : 0;
+                StaticSprite front = {0};
+                (void)setPokemonFrontBattleSpriteId(&front, pokeId);
+                front.x = (front.width > 0) ? (SCREEN_WIDTH - front.width) / 2 : 0;
+                front.y = (front.height > 0) ? (evoAreaH - front.height) / 2 : 0;
+                if (front.pixels != NULL) {
+                    draw_sprite_any(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                }
+            }
+
             const char *pokeName = (learnMovePokemon != NULL && learnMovePokemon->id.data != NULL && learnMovePokemon->id.data->name != NULL)
                                        ? learnMovePokemon->id.data->name
                                        : "???";
             const char *moveName = (learnMoveMove != NULL && learnMoveMove->name != NULL) ? learnMoveMove->name : "???";
             char buf[192];
-            snprintf(buf, sizeof(buf), "%s wants to learn %s! Would you like to forget a move to learn it?", pokeName, moveName);
+            snprintf(buf, sizeof(buf), "%s wants to learn %s!\nForget a move to learn it?", pokeName, moveName);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, buf, BLACK);
 
             if (spacePressed) {
@@ -3393,6 +3449,29 @@ int main(void)
         }
 
         case GAME_STATE_LEARN_MOVE_YESNO: {
+            if (learnMoveReturnState == GAME_STATE_EVOLUTION) {
+                draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
+                                EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
+                                0, 0,
+                                TRANSPARENT_COLOUR);
+
+                const int evolutionSpeedFrames = 10;
+                evolutionTimer++;
+                if (evolutionTimer >= evolutionSpeedFrames) {
+                    evolutionTimer = 0;
+                    evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
+                }
+
+                const int evoAreaH = TEXTBOX_Y;
+                const int pokeId = (learnMovePokemon != NULL) ? learnMovePokemon->id.frontFrame_ID : 0;
+                StaticSprite front = {0};
+                (void)setPokemonFrontBattleSpriteId(&front, pokeId);
+                front.x = (front.width > 0) ? (SCREEN_WIDTH - front.width) / 2 : 0;
+                front.y = (front.height > 0) ? (evoAreaH - front.height) / 2 : 0;
+                if (front.pixels != NULL) {
+                    draw_sprite_any(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                }
+            }
             
             if (leftPressed || upPressed) learnMoveYesNo = 0;
             if (rightPressed || downPressed) learnMoveYesNo = 1;
@@ -3424,6 +3503,29 @@ int main(void)
         }
 
         case GAME_STATE_LEARN_MOVE_FORGET: {
+            if (learnMoveReturnState == GAME_STATE_EVOLUTION) {
+                draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
+                                EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
+                                0, 0,
+                                TRANSPARENT_COLOUR);
+
+                const int evolutionSpeedFrames = 10;
+                evolutionTimer++;
+                if (evolutionTimer >= evolutionSpeedFrames) {
+                    evolutionTimer = 0;
+                    evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
+                }
+
+                const int evoAreaH = TEXTBOX_Y;
+                const int pokeId = (learnMovePokemon != NULL) ? learnMovePokemon->id.frontFrame_ID : 0;
+                StaticSprite front = {0};
+                (void)setPokemonFrontBattleSpriteId(&front, pokeId);
+                front.x = (front.width > 0) ? (SCREEN_WIDTH - front.width) / 2 : 0;
+                front.y = (front.height > 0) ? (evoAreaH - front.height) / 2 : 0;
+                if (front.pixels != NULL) {
+                    draw_sprite_any(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                }
+            }
 
             if (leftPressed && learnMoveForgetIndex > 0) learnMoveForgetIndex--;
             if (rightPressed && learnMoveForgetIndex < 3) learnMoveForgetIndex++;
@@ -3452,6 +3554,30 @@ int main(void)
         }
 
         case GAME_STATE_LEARN_MOVE_MESSAGE: {
+            if (learnMoveReturnState == GAME_STATE_EVOLUTION) {
+                draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
+                                EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
+                                0, 0,
+                                TRANSPARENT_COLOUR);
+
+                const int evolutionSpeedFrames = 10;
+                evolutionTimer++;
+                if (evolutionTimer >= evolutionSpeedFrames) {
+                    evolutionTimer = 0;
+                    evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
+                }
+
+                const int evoAreaH = TEXTBOX_Y;
+                const int pokeId = (learnMovePokemon != NULL) ? learnMovePokemon->id.frontFrame_ID : 0;
+                StaticSprite front = {0};
+                (void)setPokemonFrontBattleSpriteId(&front, pokeId);
+                front.x = (front.width > 0) ? (SCREEN_WIDTH - front.width) / 2 : 0;
+                front.y = (front.height > 0) ? (evoAreaH - front.height) / 2 : 0;
+                if (front.pixels != NULL) {
+                    draw_sprite_any(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
+                }
+            }
+
             const char *pokeName = (learnMovePokemon != NULL && learnMovePokemon->id.data != NULL && learnMovePokemon->id.data->name != NULL)
                                        ? learnMovePokemon->id.data->name
                                        : "???";
@@ -3638,6 +3764,152 @@ int main(void)
                 battleCursor = 0;
                 currentGameState = GAME_STATE_POKEBALL_THROW;
                 previousGameState = GAME_STATE_POKEBALL_THROW;
+            }
+
+            break;
+        }
+
+        case GAME_STATE_BATTLE_ITEM_TARGET: {
+            if (itemTargetItem == ITEM_NONE || !itemIsRevive(itemTargetItem)) {
+                currentGameState = activeBattleMenuState;
+                previousGameState = activeBattleMenuState;
+                break;
+            }
+
+            // Cancel back to where we came from in the bag UI.
+            if (escPressed) {
+                battleUi = itemTargetReturnUi;
+                battleCursor = itemTargetReturnCursor;
+                if (itemTargetReturnUi == BATTLE_UI_BAG_HP_LIST) {
+                    bagHpPage = itemTargetReturnPage;
+                } else if (itemTargetReturnUi == BATTLE_UI_BAG_BALL_LIST) {
+                    bagBallPage = itemTargetReturnPage;
+                }
+                currentGameState = activeBattleMenuState;
+                previousGameState = activeBattleMenuState;
+                break;
+            }
+
+            if (itemTargetIndex < 0) itemTargetIndex = 0;
+            if (itemTargetIndex > 5) itemTargetIndex = 5;
+
+            // Simple 3x2 navigation across slots 0..5 (do not skip invalid slots).
+            const int prev = itemTargetIndex;
+            int row = itemTargetIndex / 3;
+            int col = itemTargetIndex % 3;
+            if (upPressed && row > 0) row--;
+            if (downPressed && row < 1) row++;
+            if (leftPressed && col > 0) col--;
+            if (rightPressed && col < 2) col++;
+            int next = row * 3 + col;
+            if (next < 0) next = 0;
+            if (next > 5) next = 5;
+            itemTargetIndex = next;
+            if (itemTargetIndex != prev) play_sfx(plink_audio, plink_audio_len);
+
+            draw_map();
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+            {
+                char buf[96];
+                snprintf(buf, sizeof(buf), "Use %s on which Pokemon?", itemName(itemTargetItem));
+                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, buf, BLACK);
+            }
+
+            // Party slot background + box sprites.
+            {
+                const unsigned short *partyBg = battlePartySlotSprites[itemTargetIndex + 1];
+                draw_sprite_any(partyBg, BATTLE_PARTY_WIDTH, BATTLE_PARTY_HEIGHT, BATTLE_PARTY_X, BATTLE_PARTY_Y, TRANSPARENT_COLOUR);
+
+                for (int i = 0; i < 6; i++) {
+                    const pokemonInBattle *slotPokemon = (battleState.playerParty != NULL && i < battleState.playerParty->count) ? battleState.playerParty->slots[i] : NULL;
+                    const int slotHp = (slotPokemon != NULL) ? slotPokemon->scaledStatsWithLevel[0] : 0;
+                    const bool slotFainted = (slotPokemon != NULL) && (!slotPokemon->alive || slotHp <= 0);
+                    const bool slotSelectable = slotFainted;
+
+                    if (i == itemTargetIndex) {
+                        if (!slotSelectable || slotPokemon == NULL) {
+                            draw_sprite_any_bob_party_greyscale(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobPartyFrame
+                            );
+                        } else {
+                            draw_sprite_any_bob_party(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR,
+                                bobPartyFrame
+                            );
+                        }
+                    } else {
+                        if (!slotSelectable || slotPokemon == NULL) {
+                            draw_sprite_any_greyscale(
+                                partyBoxSprites[i].pixels,
+                                partyBoxSprites[i].width,
+                                partyBoxSprites[i].height,
+                                partyBoxSprites[i].x,
+                                partyBoxSprites[i].y,
+                                TRANSPARENT_COLOUR
+                            );
+                        } else {
+                            drawStaticSprite(&partyBoxSprites[i]);
+                        }
+                    }
+                }
+            }
+
+            if (spacePressed) {
+                const bool valid =
+                    (battleState.playerParty != NULL) &&
+                    (itemTargetIndex >= 0) &&
+                    (itemTargetIndex < battleState.playerParty->count) &&
+                    (battleState.playerParty->slots[itemTargetIndex] != NULL) &&
+                    (!battleState.playerParty->slots[itemTargetIndex]->alive);
+
+                if (!valid) {
+                    battleUiSetSingleMessage(&battleState, "Choose a fainted Pokemon!");
+                    actionTextReturnUi = BATTLE_UI_MENU;
+                    actionTextReturnCursor = 0;
+                    actionTextReturnGameState = GAME_STATE_BATTLE_ITEM_TARGET;
+                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    actionTextAwaitSpaceRelease = true;
+                    break;
+                }
+
+                pokemonInBattle *p = getActivePokemon(&playerParty);
+                pokemonInBattle *e = getActivePokemon(&enemyParty);
+                actionTextShownPlayerHp = (p != NULL) ? p->scaledStatsWithLevel[0] : -1;
+                actionTextShownEnemyHp = (e != NULL) ? e->scaledStatsWithLevel[0] : -1;
+                actionTextTargetPlayerHp = actionTextShownPlayerHp;
+                actionTextTargetEnemyHp = actionTextShownEnemyHp;
+                actionTextExpStartLevel = (p != NULL) ? p->level : -1;
+                actionTextExpStartExp = (p != NULL) ? p->exp : -1;
+                actionTextShownLevel = actionTextExpStartLevel;
+                actionTextShownExp = actionTextExpStartExp;
+                actionTextTargetLevel = actionTextShownLevel;
+                actionTextTargetExp = actionTextShownExp;
+                actionTextExpAnimating = false;
+
+                battleActionPending = true;
+                pendingBattleAction = ACTION_ITEM;
+                pendingBattleParam = ((int)itemTargetItem & 0xFF) | ((itemTargetIndex + 1) << 8);
+                battleUi = BATTLE_UI_MENU;
+                battleCursor = 0;
+
+                actionTextReturnUi = BATTLE_UI_MENU;
+                actionTextReturnCursor = 0;
+                actionTextReturnGameState = activeBattleMenuState;
+                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                actionTextAwaitSpaceRelease = true;
             }
 
             break;
@@ -4211,7 +4483,7 @@ int main(void)
         }
 
         case GAME_STATE_EVOLUTION: {
-            // animate backdrop, then show base sprite -> evolved sprite.
+            // Evolution screen: backdrop + front sprite + mandatory animation (can't skip).
             draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
                             EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
                             0, 0,
@@ -4240,6 +4512,8 @@ int main(void)
                     evolutionPokemonIndex = next;
                     evolutionPhase = 0;
                     evolutionPhaseTimer = 0;
+                    evolutionFromName[0] = '\0';
+                    evolutionIntoName[0] = '\0';
                 } else {
                     currentGameState = evolutionReturnState;
                 }
@@ -4247,58 +4521,117 @@ int main(void)
             }
 
             const PokemonData *into = mon->pendingEvolutionInto;
-            const int evoSpriteX = 112;
-            const int evoSpriteY = 72;
 
-            const unsigned short *baseSprite = menuPokemonSpriteForId(mon->id.frontFrame_ID);
-            const unsigned short *evolvedSprite = (into != NULL) ? menuPokemonSpriteForId(into->id) : NULL;
+            // Cache names at the start of each evolution so messages stay correct after applyPendingEvolution().
+            if (evolutionPhase == 0 && evolutionPhaseTimer == 0) {
+                const char *from = (mon->id.data != NULL && mon->id.data->name != NULL) ? mon->id.data->name : "???";
+                const char *to = (into != NULL && into->name != NULL) ? into->name : "???";
+                snprintf(evolutionFromName, sizeof(evolutionFromName), "%s", from);
+                snprintf(evolutionIntoName, sizeof(evolutionIntoName), "%s", to);
+            }
+
+            // Build front sprites 
+            StaticSprite baseFront = {0};
+            StaticSprite evoFront = {0};
+            (void)setPokemonFrontBattleSpriteId(&baseFront, mon->id.frontFrame_ID);
+            if (into != NULL) (void)setPokemonFrontBattleSpriteId(&evoFront, into->id);
+
+            const int evoAreaH = TEXTBOX_Y; // space above textbox
+            baseFront.x = (baseFront.width > 0) ? (SCREEN_WIDTH - baseFront.width) / 2 : 0;
+            baseFront.y = (baseFront.height > 0) ? (evoAreaH - baseFront.height) / 2 : 0;
+            evoFront.x = (evoFront.width > 0) ? (SCREEN_WIDTH - evoFront.width) / 2 : baseFront.x;
+            evoFront.y = (evoFront.height > 0) ? (evoAreaH - evoFront.height) / 2 : baseFront.y;
+
+            char evoMsg[192];
+            evoMsg[0] = '\0';
+
+            const int phase0Ticks = 45;
+            const int phase1Ticks = 60;
 
             if (evolutionPhase == 0) {
-                // Backdrop only until Space/Esc.
-                if (spacePressed || escPressed) {
+                if (baseFront.pixels != NULL) {
+                    draw_sprite_any(baseFront.pixels, baseFront.width, baseFront.height, baseFront.x, baseFront.y, TRANSPARENT_COLOUR);
+                }
+                snprintf(evoMsg, sizeof(evoMsg), "What? %s is trying to evolve!", evolutionFromName);
+
+                evolutionPhaseTimer++;
+                if (evolutionPhaseTimer >= phase0Ticks) {
                     evolutionPhase = 1;
                     evolutionPhaseTimer = 0;
                 }
             } else if (evolutionPhase == 1) {
-                if (baseSprite != NULL) {
-                    draw_sprite_any(baseSprite,
-                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
-                                    evoSpriteX, evoSpriteY,
-                                    TRANSPARENT_COLOUR);
+                const bool showEvolved = ((evolutionPhaseTimer / 6) % 2) == 1;
+                const StaticSprite *s = (showEvolved && evoFront.pixels != NULL) ? &evoFront : &baseFront;
+                if (s != NULL && s->pixels != NULL) {
+                    draw_sprite_any(s->pixels, s->width, s->height, s->x, s->y, TRANSPARENT_COLOUR);
                 }
+                snprintf(evoMsg, sizeof(evoMsg), "What? %s is trying to evolve!", evolutionFromName);
+
                 evolutionPhaseTimer++;
-                if (spacePressed || escPressed || evolutionPhaseTimer >= 30) {
+                if (evolutionPhaseTimer >= phase1Ticks) {
+                    (void)applyPendingEvolution(mon);
+                    syncPartyBoxSpritesToParty(partyBoxSprites, &playerParty);
                     evolutionPhase = 2;
                     evolutionPhaseTimer = 0;
                 }
             } else {
-                if (evolvedSprite != NULL) {
-                    draw_sprite_any(evolvedSprite,
-                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
-                                    evoSpriteX, evoSpriteY,
-                                    TRANSPARENT_COLOUR);
+
+                StaticSprite newFront = {0};
+                (void)setPokemonFrontBattleSpriteId(&newFront, mon->id.frontFrame_ID);
+                newFront.x = (newFront.width > 0) ? (SCREEN_WIDTH - newFront.width) / 2 : 0;
+                newFront.y = (newFront.height > 0) ? (evoAreaH - newFront.height) / 2 : 0;
+                if (newFront.pixels != NULL) {
+                    draw_sprite_any(newFront.pixels, newFront.width, newFront.height, newFront.x, newFront.y, TRANSPARENT_COLOUR);
                 }
-                evolutionPhaseTimer++;
-                if (spacePressed || escPressed || evolutionPhaseTimer >= 30) {
-                    (void)applyPendingEvolution(mon);
-                    syncPartyBoxSpritesToParty(partyBoxSprites, &playerParty);
+
+                snprintf(evoMsg, sizeof(evoMsg), "%s evolved into %s!", evolutionFromName, evolutionIntoName);
+
+                if (spacePressed) {
+                    // If a move was learned automatically show that message.
+                    pokemonInBattle *learnedP = NULL;
+                    const AttackData *learnedM = NULL;
+                    const AttackData *forgotM = NULL;
+                    if (popNextLearnedMoveMsg(&playerParty, &learnedP, &learnedM, &forgotM)) {
+                        learnMovePokemon = learnedP;
+                        learnMoveMove = learnedM;
+                        learnMoveForgottenMove = forgotM;
+                        learnMoveReturnState = GAME_STATE_EVOLUTION;
+                        currentGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                        previousGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                        break;
+                    }
+
+                    if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
+                        learnMoveYesNo = 0;
+                        learnMoveForgetIndex = 0;
+                        learnMoveReturnState = GAME_STATE_EVOLUTION;
+                        currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                        previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                        break;
+                    }
 
                     if (mon->pendingEvolutionInto != NULL) {
                         // Same Pokemon can evolve again.
                         evolutionPhase = 0;
                         evolutionPhaseTimer = 0;
+                        evolutionFromName[0] = '\0';
+                        evolutionIntoName[0] = '\0';
                     } else {
                         const int next = findNextPendingEvolutionIndex(&playerParty, evolutionPokemonIndex);
                         if (next >= 0) {
                             evolutionPokemonIndex = next;
                             evolutionPhase = 0;
                             evolutionPhaseTimer = 0;
+                            evolutionFromName[0] = '\0';
+                            evolutionIntoName[0] = '\0';
                         } else {
                             currentGameState = evolutionReturnState;
                         }
                     }
                 }
             }
+
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, evoMsg, BLACK);
             break;
         }
 

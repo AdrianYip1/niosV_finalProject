@@ -40,11 +40,11 @@ const char *itemName(ItemId item) {
     return getItemData(item)->name;
 }
 
-int bagHpItemCount(void) { return 4; }
+int bagHpItemCount(void) { return 6; }
 int bagBallItemCount(void) { return 5; }
 
 ItemId bagHpItemAt(int index) {
-    static const ItemId items[] = { ITEM_POTION, ITEM_SUPER_POTION, ITEM_HYPER_POTION, ITEM_FULL_RESTORE };
+    static const ItemId items[] = { ITEM_POTION, ITEM_SUPER_POTION, ITEM_HYPER_POTION, ITEM_FULL_RESTORE, ITEM_REVIVE, ITEM_MAX_REVIVE };
     if (index < 0 || index >= (int)(sizeof(items) / sizeof(items[0]))) return ITEM_NONE;
     return items[index];
 }

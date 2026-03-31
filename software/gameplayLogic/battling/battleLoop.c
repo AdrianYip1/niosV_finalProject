@@ -533,7 +533,10 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     break;
                 }
 
-                const ItemId item = (ItemId)param;
+                const int packed = param;
+                const ItemId item = (ItemId)(packed & 0xFF);
+                const int targetSlotPlus1 = (packed >> 8) & 0xFF; // 0=active, else 1..6 => slots 0..5
+
                 const char *name = itemName(item);
                 char buf[96];
 
@@ -554,35 +557,78 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     break;
                 }
 
-                (void)bagRemove(state->playerBag, item, 1);
-
-                snprintf(buf, sizeof(buf), "Used %s!", name);
-                battlePushMessage(state, buf);
+                pokemonInBattle *target = player;
+                if (targetSlotPlus1 > 0) {
+                    const int idx = targetSlotPlus1 - 1;
+                    if (state->playerParty == NULL || idx < 0 || idx >= state->playerParty->count) {
+                        battlePushMessage(state, "No target!");
+                        break;
+                    }
+                    target = state->playerParty->slots[idx];
+                }
+                if (target == NULL) {
+                    battlePushMessage(state, "No target!");
+                    break;
+                }
 
                 if (itemIsHealing(item)) {
-                    play_sfx(recover_audio, recover_audio_len);
-                    int heal = 0;
-                    if (item == ITEM_POTION) heal = 20;
-                    else if (item == ITEM_SUPER_POTION) heal = 60;
-                    else if (item == ITEM_HYPER_POTION) heal = 120;
+                    // Revives require a fainted target
+                    if (itemIsRevive(item)) {
+                        if (target->alive) {
+                            battlePushMessage(state, "It won't have any effect!");
+                            break;
+                        }
+                    } else {
+                        if (!target->alive) {
+                            battlePushMessage(state, "It won't have any effect!");
+                            break;
+                        }
+                    }
 
-                    if (item == ITEM_FULL_RESTORE) {
-                        fullRestore(player);
+                    (void)bagRemove(state->playerBag, item, 1);
+                    snprintf(buf, sizeof(buf), "Used %s!", name);
+                    battlePushMessage(state, buf);
+
+                    play_sfx(recover_audio, recover_audio_len);
+
+                    if (itemIsRevive(item)) {
+                        target->alive = true;
+                        target->status = STATUS_NONE;
+                        target->sleepTurnsRemaining = 0;
+                        const int maxHp = (target->maxHp > 0) ? target->maxHp : 1;
+                        int hp = (item == ITEM_MAX_REVIVE) ? maxHp : (maxHp / 2);
+                        if (hp < 1) hp = 1;
+                        if (hp > maxHp) hp = maxHp;
+                        target->scaledStatsWithLevel[0] = hp;
+                        battlePushMessage(state, "Revived!");
+                    } else if (item == ITEM_FULL_RESTORE) {
+                        fullRestore(target);
                         battlePushMessage(state, "Restored health!");
                     } else {
-                        healPokemon(player, heal);
+                        int heal = 0;
+                        if (item == ITEM_POTION) heal = 20;
+                        else if (item == ITEM_SUPER_POTION) heal = 60;
+                        else if (item == ITEM_HYPER_POTION) heal = 120;
+                        healPokemon(target, heal);
                         battlePushMessage(state, "Recovered HP!");
                     }
-                    if (state->messageCount > 0) {
-                        const int idx = state->messageCount - 1;
-                        if (idx >= 0 && idx < BATTLE_MSG_MAX) {
-                            state->hpAfterPlayer[idx] = player->scaledStatsWithLevel[0];
+
+                    const bool targetIsActive = (state->playerParty != NULL) &&
+                                                (target == getActivePokemon(state->playerParty));
+                    if (targetIsActive && state->messageCount > 0) {
+                        const int msgIdx = state->messageCount - 1;
+                        if (msgIdx >= 0 && msgIdx < BATTLE_MSG_MAX) {
+                            state->hpAfterPlayer[msgIdx] = target->scaledStatsWithLevel[0];
                         }
                     }
                     break;
                 }
 
                 if (itemIsBall(item)) {
+                    (void)bagRemove(state->playerBag, item, 1);
+                    snprintf(buf, sizeof(buf), "Used %s!", name);
+                    battlePushMessage(state, buf);
+
                     PokeballType ball = POKEBALL_POKE;
                     if (item == ITEM_POKEBALL) ball = POKEBALL_POKE;
                     else if (item == ITEM_GREAT_BALL) ball = POKEBALL_GREAT;
