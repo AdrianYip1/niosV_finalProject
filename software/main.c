@@ -1874,11 +1874,20 @@ int main(void)
                             MAIN_MENU_UI_BACKDROP_MENU_WIDTH, MAIN_MENU_UI_BACKDROP_MENU_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
-            // Optional border overlay if the backdrop uses transparency.
+            draw_sprite_any(mainMenuUiPokemonLeftSprite, MAIN_MENU_UI_POKEMON_LEFT_WIDTH, MAIN_MENU_UI_POKEMON_LEFT_HEIGHT, 3, 70, TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiPokemonRightSprite,MAIN_MENU_UI_POKEMON_RIGHT_WIDTH,MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT,  227, 70, TRANSPARENT_COLOUR);
             draw_sprite_any(mainMenuUiMenuBorderSprite,
                             MAIN_MENU_UI_MENU_BORDER_WIDTH, MAIN_MENU_UI_MENU_BORDER_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiUi3dsMenuSprite,MAIN_MENU_UI_UI3DS_MENU_WIDTH,MAIN_MENU_UI_UI3DS_MENU_HEIGHT, 82, 113, TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiBagMenuSprite,MAIN_MENU_UI_BAG_MENU_WIDTH,MAIN_MENU_UI_BAG_MENU_HEIGHT,  82, 58, TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiBallMenuSprite,MAIN_MENU_UI_BALL_MENU_WIDTH, MAIN_MENU_UI_BALL_MENU_HEIGHT, 130, 29, TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiDexMenuSprite, MAIN_MENU_UI_DEX_MENU_WIDTH, MAIN_MENU_UI_DEX_MENU_HEIGHT, 178, 58, TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiFrontFacingMcSprite,MAIN_MENU_UI_FRONT_FACING_MC_WIDTH,MAIN_MENU_UI_FRONT_FACING_MC_HEIGHT,  128, 80, TRANSPARENT_COLOUR);
+
+            draw_sprite_any(mainMenuUiSaveMenuSprite, MAIN_MENU_UI_SAVE_MENU_WIDTH,MAIN_MENU_UI_SAVE_MENU_HEIGHT, 130, 141, TRANSPARENT_COLOUR);
+            draw_sprite_any(mainMenuUiTrainerCardMenuSprite,MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH, MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT, 178, 113, TRANSPARENT_COLOUR);
 
             if (spacePressed || escPressed) {
                 currentGameState = GAME_STATE_MAP;
