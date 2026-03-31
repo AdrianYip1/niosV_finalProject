@@ -22,6 +22,7 @@ SRCS := software/main.c \
         software/graphics/backdrops/gym_interior_tiles.c \
         software/graphics/backdrops/decor_tiles.c \
         software/graphics/backdrops/building_extra_tiles.c \
+        software/graphics/backdrops/cliff_tiles.c \
         software/graphics/sprites/battleIcons/battle_icons.c \
         software/graphics/sprites/battleIcons/battleHp/burned.c \
         software/graphics/sprites/battleIcons/battleHp/caught.c \

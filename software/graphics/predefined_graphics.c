@@ -60,6 +60,9 @@ void init_predefined_graphics(void)
     memcpy(tiles[TILE_GYM_BOTTOM_LEFT], gym_bottom_left_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_GYM_BOTTOM_MIDDLE], gym_bottom_middle_tile, sizeof(tiles[0]));
     memcpy(tiles[TILE_GYM_BOTTOM_RIGHT], gym_bottom_right_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_CLIFF_LEFT], cliff_left_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_CLIFF_MIDDLE], cliff_middle_tile, sizeof(tiles[0]));
+    memcpy(tiles[TILE_CLIFF_RIGHT], cliff_right_tile, sizeof(tiles[0]));
 
     for (int i = 0; i < BACKDROP1_TILE_COUNT; i++) {
         memcpy(tiles[TILE_BACKDROP1_START + i], backdrop1_tiles[i], sizeof(tiles[0]));

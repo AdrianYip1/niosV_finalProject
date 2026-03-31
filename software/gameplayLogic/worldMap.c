@@ -33,6 +33,13 @@ typedef struct {
     int transition_count;
 } WorldMapDefinition;
 
+static bool matches_building_entrance_tile(MapTilePosition building_pos,
+                                           int foot_tile_x,
+                                           int foot_tile_y);
+static void get_building_exterior_spawn(MapTilePosition building_pos,
+                                        int *spawn_x,
+                                        int *spawn_y);
+
 static const MapTransition kRouteATransitions[] = {
     { MAP_TRANSITION_EDGE, MAP_TRANSITION_INPUT_LEFT, 0, 0, MC_MOVE_EXIT_LEFT, WORLD_MAP_ROUTE_B, (MAP_WIDTH * TILE_SIZE) - 24, 112, MC_FACING_W },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 8, 4, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
@@ -40,18 +47,10 @@ static const MapTransition kRouteATransitions[] = {
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 9, 3, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 10, 4, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 3, MC_MOVE_OK, WORLD_MAP_POKE_MART_1, 144, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 16, 4, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 17, 4, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 17, 3, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 18, 4, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
 };
 
 static const MapTransition kRouteBTransitions[] = {
     { MAP_TRANSITION_EDGE, MAP_TRANSITION_INPUT_RIGHT, 0, 0, MC_MOVE_EXIT_RIGHT, WORLD_MAP_ROUTE_A, 8, 112, MC_FACING_E },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 12, 4, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 4, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 3, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
-    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 14, 4, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
 };
 
 static const MapTransition kPokemonCenter1Transitions[] = {
@@ -120,6 +119,26 @@ static bool is_transition_input_pressed(MapTransitionInput input,
     }
 }
 
+static bool matches_building_entrance_tile(MapTilePosition building_pos,
+                                           int foot_tile_x,
+                                           int foot_tile_y) {
+    return (foot_tile_x == building_pos.x && foot_tile_y == building_pos.y + 3) ||
+           (foot_tile_x == building_pos.x + 1 && foot_tile_y == building_pos.y + 3) ||
+           (foot_tile_x == building_pos.x + 1 && foot_tile_y == building_pos.y + 2) ||
+           (foot_tile_x == building_pos.x + 2 && foot_tile_y == building_pos.y + 3);
+}
+
+static void get_building_exterior_spawn(MapTilePosition building_pos,
+                                        int *spawn_x,
+                                        int *spawn_y) {
+    if (spawn_x != NULL) {
+        *spawn_x = (building_pos.x * TILE_SIZE) + ((3 * TILE_SIZE) / 2);
+    }
+    if (spawn_y != NULL) {
+        *spawn_y = (building_pos.y + 3) * TILE_SIZE;
+    }
+}
+
 bool resolve_map_transition(WorldMapId current_map,
                             McMoveResult move_result,
                             bool upPressed, bool downPressed,
@@ -151,6 +170,56 @@ bool resolve_map_transition(WorldMapId current_map,
         *out_spawn_y = transition->spawn_y;
         *out_spawn_facing = transition->spawn_facing;
         return true;
+    }
+
+    if (upPressed && current_map == WORLD_MAP_ROUTE_A) {
+        MapTilePosition house_pos;
+
+        if (map_get_route_a_house_position(&house_pos) &&
+            matches_building_entrance_tile(house_pos, foot_tile_x, foot_tile_y)) {
+            *out_target_map = WORLD_MAP_HOUSE_1;
+            *out_spawn_x = 152;
+            *out_spawn_y = 192;
+            *out_spawn_facing = MC_FACING_N;
+            return true;
+        }
+    }
+
+    if (upPressed && current_map == WORLD_MAP_ROUTE_B) {
+        MapTilePosition gym_pos;
+
+        if (map_get_route_b_gym_position(&gym_pos) &&
+            matches_building_entrance_tile(gym_pos, foot_tile_x, foot_tile_y)) {
+            *out_target_map = WORLD_MAP_GYM_1;
+            *out_spawn_x = 152;
+            *out_spawn_y = 192;
+            *out_spawn_facing = MC_FACING_N;
+            return true;
+        }
+    }
+
+    if (downPressed && current_map == WORLD_MAP_HOUSE_1) {
+        MapTilePosition house_pos;
+
+        if (map_get_route_a_house_position(&house_pos) &&
+            foot_tile_x >= 8 && foot_tile_x <= 10 && foot_tile_y == 13) {
+            *out_target_map = WORLD_MAP_ROUTE_A;
+            get_building_exterior_spawn(house_pos, out_spawn_x, out_spawn_y);
+            *out_spawn_facing = MC_FACING_S;
+            return true;
+        }
+    }
+
+    if (downPressed && current_map == WORLD_MAP_GYM_1) {
+        MapTilePosition gym_pos;
+
+        if (map_get_route_b_gym_position(&gym_pos) &&
+            foot_tile_x >= 8 && foot_tile_x <= 10 && foot_tile_y == 13) {
+            *out_target_map = WORLD_MAP_ROUTE_B;
+            get_building_exterior_spawn(gym_pos, out_spawn_x, out_spawn_y);
+            *out_spawn_facing = MC_FACING_S;
+            return true;
+        }
     }
 
     return false;

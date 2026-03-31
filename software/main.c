@@ -290,9 +290,11 @@
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
 static const char TRAINER_A_GREETING_TEXT[] = "Trainer A: Hey! I've been waiting for you.";
+static const char TRAINER_A_BATTLE_TEXT[] = "When two Trainers' eys meet,\n it's battle time!";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
 static const char NURSE_HEALED_TEXT[] = "Nurse: We hope to see you again!";
 static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart!\nWhat would you like to buy today?";
+static const char FOUND_POKEBALL_TEXT[] = "You found a Poke Ball!";
 
 static void play_world_map_bgm(WorldMapId map_id);
 
@@ -734,11 +736,9 @@ static void setupTrainerAParty(Party *enemyParty, pokemonInBattle team[6]) {
 
     initParty(enemyParty);
 
-    initPokemonInBattle(&team[0], &LUCARIO, 22);
-    initPokemonInBattle(&team[1], &ROSERADE, 21);
-    initPokemonInBattle(&team[2], &GARCHOMP, 24);
+    initPokemonInBattle(&team[0], &GARCHOMP, 20);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 1; i++) {
         (void)addPokemonToParty(enemyParty, &team[i]);
     }
 }
@@ -1112,6 +1112,7 @@ int main(void)
     static pokemonInBattle wildEnemy;
 
     static pokemonInBattle cynthiaTeam[6];
+    static pokemonInBattle trainerATeam[6];
     BattleType nextBattleType = BATTLE_WILD;
 
     StaticSprite playerBackSprite;
@@ -1370,7 +1371,7 @@ int main(void)
                 } else {
                     // battle type is BATTLE_TRAINER
                     if (currentMapId == WORLD_MAP_ROUTE_B) {
-                        setupTrainerAParty(&enemyParty, cynthiaTeam);
+                        setupTrainerAParty(&enemyParty, trainerATeam);
                     } else {
                         setupCynthiaTrainerParty(&enemyParty, cynthiaTeam);
                     }
@@ -3536,7 +3537,9 @@ int main(void)
                             (SCREEN_WIDTH - VS_CYNTHIA_WIDTH) / 2,
                             0,
                             TRANSPARENT_COLOUR);
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y,
+                                      currentMapId == WORLD_MAP_ROUTE_B ? TRAINER_A_BATTLE_TEXT : "Cynthia wants to battle!",
+                                      BLACK);
 
             if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
@@ -3606,7 +3609,9 @@ int main(void)
                             (SCREEN_WIDTH - VS_CYNTHIA_WIDTH) / 2,
                             0,
                             TRANSPARENT_COLOUR);
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Cynthia wants to battle!", BLACK);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y,
+                                      currentMapId == WORLD_MAP_ROUTE_B ? TRAINER_A_BATTLE_TEXT : "Cynthia wants to battle!",
+                                      BLACK);
 
             if (spacePressed) {
                 play_sfx(plink_audio, plink_audio_len);
@@ -4322,6 +4327,14 @@ int main(void)
                     nextBattleType = BATTLE_TRAINER;
                     play_bgm(cynthia_audio, cynthia_audio_len);
                     currentGameState = GAME_STATE_DIALOGUE;
+                } else if (!routeBTrainerLock &&
+                           (spacePressed || enterPressed) &&
+                           map_try_collect_route_b_pokeball(&mcBounds)) {
+                    bagAdd(&playerBag, ITEM_POKEBALL, 1);
+                    dialogueText = FOUND_POKEBALL_TEXT;
+                    dialogueReturnState = GAME_STATE_MAP;
+                    currentGameState = GAME_STATE_DIALOGUE;
+                    play_sfx(plink_audio, plink_audio_len);
                 } else if (!routeBTrainerLock &&
                            (spacePressed || enterPressed) &&
                            map_can_use_pokemon_center_pc(&mcBounds)) {

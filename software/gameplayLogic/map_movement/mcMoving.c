@@ -62,7 +62,9 @@ static bool mcCanMoveBy(int dx, int dy) {
     return map_bounds_are_walkable(bounds.x0 + dx,
                                    bounds.y0 + dy,
                                    bounds.x1 + dx,
-                                   bounds.y1 + dy);
+                                   bounds.y1 + dy,
+                                   dx,
+                                   dy);
 }
 
 static bool tryMoveUp(void) {

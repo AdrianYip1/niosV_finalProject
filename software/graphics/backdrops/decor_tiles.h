@@ -41,3 +41,6 @@ extern const short gym_middle_right_tile[TILE_SIZE * TILE_SIZE];
 extern const short gym_bottom_left_tile[TILE_SIZE * TILE_SIZE];
 extern const short gym_bottom_middle_tile[TILE_SIZE * TILE_SIZE];
 extern const short gym_bottom_right_tile[TILE_SIZE * TILE_SIZE];
+extern const short cliff_left_tile[TILE_SIZE * TILE_SIZE];
+extern const short cliff_middle_tile[TILE_SIZE * TILE_SIZE];
+extern const short cliff_right_tile[TILE_SIZE * TILE_SIZE];
