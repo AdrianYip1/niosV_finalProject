@@ -1,5 +1,6 @@
 #include "graphics/graphics.h"
 #include "graphics/predefined_graphics.h"
+#include "graphics/sprites/bagMenu/bagMenuSprites.h"
 #include "graphics/predefined_colours.h"
 #include "graphics/sprites/pokemon/charizardSprite.h"
 #include "graphics/sprites/pokemon/rayquazaSprite.h"
@@ -4138,18 +4139,66 @@ int main(void)
         }
 
         case GAME_STATE_BAG_MENU_ITEMS:
+            draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuItemsSprite, BAG_MENU_ITEMS_WIDTH,BAG_MENU_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuItemsBagSprite,BAG_MENU_ITEMS_BAG_WIDTH,BAG_MENU_ITEMS_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+
+            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_POKEBALLS;
         break;
 
         case GAME_STATE_BAG_MENU_POKEBALLS:
+            draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuPokeballsSprite, BAG_MENU_POKEBALLS_WIDTH,BAG_MENU_POKEBALLS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuPokeballBagSprite,BAG_MENU_POKEBALL_BAG_WIDTH,BAG_MENU_POKEBALL_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_TMS;
         break;
 
         case GAME_STATE_BAG_MENU_TMS:
+            draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuTmsSprite, BAG_MENU_TMS_WIDTH,BAG_MENU_TMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuTmBagSprite,BAG_MENU_TM_BAG_WIDTH,BAG_MENU_TM_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+
+            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_BERRIES;
         break;
 
         case GAME_STATE_BAG_MENU_BERRIES:
+            draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBerriesSprite, BAG_MENU_BERRIES_WIDTH,BAG_MENU_BERRIES_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuBerryBagSprite,BAG_MENU_BERRY_BAG_WIDTH,BAG_MENU_BERRY_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_KEY_ITEMS;
         break;
 
         case GAME_STATE_BAG_MENU_KEY_ITEMS:
+            draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuKeyItemsSprite, BAG_MENU_KEY_ITEMS_WIDTH,BAG_MENU_KEY_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            draw_sprite_any(bagMenuKeyItemBagSprite,BAG_MENU_KEY_ITEM_BAG_WIDTH,BAG_MENU_KEY_ITEM_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+
+            if (spacePressed) currentGameState = GAME_STATE_MAP;
         break;
 
         case GAME_STATE_PC_MENU: {

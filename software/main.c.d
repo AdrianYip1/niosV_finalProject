@@ -1,5 +1,6 @@
 software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/predefined_graphics.h software/graphics/graphics.h \
+ software/graphics/sprites/bagMenu/bagMenuSprites.h \
  software/graphics/predefined_colours.h \
  software/graphics/sprites/pokemon/charizardSprite.h \
  software/graphics/sprites/pokemon/rayquazaSprite.h \
@@ -85,6 +86,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
 software/graphics/graphics.h:
 software/graphics/predefined_graphics.h:
 software/graphics/graphics.h:
+software/graphics/sprites/bagMenu/bagMenuSprites.h:
 software/graphics/predefined_colours.h:
 software/graphics/sprites/pokemon/charizardSprite.h:
 software/graphics/sprites/pokemon/rayquazaSprite.h:
