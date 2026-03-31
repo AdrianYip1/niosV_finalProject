@@ -61,6 +61,42 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
     for (int i = 0; i < 4; i++) pokemon->pendingLearnedMoves[i] = NULL;
     for (int i = 0; i < 4; i++) pokemon->pendingForgottenMoves[i] = NULL;
     pokemon->pendingLearnedMoveCount = 0;
+    pokemon->pendingEvolutionInto = NULL;
+}
+
+bool applyPendingEvolution(pokemonInBattle *pokemon) {
+    if (pokemon == NULL) return false;
+    const PokemonData *into = pokemon->pendingEvolutionInto;
+    if (into == NULL) return false;
+
+    pokemon->pendingEvolutionInto = NULL;
+
+    pokemon->id.data = into;
+    pokemon->id.frontFrame_ID = into->id;
+    pokemon->id.backFrame_ID = into->id;
+    pokemon->type1 = into->type1;
+    pokemon->type2 = into->type2;
+
+    // Evolution changes base stats, preserve current HP 
+    const int evoPrevMaxHp = pokemon->maxHp;
+    const int evoPrevCurHp = pokemon->scaledStatsWithLevel[0];
+    scaleStatsWithLevel(pokemon);
+    pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
+    const int evoDeltaHp = pokemon->maxHp - evoPrevMaxHp;
+    int evoCurHp = evoPrevCurHp + ((evoDeltaHp > 0) ? evoDeltaHp : 0);
+    if (evoCurHp > pokemon->maxHp) evoCurHp = pokemon->maxHp;
+    if (evoCurHp < 1 && pokemon->alive) evoCurHp = 1;
+    pokemon->scaledStatsWithLevel[0] = evoCurHp;
+
+    // check level-up moves after evolution.
+    checkLevelUpMoves(pokemon, onLearnMove);
+
+    // Handle possible chained evolutions 
+    const PokemonData *next = checkEvolution(pokemon->id.data, pokemon->level);
+    if (next != NULL) {
+        pokemon->pendingEvolutionInto = next;
+    }
+    return true;
 }
 
 void scaleStatsWithLevel(pokemonInBattle *pokemon) {
@@ -112,22 +148,8 @@ void levelUp(pokemonInBattle *pokemon) {
     checkLevelUpMoves(pokemon, onLearnMove);
     const PokemonData *next = checkEvolution(pokemon->id.data, pokemon->level);
     if (next != NULL) {
-        pokemon->id.data = next;
-        pokemon->id.frontFrame_ID = next->id;
-        pokemon->id.backFrame_ID = next->id;
-        pokemon->type1 = next->type1;
-        pokemon->type2 = next->type2;
-        // Evolution changes base stats; preserve current HP by applying the new max-HP delta.
-        const int evoPrevMaxHp = pokemon->maxHp;
-        const int evoPrevCurHp = pokemon->scaledStatsWithLevel[0];
-        scaleStatsWithLevel(pokemon);
-        pokemon->maxHp = pokemon->scaledStatsWithLevel[0];
-        const int evoDeltaHp = pokemon->maxHp - evoPrevMaxHp;
-        int evoCurHp = evoPrevCurHp + ((evoDeltaHp > 0) ? evoDeltaHp : 0);
-        if (evoCurHp > pokemon->maxHp) evoCurHp = pokemon->maxHp;
-        if (evoCurHp < 1 && pokemon->alive) evoCurHp = 1;
-        pokemon->scaledStatsWithLevel[0] = evoCurHp;
-        checkLevelUpMoves(pokemon, onLearnMove);
+        // Defer evolution until after the battle
+        pokemon->pendingEvolutionInto = next;
     }
 }
 

@@ -71,6 +71,9 @@ typedef struct {
     const AttackData *pendingLearnedMoves[4];
     const AttackData *pendingForgottenMoves[4];
     int pendingLearnedMoveCount;
+
+    // Set when the Pokemon meets evolution requirement
+    const PokemonData *pendingEvolutionInto;
 } pokemonInBattle;
 
 // init
@@ -82,6 +85,9 @@ void levelUp(pokemonInBattle *pokemon);
 void gainExp(pokemonInBattle *pokemon, pokemonInBattle *defeatedPokemon);
 int expRequiredAtLevel(int level);
 int experienceGained(int levelSelf, int levelOpponent);
+
+// Applies pendingEvolutionInto and clears it. Returns true if evolution was applied.
+bool applyPendingEvolution(pokemonInBattle *pokemon);
 
 // type
 float getTypeEffectiveness(PokemonType attackType, PokemonType defendType1, PokemonType defendType2);

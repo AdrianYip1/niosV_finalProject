@@ -389,6 +389,22 @@ static inline bool isBagMenuState(GameState state) {
            state == GAME_STATE_BAG_MENU_KEY_ITEMS;
 }
 
+static int findNextPendingEvolutionIndex(const Party *party, int afterIndex) {
+    if (party == NULL) return -1;
+    for (int i = afterIndex + 1; i < party->count; i++) {
+        pokemonInBattle *mon = party->slots[i];
+        if (mon == NULL) continue;
+        if (!mon->alive) continue;
+        if (mon->pendingEvolutionInto == NULL) {
+            const PokemonData *into = (mon->id.data != NULL) ? checkEvolution(mon->id.data, mon->level) : NULL;
+            mon->pendingEvolutionInto = into;
+        }
+        if (mon->pendingEvolutionInto == NULL) continue;
+        return i;
+    }
+    return -1;
+}
+
 
 
 static inline int clamp_int(int v, int lo, int hi) {
@@ -1418,9 +1434,13 @@ int main(void)
     int pokedexScrollIndex = POKEMON_ID_CHARMANDER;
     int pokedexInfoCursor = 1; // 0=up arrow, 1=down arrow, 2=X
 
-    // Main menu UI + evolution placeholder
+    // Evolution UI state (runs after battles).
     int evolutionFrame = 0;
     int evolutionTimer = 0;
+    int evolutionPhase = 0; // 0=backdrop, 1=show base, 2=show evolved
+    int evolutionPhaseTimer = 0;
+    int evolutionPokemonIndex = -1;
+    GameState evolutionReturnState = GAME_STATE_MAP;
 
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
@@ -1485,8 +1505,12 @@ int main(void)
                         // Evolution placeholder (debug).
                         if (currentGameState == GAME_STATE_MAP) {
                             currentGameState = GAME_STATE_EVOLUTION;
+                            evolutionPokemonIndex = findNextPendingEvolutionIndex(&playerParty, -1);
+                            evolutionReturnState = GAME_STATE_MAP;
                             evolutionFrame = 0;
                             evolutionTimer = 0;
+                            evolutionPhase = 0;
+                            evolutionPhaseTimer = 0;
                         }
                     } else if (ch == '\n') {
                         enterPressed = true;
@@ -4180,7 +4204,7 @@ int main(void)
         }
 
         case GAME_STATE_EVOLUTION: {
-            // Placeholder evolution screen: animate backdrop until space is pressed.
+            // Evolution screen: animate backdrop, then show base sprite -> evolved sprite.
             draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
                             EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
                             0, 0,
@@ -4193,8 +4217,80 @@ int main(void)
                 evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
             }
 
-            if (spacePressed || escPressed) {
-                currentGameState = GAME_STATE_MAP;
+            // Find a valid pending evolution target.
+            if (evolutionPokemonIndex < 0 || evolutionPokemonIndex >= playerParty.count) {
+                evolutionPokemonIndex = findNextPendingEvolutionIndex(&playerParty, -1);
+            }
+            if (evolutionPokemonIndex < 0) {
+                currentGameState = evolutionReturnState;
+                break;
+            }
+
+            pokemonInBattle *mon = playerParty.slots[evolutionPokemonIndex];
+            if (mon == NULL || !mon->alive || mon->pendingEvolutionInto == NULL) {
+                const int next = findNextPendingEvolutionIndex(&playerParty, evolutionPokemonIndex);
+                if (next >= 0) {
+                    evolutionPokemonIndex = next;
+                    evolutionPhase = 0;
+                    evolutionPhaseTimer = 0;
+                } else {
+                    currentGameState = evolutionReturnState;
+                }
+                break;
+            }
+
+            const PokemonData *into = mon->pendingEvolutionInto;
+            const int evoSpriteX = 112;
+            const int evoSpriteY = 72;
+
+            const unsigned short *baseSprite = menuPokemonSpriteForId(mon->id.frontFrame_ID);
+            const unsigned short *evolvedSprite = (into != NULL) ? menuPokemonSpriteForId(into->id) : NULL;
+
+            if (evolutionPhase == 0) {
+                // Backdrop only until Space/Esc.
+                if (spacePressed || escPressed) {
+                    evolutionPhase = 1;
+                    evolutionPhaseTimer = 0;
+                }
+            } else if (evolutionPhase == 1) {
+                if (baseSprite != NULL) {
+                    draw_sprite_any(baseSprite,
+                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                    evoSpriteX, evoSpriteY,
+                                    TRANSPARENT_COLOUR);
+                }
+                evolutionPhaseTimer++;
+                if (spacePressed || escPressed || evolutionPhaseTimer >= 30) {
+                    evolutionPhase = 2;
+                    evolutionPhaseTimer = 0;
+                }
+            } else {
+                if (evolvedSprite != NULL) {
+                    draw_sprite_any(evolvedSprite,
+                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                    evoSpriteX, evoSpriteY,
+                                    TRANSPARENT_COLOUR);
+                }
+                evolutionPhaseTimer++;
+                if (spacePressed || escPressed || evolutionPhaseTimer >= 30) {
+                    (void)applyPendingEvolution(mon);
+                    syncPartyBoxSpritesToParty(partyBoxSprites, &playerParty);
+
+                    if (mon->pendingEvolutionInto != NULL) {
+                        // Same Pokemon can evolve again.
+                        evolutionPhase = 0;
+                        evolutionPhaseTimer = 0;
+                    } else {
+                        const int next = findNextPendingEvolutionIndex(&playerParty, evolutionPokemonIndex);
+                        if (next >= 0) {
+                            evolutionPokemonIndex = next;
+                            evolutionPhase = 0;
+                            evolutionPhaseTimer = 0;
+                        } else {
+                            currentGameState = evolutionReturnState;
+                        }
+                    }
+                }
             }
             break;
         }
@@ -4462,7 +4558,20 @@ int main(void)
         //exp calculations, levelup, evolution, learn moves
             draw_map();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleEndMsg, BLACK);
-            if (spacePressed) currentGameState = GAME_STATE_MAP;
+            if (spacePressed) {
+                const int idx = findNextPendingEvolutionIndex(&playerParty, -1);
+                if (idx >= 0) {
+                    evolutionPokemonIndex = idx;
+                    evolutionReturnState = GAME_STATE_MAP;
+                    evolutionFrame = 0;
+                    evolutionTimer = 0;
+                    evolutionPhase = 0;
+                    evolutionPhaseTimer = 0;
+                    currentGameState = GAME_STATE_EVOLUTION;
+                } else {
+                    currentGameState = GAME_STATE_MAP;
+                }
+            }
 
             break;
 
