@@ -18,39 +18,39 @@ typedef enum {
 
 #define MAIN_MENU_UI_UI3DS_MENU_WIDTH  61
 #define MAIN_MENU_UI_UI3DS_MENU_HEIGHT 54
-extern const unsigned short ui3dsMenuSprite[MAIN_MENU_UI_UI3DS_MENU_WIDTH * MAIN_MENU_UI_UI3DS_MENU_HEIGHT];
+extern const unsigned short mainMenuUiUi3dsMenuSprite[MAIN_MENU_UI_UI3DS_MENU_WIDTH * MAIN_MENU_UI_UI3DS_MENU_HEIGHT];
 
 #define MAIN_MENU_UI_BAG_MENU_WIDTH  61
 #define MAIN_MENU_UI_BAG_MENU_HEIGHT 54
-extern const unsigned short bagMenuSprite[MAIN_MENU_UI_BAG_MENU_WIDTH * MAIN_MENU_UI_BAG_MENU_HEIGHT];
+extern const unsigned short mainMenuUiBagMenuSprite[MAIN_MENU_UI_BAG_MENU_WIDTH * MAIN_MENU_UI_BAG_MENU_HEIGHT];
 
 #define MAIN_MENU_UI_BALL_MENU_WIDTH  61
 #define MAIN_MENU_UI_BALL_MENU_HEIGHT 54
-extern const unsigned short ballMenuSprite[MAIN_MENU_UI_BALL_MENU_WIDTH * MAIN_MENU_UI_BALL_MENU_HEIGHT];
+extern const unsigned short mainMenuUiBallMenuSprite[MAIN_MENU_UI_BALL_MENU_WIDTH * MAIN_MENU_UI_BALL_MENU_HEIGHT];
 
 #define MAIN_MENU_UI_DEX_MENU_WIDTH  61
 #define MAIN_MENU_UI_DEX_MENU_HEIGHT 54
-extern const unsigned short dexMenuSprite[MAIN_MENU_UI_DEX_MENU_WIDTH * MAIN_MENU_UI_DEX_MENU_HEIGHT];
+extern const unsigned short mainMenuUiDexMenuSprite[MAIN_MENU_UI_DEX_MENU_WIDTH * MAIN_MENU_UI_DEX_MENU_HEIGHT];
 
 #define MAIN_MENU_UI_MENU_BORDER_WIDTH  320
 #define MAIN_MENU_UI_MENU_BORDER_HEIGHT 240
-extern const unsigned short menuBorderSprite[MAIN_MENU_UI_MENU_BORDER_WIDTH * MAIN_MENU_UI_MENU_BORDER_HEIGHT];
+extern const unsigned short mainMenuUiMenuBorderSprite[MAIN_MENU_UI_MENU_BORDER_WIDTH * MAIN_MENU_UI_MENU_BORDER_HEIGHT];
 
 #define MAIN_MENU_UI_POKEMON_LEFT_WIDTH  89
 #define MAIN_MENU_UI_POKEMON_LEFT_HEIGHT 84
-extern const unsigned short pokemonLeftSprite[MAIN_MENU_UI_POKEMON_LEFT_WIDTH * MAIN_MENU_UI_POKEMON_LEFT_HEIGHT];
+extern const unsigned short mainMenuUiPokemonLeftSprite[MAIN_MENU_UI_POKEMON_LEFT_WIDTH * MAIN_MENU_UI_POKEMON_LEFT_HEIGHT];
 
 #define MAIN_MENU_UI_POKEMON_RIGHT_WIDTH  89
 #define MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT 84
-extern const unsigned short pokemonRightSprite[MAIN_MENU_UI_POKEMON_RIGHT_WIDTH * MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT];
+extern const unsigned short mainMenuUiPokemonRightSprite[MAIN_MENU_UI_POKEMON_RIGHT_WIDTH * MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT];
 
 #define MAIN_MENU_UI_SAVE_MENU_WIDTH  61
 #define MAIN_MENU_UI_SAVE_MENU_HEIGHT 54
-extern const unsigned short saveMenuSprite[MAIN_MENU_UI_SAVE_MENU_WIDTH * MAIN_MENU_UI_SAVE_MENU_HEIGHT];
+extern const unsigned short mainMenuUiSaveMenuSprite[MAIN_MENU_UI_SAVE_MENU_WIDTH * MAIN_MENU_UI_SAVE_MENU_HEIGHT];
 
 #define MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH  61
 #define MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT 54
-extern const unsigned short trainerCardMenuSprite[MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH * MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT];
+extern const unsigned short mainMenuUiTrainerCardMenuSprite[MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH * MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT];
 
 extern const unsigned short* const mainMenuUiSprites[MAIN_MENU_UI_SPRITE_COUNT];
 extern const uint16_t mainMenuUiSpritesWidths[MAIN_MENU_UI_SPRITE_COUNT];

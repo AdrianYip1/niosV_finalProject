@@ -15,6 +15,9 @@ OUT_H = OUT_DIR / "mainMenuUiSprites.h"
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
 
+# Prefix C identifiers to avoid symbol collisions with other sprite packs.
+NAME_PREFIX = "mainMenuUi"
+
 
 def is_magentaish(r: int, g: int, b: int) -> bool:
     return r >= 200 and b >= 200 and g <= 100
@@ -95,7 +98,7 @@ def main() -> None:
         if base in used:
             raise RuntimeError(f"Duplicate sprite name after normalization: {base} from {used[base]} and {p.name}")
         used[base] = p.name
-        name = f"{base}Sprite"
+        name = f"{NAME_PREFIX}{base[:1].upper()}{base[1:]}Sprite"
         macro_base = camel_to_screaming_snake(base)
         sprites.append((name, macro_base, p))
 
