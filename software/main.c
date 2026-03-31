@@ -78,6 +78,8 @@
 #include "graphics/sprites/menu/menuSprites.h"
 #include "graphics/sprites/menu/cancelSprite.h"
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
+#include "graphics/sprites/mainMenuUi/mainMenuUiSprites.h"
+#include "graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -337,6 +339,8 @@ typedef enum {
     GAME_STATE_BAG_MENU_TMS,
     GAME_STATE_BAG_MENU_BERRIES,
     GAME_STATE_BAG_MENU_KEY_ITEMS,
+    GAME_STATE_MAIN_MENU_UI,
+    GAME_STATE_EVOLUTION,
 } GameState;
 
 typedef enum {
@@ -372,7 +376,9 @@ static inline bool isOverworldState(GameState state) {
            state == GAME_STATE_BAG_MENU_POKEBALLS|| 
            state == GAME_STATE_BAG_MENU_TMS|| 
            state == GAME_STATE_BAG_MENU_BERRIES|| 
-           state == GAME_STATE_BAG_MENU_KEY_ITEMS;
+           state == GAME_STATE_BAG_MENU_KEY_ITEMS ||
+           state == GAME_STATE_MAIN_MENU_UI ||
+           state == GAME_STATE_EVOLUTION;
 }
 
 static inline bool isBagMenuState(GameState state) {
@@ -1412,6 +1418,10 @@ int main(void)
     int pokedexScrollIndex = POKEMON_ID_CHARMANDER;
     int pokedexInfoCursor = 1; // 0=up arrow, 1=down arrow, 2=X
 
+    // Main menu UI + evolution placeholder state
+    int evolutionFrame = 0;
+    int evolutionTimer = 0;
+
     // Learn-move flow state
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
@@ -1463,6 +1473,20 @@ int main(void)
                             currentGameState = GAME_STATE_BAG_MENU_ITEMS;
                         } else if (isBagMenuState(currentGameState)) {
                             currentGameState = GAME_STATE_MAP;
+                        }
+                    } else if (ch == '8') {
+                        // Main menu UI toggle (overworld).
+                        if (currentGameState == GAME_STATE_MAP) {
+                            currentGameState = GAME_STATE_MAIN_MENU_UI;
+                        } else if (currentGameState == GAME_STATE_MAIN_MENU_UI) {
+                            currentGameState = GAME_STATE_MAP;
+                        }
+                    } else if (ch == '9') {
+                        // Evolution placeholder (debug).
+                        if (currentGameState == GAME_STATE_MAP) {
+                            currentGameState = GAME_STATE_EVOLUTION;
+                            evolutionFrame = 0;
+                            evolutionTimer = 0;
                         }
                     } else if (ch == '\n') {
                         enterPressed = true;
@@ -1817,6 +1841,23 @@ int main(void)
                         play_sfx(plink_audio, plink_audio_len);
                     }
                 }
+            }
+            break;
+        }
+        case GAME_STATE_MAIN_MENU_UI: {
+            draw_map();
+            draw_sprite_any(mainMenuUiBackdropMenuSprite,
+                            MAIN_MENU_UI_BACKDROP_MENU_WIDTH, MAIN_MENU_UI_BACKDROP_MENU_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
+            // Optional border overlay if the backdrop uses transparency.
+            draw_sprite_any(mainMenuUiMenuBorderSprite,
+                            MAIN_MENU_UI_MENU_BORDER_WIDTH, MAIN_MENU_UI_MENU_BORDER_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
+
+            if (spacePressed || escPressed) {
+                currentGameState = GAME_STATE_MAP;
             }
             break;
         }
@@ -4135,6 +4176,26 @@ int main(void)
                 draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "You used a Poke Ball!", BLACK);
             }
 
+            break;
+        }
+
+        case GAME_STATE_EVOLUTION: {
+            // Placeholder evolution screen: animate backdrop until space is pressed.
+            draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
+                            EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
+
+            const int evolutionSpeedFrames = 10;
+            evolutionTimer++;
+            if (evolutionTimer >= evolutionSpeedFrames) {
+                evolutionTimer = 0;
+                evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
+            }
+
+            if (spacePressed || escPressed) {
+                currentGameState = GAME_STATE_MAP;
+            }
             break;
         }
 
