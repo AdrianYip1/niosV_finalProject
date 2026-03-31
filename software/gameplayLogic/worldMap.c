@@ -40,10 +40,18 @@ static const MapTransition kRouteATransitions[] = {
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 9, 3, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 10, 4, MC_MOVE_OK, WORLD_MAP_POKEMON_CENTER_1, 152, 192, MC_FACING_N },
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 3, MC_MOVE_OK, WORLD_MAP_POKE_MART_1, 144, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 16, 4, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 17, 4, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 17, 3, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 18, 4, MC_MOVE_OK, WORLD_MAP_HOUSE_1, 152, 192, MC_FACING_N },
 };
 
 static const MapTransition kRouteBTransitions[] = {
     { MAP_TRANSITION_EDGE, MAP_TRANSITION_INPUT_RIGHT, 0, 0, MC_MOVE_EXIT_RIGHT, WORLD_MAP_ROUTE_A, 8, 112, MC_FACING_E },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 12, 4, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 4, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 13, 3, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_UP, 14, 4, MC_MOVE_OK, WORLD_MAP_GYM_1, 152, 192, MC_FACING_N },
 };
 
 static const MapTransition kPokemonCenter1Transitions[] = {
@@ -63,17 +71,33 @@ static const MapTransition kPokeMart1Transitions[] = {
     { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 8, 14, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 216, 64, MC_FACING_S },
 };
 
+static const MapTransition kHouse1Transitions[] = {
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 8, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 280, 64, MC_FACING_S },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 9, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 280, 64, MC_FACING_S },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 10, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_A, 280, 64, MC_FACING_S },
+};
+
+static const MapTransition kGym1Transitions[] = {
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 8, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_B, 216, 64, MC_FACING_S },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 9, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_B, 216, 64, MC_FACING_S },
+    { MAP_TRANSITION_TILE, MAP_TRANSITION_INPUT_DOWN, 10, 13, MC_MOVE_OK, WORLD_MAP_ROUTE_B, 216, 64, MC_FACING_S },
+};
+
 static const WorldMapDefinition kWorldMaps[WORLD_MAP_COUNT] = {
     { MAP_PRESET_GROUND, MAP_DECOR_ROUTE_A, kRouteATransitions, (int)(sizeof(kRouteATransitions) / sizeof(kRouteATransitions[0])) },
     { MAP_PRESET_GROUND, MAP_DECOR_ROUTE_B, kRouteBTransitions, (int)(sizeof(kRouteBTransitions) / sizeof(kRouteBTransitions[0])) },
     { MAP_PRESET_POKEMON_CENTER_INTERIOR, MAP_DECOR_NONE, kPokemonCenter1Transitions, (int)(sizeof(kPokemonCenter1Transitions) / sizeof(kPokemonCenter1Transitions[0])) },
     { MAP_PRESET_POKE_MART_INTERIOR, MAP_DECOR_NONE, kPokeMart1Transitions, (int)(sizeof(kPokeMart1Transitions) / sizeof(kPokeMart1Transitions[0])) },
+    { MAP_PRESET_HOUSE_INTERIOR, MAP_DECOR_NONE, kHouse1Transitions, (int)(sizeof(kHouse1Transitions) / sizeof(kHouse1Transitions[0])) },
+    { MAP_PRESET_GYM_INTERIOR, MAP_DECOR_NONE, kGym1Transitions, (int)(sizeof(kGym1Transitions) / sizeof(kGym1Transitions[0])) },
 };
 
 void load_world_map(WorldMapId map_id, int start_x, int start_y, McFacing facing) {
     const WorldMapDefinition *def = &kWorldMaps[(int)map_id];
     if (def->preset == MAP_PRESET_POKEMON_CENTER_INTERIOR ||
-        def->preset == MAP_PRESET_POKE_MART_INTERIOR) {
+        def->preset == MAP_PRESET_POKE_MART_INTERIOR ||
+        def->preset == MAP_PRESET_HOUSE_INTERIOR ||
+        def->preset == MAP_PRESET_GYM_INTERIOR) {
         setMCScale(3, 2);
     } else {
         setMCScale(1, 1);

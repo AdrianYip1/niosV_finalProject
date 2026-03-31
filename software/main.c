@@ -289,6 +289,7 @@
 #define SELECTED_POKEMON_DIFFERENCE_Y 1 //1 down from nonselected
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
+static const char TRAINER_A_GREETING_TEXT[] = "Trainer A: Hey! I've been waiting for you.";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
 static const char NURSE_HEALED_TEXT[] = "Nurse: We hope to see you again!";
 static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart!\nWhat would you like to buy today?";
@@ -724,6 +725,20 @@ static void setupCynthiaTrainerParty(Party *enemyParty, pokemonInBattle team[6])
     initPokemonInBattle(&team[5], &GARCHOMP, 66);
 
     for (int i = 0; i < 6; i++) {
+        (void)addPokemonToParty(enemyParty, &team[i]);
+    }
+}
+
+static void setupTrainerAParty(Party *enemyParty, pokemonInBattle team[6]) {
+    if (enemyParty == NULL || team == NULL) return;
+
+    initParty(enemyParty);
+
+    initPokemonInBattle(&team[0], &LUCARIO, 22);
+    initPokemonInBattle(&team[1], &ROSERADE, 21);
+    initPokemonInBattle(&team[2], &GARCHOMP, 24);
+
+    for (int i = 0; i < 3; i++) {
         (void)addPokemonToParty(enemyParty, &team[i]);
     }
 }
@@ -1296,6 +1311,9 @@ int main(void)
             char ch = 0;
             while (keyboard_pop_char(&ch)) {
                 if (ch == '2') {
+                    currentMapId = WORLD_MAP_ROUTE_A;
+                    mapReturnX = 80;
+                    mapReturnY = 112;
                     currentGameState = GAME_STATE_MAP;
                     nextBattleType = BATTLE_WILD;
                 } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
@@ -1350,8 +1368,12 @@ int main(void)
                     initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
                     addPokemonToParty(&enemyParty, &wildEnemy);
                 } else {
-                    //battle type is BATTLE_TRAINER
-                    setupCynthiaTrainerParty(&enemyParty, cynthiaTeam);
+                    // battle type is BATTLE_TRAINER
+                    if (currentMapId == WORLD_MAP_ROUTE_B) {
+                        setupTrainerAParty(&enemyParty, cynthiaTeam);
+                    } else {
+                        setupCynthiaTrainerParty(&enemyParty, cynthiaTeam);
+                    }
                 }
 
                 // Ensure the party leader (slot 0) gets sent out first.
@@ -4275,8 +4297,12 @@ int main(void)
         case GAME_STATE_MAP:
         default:
             {
+                const McBounds mcBoundsBeforeMove = getMCBounds();
+                const bool routeBTrainerLock = map_tick_route_b_trainer_event(&mcBoundsBeforeMove);
                 draw_map();
-                const McMoveResult moveResult = mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
+                const McMoveResult moveResult = routeBTrainerLock
+                    ? mcMovingTick(false, false, false, false, false)
+                    : mcMovingTick(upDown, downDown, leftDown, rightDown, is_key_shift_pressed());
                 const McBounds mcBounds = getMCBounds();
                 WorldMapId targetMap;
                 int spawnX;
@@ -4289,14 +4315,23 @@ int main(void)
                     load_world_map(currentMapId, spawnX, spawnY, spawnFacing);
                     play_world_map_bgm(currentMapId);
                     draw_map();
-                } else if ((spacePressed || enterPressed) &&
+                } else if (currentMapId == WORLD_MAP_ROUTE_B &&
+                           map_consume_route_b_trainer_arrival()) {
+                    dialogueText = TRAINER_A_GREETING_TEXT;
+                    dialogueReturnState = GAME_STATE_TRAINER_BATTLE;
+                    nextBattleType = BATTLE_TRAINER;
+                    play_bgm(cynthia_audio, cynthia_audio_len);
+                    currentGameState = GAME_STATE_DIALOGUE;
+                } else if (!routeBTrainerLock &&
+                           (spacePressed || enterPressed) &&
                            map_can_use_pokemon_center_pc(&mcBounds)) {
                     currentGameState = GAME_STATE_PC_MENU;
                     pcCursor = 0;
                     pcSwapIndex = -1;
                     pcHeldMon = NULL;
                     play_sfx(pc_se_audio, pc_se_audio_len);
-                } else if ((spacePressed || enterPressed) &&
+                } else if (!routeBTrainerLock &&
+                           (spacePressed || enterPressed) &&
                            map_can_talk_to_pokemon_center_nurse(&mcBounds)) {
                     dialogueText = NURSE_GREETING_TEXT;
                     // After greeting, go to heal animation (not back to map)
@@ -4307,20 +4342,24 @@ int main(void)
                     pcHealPulseFrame = 0;
                     pcHealDone = false;
                     map_set_nurse_facing_left(true);  // Nurse turns to face the healing tray
-                } else if ((spacePressed || enterPressed) &&
+                } else if (!routeBTrainerLock &&
+                           (spacePressed || enterPressed) &&
                            map_can_talk_to_poke_mart_clerk(&mcBounds)) {
                     dialogueText = CLERK_GREETING_TEXT;
                     dialogueReturnState = GAME_STATE_MAP;
                     currentGameState = GAME_STATE_DIALOGUE;
-                } else if (currentMapId == WORLD_MAP_ROUTE_B &&
+                } else if (!routeBTrainerLock &&
+                           currentMapId == WORLD_MAP_ROUTE_B &&
                            spacePressed &&
                            map_can_talk_to_route_b_cynthia(&mcBounds)) {
-                    dialogueText = CYNTHIA_GREETING_TEXT;
+                    dialogueText = TRAINER_A_GREETING_TEXT;
                     dialogueReturnState = GAME_STATE_TRAINER_BATTLE;
                     nextBattleType = BATTLE_TRAINER;
                     play_bgm(cynthia_audio, cynthia_audio_len);
                     currentGameState = GAME_STATE_DIALOGUE;
-                } else if (moveResult == MC_MOVE_OK && should_trigger_grass_battle(upPressed, downPressed, leftPressed, rightPressed)) {
+                } else if (!routeBTrainerLock &&
+                           moveResult == MC_MOVE_OK &&
+                           should_trigger_grass_battle(upPressed, downPressed, leftPressed, rightPressed)) {
                     nextBattleType = BATTLE_WILD;
                     currentGameState = GAME_STATE_WILD_BATTLE;
                 }

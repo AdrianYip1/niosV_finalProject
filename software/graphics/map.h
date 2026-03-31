@@ -30,6 +30,8 @@ typedef enum {
     MAP_PRESET_GROUND,
     MAP_PRESET_POKEMON_CENTER_INTERIOR,
     MAP_PRESET_POKE_MART_INTERIOR,
+    MAP_PRESET_HOUSE_INTERIOR,
+    MAP_PRESET_GYM_INTERIOR,
     MAP_PRESET_COUNT,
 } MapPresetId;
 
@@ -40,6 +42,8 @@ bool map_set_tile_xy(int x, int y, TileId tile);
 bool map_place_tree_xy(int x, int y);
 bool map_place_pokemon_center_xy(int x, int y);
 bool map_place_poke_mart_xy(int x, int y);
+bool map_place_house_xy(int x, int y);
+bool map_place_gym_xy(int x, int y);
 bool map_set_overlay_tile_xy(int x, int y, TileId tile);
 bool map_is_walkable_tile(TileId tile);
 bool map_is_walkable_at_xy(int x, int y);
@@ -52,6 +56,9 @@ bool map_can_talk_to_pokemon_center_nurse(const McBounds *bounds);
 bool map_can_talk_to_poke_mart_clerk(const McBounds *bounds);
 bool map_is_mc_on_grass_patch(const McBounds *bounds);
 bool map_can_use_pokemon_center_pc(const McBounds *bounds);
+void map_reset_route_b_trainer(void);
+bool map_tick_route_b_trainer_event(const McBounds *bounds);
+bool map_consume_route_b_trainer_arrival(void);
 
 void init_map(void); 
 void draw_map(void);

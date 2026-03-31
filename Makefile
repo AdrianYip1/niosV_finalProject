@@ -18,7 +18,10 @@ SRCS := software/main.c \
         software/graphics/backdrops/ground_tiles.c \
         software/graphics/backdrops/pokemon_center_interior_tiles.c \
         software/graphics/backdrops/poke_mart_interior_tiles.c \
+        software/graphics/backdrops/house_interior_tiles.c \
+        software/graphics/backdrops/gym_interior_tiles.c \
         software/graphics/backdrops/decor_tiles.c \
+        software/graphics/backdrops/building_extra_tiles.c \
         software/graphics/sprites/battleIcons/battle_icons.c \
         software/graphics/sprites/battleIcons/battleHp/burned.c \
         software/graphics/sprites/battleIcons/battleHp/caught.c \
@@ -80,6 +83,8 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseSprite.c \
         software/graphics/sprites/pokemonCenter/pokemonCenterNurseLeftSprite.c \
         software/graphics/sprites/trainerSprites/cynthiaFrontMapSprite.c \
+        software/graphics/sprites/trainerSprites/trainerLeftMapSprite.c \
+        software/graphics/sprites/trainerSprites/trainerWalking_frames.c \
         software/graphics/titleScreen/titleScreen_frames.c \
         software/graphics/titleScreen/titleScreenDraw.c \
         software/graphics/sprites/pokemonAreas/pokemonAreaBack.c \
