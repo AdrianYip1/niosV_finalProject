@@ -288,7 +288,9 @@
 #define NON_SELECTED_POKEMON_STATUS_X 32
 #define NON_SELECTED_POKEMON_STATUS_Y 23
 
-#define SELECTED_POKEMON_DIFFERENCE_Y 1 //1 down from nonselected
+// Selected slot art is drawn slightly up compared to unselected art.
+#define SELECTED_POKEMON_DIFFERENCE_Y (-3)
+#define SELECTED_POKEMON_DIFFERENCE_X (-1)
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
@@ -1565,9 +1567,9 @@ int main(void)
 
         switch (currentGameState) {
         case GAME_STATE_MENU: {
-            // Global menu UI offset tweak.
-            const int menuX = 0;
-            const int menuY = 0;
+            // Slot content anchor (slot art is at x=32,y=24).
+            const int menuX = 32;
+            const int menuY = 24;
 
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 6) menuCursor = 6;
@@ -1610,13 +1612,7 @@ int main(void)
                             TRANSPARENT_COLOUR);
 
             const int slotW = 128;
-            const int slotH = 49;
-            const int unselectedDx = NON_SELECTED_POKEMON_X;
-            const int unselectedDy = NON_SELECTED_POKEMON_Y - 2;
-            const int leaderSelectedDx = NON_SELECTED_POKEMON_X;
-            const int leaderSelectedDy = NON_SELECTED_POKEMON_Y;
-            const int leaderUnselectedDx = NON_SELECTED_POKEMON_X;
-            const int leaderUnselectedDy = NON_SELECTED_POKEMON_Y - 2;
+            const int slotH = 48;
 
             for (int i = 0; i < 6; i++) {
                 const int slotX = menuX + (i % 2) * slotW;
@@ -1624,13 +1620,14 @@ int main(void)
                 const int colYOffset = ((i % 2) == 1) ? 9 : 0;
                 const bool isSelected = (i == menuCursor) || (i == menuSwapIndex);
                 const bool isLeaderSlot = (i == 0);
-                int dy;
-                if (i == 0 || i == 1) dy = 0;
-                else if (i == 2 || i ==3) dy == 48;
-                else if ( i == 4 ||i==5) dy == 48 + 48;
-  
-                const int dx = ((i % 2) == 1) ? (161 - 33) : 0; 
-                const int selected_dy;
+
+                // Slot frame art shifts for unselected slots (x+1, y+3).
+                const int slotXOffsetForFrame = isSelected ? 0 : 1;
+                const int slotYOffsetForFrame = isSelected ? 0 : 3;
+
+                const int dy = (i / 2) * 48;
+                const int dx = ((i % 2) == 1) ? (161 - 33) : 0;
+
                 if (isLeaderSlot) {
                     if (isSelected) {
                         draw_sprite_any(partyLeaderSelectedSprite,
@@ -1652,7 +1649,7 @@ int main(void)
                     } else {
                         draw_sprite_any(pokemonUnselectedSprite,
                                         MENU_POKEMON_UNSELECTED_WIDTH, MENU_POKEMON_UNSELECTED_HEIGHT,
-                                       33 + dx, 27 + colYOffset + dy,
+                                        33 + dx, 27 + colYOffset + dy,
                                         TRANSPARENT_COLOUR);
                     }
                 }
@@ -1660,11 +1657,9 @@ int main(void)
                 pokemonInBattle *p = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
                 if (p == NULL) continue;
 
-                const int slotYOffsetForSelection = isSelected ? SELECTED_POKEMON_DIFFERENCE_Y : 0;
-
                 // HP bar inside the slot.
-                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X + 1;
-                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForSelection + 1;
+                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X + slotXOffsetForFrame + 1;
+                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForFrame + 1;
                 const int hpBarW = NON_SELECTED_POKEMON_HP_WIDTH;
                 const int hpBarH = NON_SELECTED_POKEMON_HP_HEIGHT;
 
@@ -1689,15 +1684,15 @@ int main(void)
                 if (statusSprite != NULL) {
                     draw_sprite_any(statusSprite,
                                     statusW, statusH,
-                                    slotX + NON_SELECTED_POKEMON_STATUS_X,
-                                    slotY + NON_SELECTED_POKEMON_STATUS_Y + colYOffset + slotYOffsetForSelection,
+                                    slotX + NON_SELECTED_POKEMON_STATUS_X + slotXOffsetForFrame,
+                                    slotY + NON_SELECTED_POKEMON_STATUS_Y + colYOffset + slotYOffsetForFrame,
                                     TRANSPARENT_COLOUR);
                 }
 
                 // Pokemon sprite + name/level (text drawn after sprite).
                 const unsigned short *pokeSprite = menuPokemonSpriteForId(p->id.frontFrame_ID);
-                const int pokeX = slotX + NON_SELECTED_POKEMON_X + 12 - 20;
-                const int pokeY = slotY + NON_SELECTED_POKEMON_Y + 14 + colYOffset + slotYOffsetForSelection - 20;
+                const int pokeX = slotX + NON_SELECTED_POKEMON_X + 12 - 20 + slotXOffsetForFrame;
+                const int pokeY = slotY + NON_SELECTED_POKEMON_Y + 14 + colYOffset + slotYOffsetForFrame - 20;
                 if (pokeSprite != NULL) {
                     if (isSelected) {
                         draw_sprite_any_bob(pokeSprite,
@@ -1720,25 +1715,25 @@ int main(void)
                 snprintf(hpCurBuf, sizeof(hpCurBuf), "%d", curHp);
                 snprintf(hpMaxBuf, sizeof(hpMaxBuf), "%d", maxHp);
 
-                draw_string_f(slotX + POKEMON_TEXT_MENU_X,
-                              slotY + POKEMON_TEXT_MENU_Y + colYOffset + slotYOffsetForSelection - 5,
+                draw_string_f(slotX + POKEMON_TEXT_MENU_X + slotXOffsetForFrame,
+                              slotY + POKEMON_TEXT_MENU_Y + colYOffset + slotYOffsetForFrame - 5,
                               (p->id.data != NULL && p->id.data->name != NULL) ? p->id.data->name : "???",
                               BLACK,
                               1);
 
-                draw_string_f(slotX + NON_SELECTED_POKEMON_LEVEL_TEXT_X,
-                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForSelection - 6,
+                draw_string_f(slotX + NON_SELECTED_POKEMON_LEVEL_TEXT_X + slotXOffsetForFrame,
+                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForFrame - 6,
                               lvlBuf,
                               BLACK,
                               1);
 
-                draw_string_f(slotX + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X - 2,
-                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForSelection -6,
+                draw_string_f(slotX + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X - 2 + slotXOffsetForFrame,
+                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForFrame - 6,
                               hpCurBuf,
                               BLACK,
                               1);
-                draw_string_f(slotX + NON_SELECTED_POKEMON_MAX_HP_TEXT_X,
-                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForSelection - 6,
+                draw_string_f(slotX + NON_SELECTED_POKEMON_MAX_HP_TEXT_X + slotXOffsetForFrame,
+                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForFrame - 6,
                               hpMaxBuf,
                               BLACK,
                               1);
