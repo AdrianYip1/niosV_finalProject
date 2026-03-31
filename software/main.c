@@ -1661,8 +1661,10 @@ int main(void)
                 if (p == NULL) continue;
 
                 // HP bar inside the slot.
-                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X + slotXOffsetForFrame + 1;
-                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForFrame + 1;
+                const int hpBarAdjustX = isSelected ? 0 : -1;   // unselected: 1 left
+                const int hpBarAdjustY = isSelected ? 1 : -2;   // selected: 1 down, unselected: 2 up
+                const int hpBarX = slotX + NON_SELECTED_POKEMON_HP_X + slotXOffsetForFrame + 1 + hpBarAdjustX;
+                const int hpBarY = slotY + NON_SELECTED_POKEMON_HP_Y + colYOffset + slotYOffsetForFrame + 1 + hpBarAdjustY;
                 const int hpBarW = NON_SELECTED_POKEMON_HP_WIDTH;
                 const int hpBarH = NON_SELECTED_POKEMON_HP_HEIGHT;
 
@@ -1718,6 +1720,8 @@ int main(void)
                 snprintf(hpCurBuf, sizeof(hpCurBuf), "%d", curHp);
                 snprintf(hpMaxBuf, sizeof(hpMaxBuf), "%d", maxHp);
 
+                const int slotTextAdjustY = isSelected ? 2 : -1; // selected: 2 down, unselected: 1 up
+
                 draw_string_f(slotX + POKEMON_TEXT_MENU_X + slotXOffsetForFrame,
                               slotY + POKEMON_TEXT_MENU_Y + colYOffset + slotYOffsetForFrame - 5,
                               (p->id.data != NULL && p->id.data->name != NULL) ? p->id.data->name : "???",
@@ -1725,18 +1729,18 @@ int main(void)
                               1);
 
                 draw_string_f(slotX + NON_SELECTED_POKEMON_LEVEL_TEXT_X + slotXOffsetForFrame,
-                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForFrame - 6,
+                              slotY + NON_SELECTED_POKEMON_LEVEL_TEXT_Y + colYOffset + slotYOffsetForFrame - 6 + slotTextAdjustY,
                               lvlBuf,
                               BLACK,
                               1);
 
                 draw_string_f(slotX + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_X - 2 + slotXOffsetForFrame,
-                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForFrame - 6,
+                              slotY + NON_SELECTED_POKEMON_CURRENT_HP_TEXT_Y + colYOffset + slotYOffsetForFrame - 6 + slotTextAdjustY,
                               hpCurBuf,
                               BLACK,
                               1);
                 draw_string_f(slotX + NON_SELECTED_POKEMON_MAX_HP_TEXT_X + slotXOffsetForFrame,
-                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForFrame - 6,
+                              slotY + NON_SELECTED_POKEMON_MAX_HP_TEXT_Y + colYOffset + slotYOffsetForFrame - 6 + slotTextAdjustY,
                               hpMaxBuf,
                               BLACK,
                               1);
