@@ -392,45 +392,7 @@ void draw_sprite_any_shade_pulse(const unsigned short *sprite,
     }
 }
 
-void draw_sprite_any_silhouette(const unsigned short *sprite,
-                                int width, int height,
-                                int x, int y,
-                                short transparent,
-                                short silhouette_colour,
-                                int silhouette_frame)
-{
-    if (silhouette_frame < 0 || silhouette_frame >= SILHOUETTE_SPRITE_FRAME_COUNT) {
-        draw_sprite_any(sprite, width, height, x, y, transparent);
-        return;
-    }
 
-    // Animated silhouette: slight jitter + blink + pulsing brightness.
-    static const signed char dx_pattern[SILHOUETTE_SPRITE_FRAME_COUNT] = {
-        0, 0, -1, 0, 1, 0, -1, 0,
-        1, 0, 0, 0, -1, 0, 1, 0
-    };
-    static const signed char shade_pattern[SILHOUETTE_SPRITE_FRAME_COUNT] = {
-        -6, -3, 0, 3, 6, 3, 0, -3,
-        -6, -3, 0, 3, 6, 3, 0, -3
-    };
-
-    const int visible = ((silhouette_frame / 2) % 2) == 0;
-    if (!visible) return;
-
-    const int dx = (int)dx_pattern[silhouette_frame];
-    const unsigned short draw_colour = shade_565((unsigned short)silhouette_colour, (int)shade_pattern[silhouette_frame]);
-
-    for (int sy = 0; sy < height; sy++) {
-        for (int sx = 0; sx < width; sx++) {
-            unsigned short colour = sprite[sy * width + sx];
-            if (colour == (unsigned short)transparent) {
-                continue;
-            }
-
-            draw_pixel(x + dx + sx, y + sy, draw_colour);
-        }
-    }
-}
 
 void draw_sprite_any_region(const unsigned short *sprite,
                             int sprite_width, int sprite_height,

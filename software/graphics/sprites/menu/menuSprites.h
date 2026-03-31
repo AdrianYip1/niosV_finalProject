@@ -20,8 +20,8 @@ extern const unsigned short partyLeaderSelectedSprite[MENU_PARTY_LEADER_SELECTED
 #define MENU_PARTY_LEADER_UNSELECTED_HEIGHT 45
 extern const unsigned short partyLeaderUnselectedSprite[MENU_PARTY_LEADER_UNSELECTED_WIDTH * MENU_PARTY_LEADER_UNSELECTED_HEIGHT];
 
-#define MENU_PARTY_MENU_WIDTH  256
-#define MENU_PARTY_MENU_HEIGHT 192
+#define MENU_PARTY_MENU_WIDTH  320
+#define MENU_PARTY_MENU_HEIGHT 240
 extern const unsigned short partyMenuSprite[MENU_PARTY_MENU_WIDTH * MENU_PARTY_MENU_HEIGHT];
 
 #define MENU_POKEMON_SELECTED_WIDTH  128

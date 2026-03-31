@@ -90,6 +90,8 @@ SRCS := software/main.c \
         software/graphics/sprites/pcMenu/pcMenuSprites.c \
         software/graphics/sprites/pokedexMenu/pokedexMenuSprites.c \
         software/graphics/sprites/pokedexTypes/pokedexTypesSprites.c \
+        software/graphics/sprites/bagMenu/bagMenuSprites.c \
+        software/graphics/sprites/mainMenuUi/mainMenuUiSprites.c \
         software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/graphics/sprites/pokeballSprites/smallPokeballSprite.c \
@@ -123,6 +125,7 @@ SRCS := software/main.c \
         software/gameplayLogic/battling/battleLoop.c \
         software/gameplayLogic/bag.c \
         software/gameplayLogic/itemDatabase.c \
+        software/gameplayLogic/entities/pokedexDatabase.c \
         software/gameplayLogic/entities/pokemonDataBase.c \
         software/gameplayLogic/entities/learnSet.c \
         software/gameplayLogic/storage/pc.c \
