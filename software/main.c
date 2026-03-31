@@ -1545,7 +1545,7 @@ int main(void)
                 // Player party is persistent for this program run
                 if (nextBattleType == BATTLE_WILD) {
                     initParty(&enemyParty);
-                    initPokemonInBattle(&wildEnemy, &CHARMANDER, 18);
+                    initPokemonInBattle(&wildEnemy, &CHARMANDER, 15);
                     addPokemonToParty(&enemyParty, &wildEnemy);
                 } else {
                     //battle type is BATTLE_TRAINER
