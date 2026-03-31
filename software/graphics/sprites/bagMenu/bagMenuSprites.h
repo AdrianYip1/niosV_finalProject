@@ -1,0 +1,147 @@
+#pragma once
+
+#include <stdint.h>
+
+#define BAG_MENU_SPRITE_COUNT  27
+
+typedef enum {
+    BAG_MENU_SPRITE_BACK_BUTTON = 0,
+    BAG_MENU_SPRITE_BAG_MENU = 1,
+    BAG_MENU_SPRITE_BAG1 = 2,
+    BAG_MENU_SPRITE_BAG2 = 3,
+    BAG_MENU_SPRITE_BAG3 = 4,
+    BAG_MENU_SPRITE_BAG4 = 5,
+    BAG_MENU_SPRITE_BAG5 = 6,
+    BAG_MENU_SPRITE_BERRIES = 7,
+    BAG_MENU_SPRITE_BERRY_BAG = 8,
+    BAG_MENU_SPRITE_CURSOR_INDICATOR = 9,
+    BAG_MENU_SPRITE_ITEMS = 10,
+    BAG_MENU_SPRITE_ITEMS_BAG = 11,
+    BAG_MENU_SPRITE_KEY_ITEMS = 12,
+    BAG_MENU_SPRITE_KEY_ITEM_BAG = 13,
+    BAG_MENU_SPRITE_LEFT_ARROW = 14,
+    BAG_MENU_SPRITE_POKEBALL_BAG = 15,
+    BAG_MENU_SPRITE_POKEBALLS = 16,
+    BAG_MENU_SPRITE_RIGHT_ARROW = 17,
+    BAG_MENU_SPRITE_SPIN1 = 18,
+    BAG_MENU_SPRITE_SPIN2 = 19,
+    BAG_MENU_SPRITE_SPIN3 = 20,
+    BAG_MENU_SPRITE_SPIN4 = 21,
+    BAG_MENU_SPRITE_SPIN5 = 22,
+    BAG_MENU_SPRITE_SPIN6 = 23,
+    BAG_MENU_SPRITE_SPIN7 = 24,
+    BAG_MENU_SPRITE_TM_BAG = 25,
+    BAG_MENU_SPRITE_TMS = 26,
+} BagMenuSpriteId;
+
+#define BAG_MENU_BACK_BUTTON_WIDTH  32
+#define BAG_MENU_BACK_BUTTON_HEIGHT 28
+extern const unsigned short backButtonSprite[BAG_MENU_BACK_BUTTON_WIDTH * BAG_MENU_BACK_BUTTON_HEIGHT];
+
+#define BAG_MENU_BAG_MENU_WIDTH  320
+#define BAG_MENU_BAG_MENU_HEIGHT 240
+extern const unsigned short bagMenuSprite[BAG_MENU_BAG_MENU_WIDTH * BAG_MENU_BAG_MENU_HEIGHT];
+
+#define BAG_MENU_BAG1_WIDTH  35
+#define BAG_MENU_BAG1_HEIGHT 4
+extern const unsigned short bag1Sprite[BAG_MENU_BAG1_WIDTH * BAG_MENU_BAG1_HEIGHT];
+
+#define BAG_MENU_BAG2_WIDTH  34
+#define BAG_MENU_BAG2_HEIGHT 4
+extern const unsigned short bag2Sprite[BAG_MENU_BAG2_WIDTH * BAG_MENU_BAG2_HEIGHT];
+
+#define BAG_MENU_BAG3_WIDTH  34
+#define BAG_MENU_BAG3_HEIGHT 4
+extern const unsigned short bag3Sprite[BAG_MENU_BAG3_WIDTH * BAG_MENU_BAG3_HEIGHT];
+
+#define BAG_MENU_BAG4_WIDTH  34
+#define BAG_MENU_BAG4_HEIGHT 4
+extern const unsigned short bag4Sprite[BAG_MENU_BAG4_WIDTH * BAG_MENU_BAG4_HEIGHT];
+
+#define BAG_MENU_BAG5_WIDTH  35
+#define BAG_MENU_BAG5_HEIGHT 4
+extern const unsigned short bag5Sprite[BAG_MENU_BAG5_WIDTH * BAG_MENU_BAG5_HEIGHT];
+
+#define BAG_MENU_BERRIES_WIDTH  80
+#define BAG_MENU_BERRIES_HEIGHT 16
+extern const unsigned short berriesSprite[BAG_MENU_BERRIES_WIDTH * BAG_MENU_BERRIES_HEIGHT];
+
+#define BAG_MENU_BERRY_BAG_WIDTH  55
+#define BAG_MENU_BERRY_BAG_HEIGHT 43
+extern const unsigned short berryBagSprite[BAG_MENU_BERRY_BAG_WIDTH * BAG_MENU_BERRY_BAG_HEIGHT];
+
+#define BAG_MENU_CURSOR_INDICATOR_WIDTH  7
+#define BAG_MENU_CURSOR_INDICATOR_HEIGHT 7
+extern const unsigned short cursorIndicatorSprite[BAG_MENU_CURSOR_INDICATOR_WIDTH * BAG_MENU_CURSOR_INDICATOR_HEIGHT];
+
+#define BAG_MENU_ITEMS_WIDTH  80
+#define BAG_MENU_ITEMS_HEIGHT 16
+extern const unsigned short itemsSprite[BAG_MENU_ITEMS_WIDTH * BAG_MENU_ITEMS_HEIGHT];
+
+#define BAG_MENU_ITEMS_BAG_WIDTH  54
+#define BAG_MENU_ITEMS_BAG_HEIGHT 45
+extern const unsigned short itemsBagSprite[BAG_MENU_ITEMS_BAG_WIDTH * BAG_MENU_ITEMS_BAG_HEIGHT];
+
+#define BAG_MENU_KEY_ITEMS_WIDTH  80
+#define BAG_MENU_KEY_ITEMS_HEIGHT 16
+extern const unsigned short keyItemsSprite[BAG_MENU_KEY_ITEMS_WIDTH * BAG_MENU_KEY_ITEMS_HEIGHT];
+
+#define BAG_MENU_KEY_ITEM_BAG_WIDTH  54
+#define BAG_MENU_KEY_ITEM_BAG_HEIGHT 44
+extern const unsigned short keyItemBagSprite[BAG_MENU_KEY_ITEM_BAG_WIDTH * BAG_MENU_KEY_ITEM_BAG_HEIGHT];
+
+#define BAG_MENU_LEFT_ARROW_WIDTH  9
+#define BAG_MENU_LEFT_ARROW_HEIGHT 14
+extern const unsigned short leftArrowSprite[BAG_MENU_LEFT_ARROW_WIDTH * BAG_MENU_LEFT_ARROW_HEIGHT];
+
+#define BAG_MENU_POKEBALL_BAG_WIDTH  54
+#define BAG_MENU_POKEBALL_BAG_HEIGHT 45
+extern const unsigned short pokeballBagSprite[BAG_MENU_POKEBALL_BAG_WIDTH * BAG_MENU_POKEBALL_BAG_HEIGHT];
+
+#define BAG_MENU_POKEBALLS_WIDTH  80
+#define BAG_MENU_POKEBALLS_HEIGHT 16
+extern const unsigned short pokeballsSprite[BAG_MENU_POKEBALLS_WIDTH * BAG_MENU_POKEBALLS_HEIGHT];
+
+#define BAG_MENU_RIGHT_ARROW_WIDTH  9
+#define BAG_MENU_RIGHT_ARROW_HEIGHT 14
+extern const unsigned short rightArrowSprite[BAG_MENU_RIGHT_ARROW_WIDTH * BAG_MENU_RIGHT_ARROW_HEIGHT];
+
+#define BAG_MENU_SPIN1_WIDTH  16
+#define BAG_MENU_SPIN1_HEIGHT 16
+extern const unsigned short spin1Sprite[BAG_MENU_SPIN1_WIDTH * BAG_MENU_SPIN1_HEIGHT];
+
+#define BAG_MENU_SPIN2_WIDTH  16
+#define BAG_MENU_SPIN2_HEIGHT 16
+extern const unsigned short spin2Sprite[BAG_MENU_SPIN2_WIDTH * BAG_MENU_SPIN2_HEIGHT];
+
+#define BAG_MENU_SPIN3_WIDTH  16
+#define BAG_MENU_SPIN3_HEIGHT 16
+extern const unsigned short spin3Sprite[BAG_MENU_SPIN3_WIDTH * BAG_MENU_SPIN3_HEIGHT];
+
+#define BAG_MENU_SPIN4_WIDTH  16
+#define BAG_MENU_SPIN4_HEIGHT 16
+extern const unsigned short spin4Sprite[BAG_MENU_SPIN4_WIDTH * BAG_MENU_SPIN4_HEIGHT];
+
+#define BAG_MENU_SPIN5_WIDTH  16
+#define BAG_MENU_SPIN5_HEIGHT 16
+extern const unsigned short spin5Sprite[BAG_MENU_SPIN5_WIDTH * BAG_MENU_SPIN5_HEIGHT];
+
+#define BAG_MENU_SPIN6_WIDTH  16
+#define BAG_MENU_SPIN6_HEIGHT 16
+extern const unsigned short spin6Sprite[BAG_MENU_SPIN6_WIDTH * BAG_MENU_SPIN6_HEIGHT];
+
+#define BAG_MENU_SPIN7_WIDTH  16
+#define BAG_MENU_SPIN7_HEIGHT 16
+extern const unsigned short spin7Sprite[BAG_MENU_SPIN7_WIDTH * BAG_MENU_SPIN7_HEIGHT];
+
+#define BAG_MENU_TM_BAG_WIDTH  55
+#define BAG_MENU_TM_BAG_HEIGHT 42
+extern const unsigned short tmBagSprite[BAG_MENU_TM_BAG_WIDTH * BAG_MENU_TM_BAG_HEIGHT];
+
+#define BAG_MENU_TMS_WIDTH  80
+#define BAG_MENU_TMS_HEIGHT 16
+extern const unsigned short tmsSprite[BAG_MENU_TMS_WIDTH * BAG_MENU_TMS_HEIGHT];
+
+extern const unsigned short* const bagMenuSprites[BAG_MENU_SPRITE_COUNT];
+extern const uint16_t bagMenuSpritesWidths[BAG_MENU_SPRITE_COUNT];
+extern const uint16_t bagMenuSpritesHeights[BAG_MENU_SPRITE_COUNT];

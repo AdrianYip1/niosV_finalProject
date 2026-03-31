@@ -6,25 +6,14 @@ import re
 from PIL import Image
 
 
-SRC_DIR = Path("ImageConvertHelpers/menu")
+SRC_DIR = Path("ImageConvertHelpers/bagMenu")
 
-OUT_DIR = Path("software/graphics/sprites/menu")
-OUT_C = OUT_DIR / "menuSprites.c"
-OUT_H = OUT_DIR / "menuSprites.h"
+OUT_DIR = Path("software/graphics/sprites/bagMenu")
+OUT_C = OUT_DIR / "bagMenuSprites.c"
+OUT_H = OUT_DIR / "bagMenuSprites.h"
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
-
-# Keep existing file but fix the identifier spelling in generated C.
-STEM_REMAP = {
-    "pokemonUnselecred": "pokemonUnselected",
-}
-
-
-def normalize_stem(stem: str) -> str:
-    # e.g. "partyMenu(2)" or "partyMenu (2)" -> "partyMenu"
-    s = re.sub(r"\s*\(\d+\)\s*$", "", stem).strip()
-    return s
 
 
 def is_magentaish(r: int, g: int, b: int) -> bool:
@@ -40,6 +29,29 @@ def camel_to_screaming_snake(name: str) -> str:
     s1 = re.sub(r"[^A-Za-z0-9_]", "_", s1)
     s1 = re.sub(r"_+", "_", s1).strip("_")
     return s1.upper()
+
+
+def normalize_stem(stem: str) -> str:
+    # "bag menu(1)" -> "bag menu"
+    s = re.sub(r"\s*\(\d+\)\s*$", "", stem).strip()
+    # collapse whitespace
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+
+def to_lower_camel(name: str) -> str:
+    # split on non-alnum; keep digits
+    parts = [p for p in re.split(r"[^A-Za-z0-9]+", name) if p]
+    if not parts:
+        raise ValueError(f"cannot build identifier from: {name!r}")
+    first = parts[0]
+    out = [first[:1].lower() + first[1:]]
+    for p in parts[1:]:
+        out.append(p[:1].upper() + p[1:])
+    ident = "".join(out)
+    if ident and ident[0].isdigit():
+        ident = "sprite" + ident
+    return ident
 
 
 def load_vals(path: Path) -> tuple[list[str], int, int]:
@@ -77,43 +89,32 @@ def main() -> None:
     if not pngs:
         raise RuntimeError(f"No .png files found in {SRC_DIR}")
 
-    sprites: list[tuple[str, Path]] = []
-    used_stems: dict[str, str] = {}
+    sprites: list[tuple[str, str, Path]] = []
     for p in pngs:
-        stem = STEM_REMAP.get(normalize_stem(p.stem), normalize_stem(p.stem))
-        prev = used_stems.get(stem)
-        if prev is not None:
-            raise RuntimeError(f"Duplicate sprite name after normalization: {stem} from {prev} and {p.name}")
-        used_stems[stem] = p.name
-        sprites.append((f"{stem}Sprite", p))
-
-    # Ensure the leader slot sprites exist (needed by the menu UI). If they're missing, fail loudly.
-    needed = {"partyLeaderSelected.png", "partyLeaderUnselected.png"}
-    present = {p.name for p in pngs}
-    missing = sorted(needed - present)
-    if missing:
-        raise RuntimeError(f"Missing menu sprite(s) in {SRC_DIR}: {', '.join(missing)}")
+        stem = normalize_stem(p.stem)
+        base = to_lower_camel(stem)
+        name = f"{base}Sprite"
+        macro_base = camel_to_screaming_snake(base)
+        sprites.append((name, macro_base, p))
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Header
     h_lines: list[str] = ["#pragma once", "", "#include <stdint.h>", ""]
-    h_lines.append(f"#define MENU_SPRITE_COUNT  {len(sprites)}")
+    h_lines.append(f"#define BAG_MENU_SPRITE_COUNT  {len(sprites)}")
     h_lines.append("")
     h_lines.append("typedef enum {")
-    for i, (name, _) in enumerate(sprites):
-        enum_base = name[: -len("Sprite")] if name.endswith("Sprite") else name
-        h_lines.append(f"    MENU_SPRITE_{camel_to_screaming_snake(enum_base)} = {i},")
-    h_lines.append("} MenuSpriteId;")
+    for i, (_, macro_base, _) in enumerate(sprites):
+        h_lines.append(f"    BAG_MENU_SPRITE_{macro_base} = {i},")
+    h_lines.append("} BagMenuSpriteId;")
     h_lines.append("")
 
     sprite_dims: list[tuple[int, int]] = []
-    for name, path in sprites:
+    for name, macro_base, path in sprites:
         _, w, h = load_vals(path)
         sprite_dims.append((w, h))
-        macro_base = f"MENU_{camel_to_screaming_snake(name[: -len('Sprite')] if name.endswith('Sprite') else name)}"
-        w_macro = f"{macro_base}_WIDTH"
-        h_macro = f"{macro_base}_HEIGHT"
+        w_macro = f"BAG_MENU_{macro_base}_WIDTH"
+        h_macro = f"BAG_MENU_{macro_base}_HEIGHT"
         h_lines.extend(
             [
                 f"#define {w_macro}  {w}",
@@ -125,9 +126,9 @@ def main() -> None:
 
     h_lines.extend(
         [
-            "extern const unsigned short* const menuSprites[MENU_SPRITE_COUNT];",
-            "extern const uint16_t menuSpriteWidths[MENU_SPRITE_COUNT];",
-            "extern const uint16_t menuSpriteHeights[MENU_SPRITE_COUNT];",
+            "extern const unsigned short* const bagMenuSprites[BAG_MENU_SPRITE_COUNT];",
+            "extern const uint16_t bagMenuSpritesWidths[BAG_MENU_SPRITE_COUNT];",
+            "extern const uint16_t bagMenuSpritesHeights[BAG_MENU_SPRITE_COUNT];",
             "",
         ]
     )
@@ -136,28 +137,27 @@ def main() -> None:
 
     # Source
     c_lines: list[str] = [f'#include "{OUT_H.name}"', ""]
-    for (name, path), (w, h) in zip(sprites, sprite_dims):
+    for (name, macro_base, path), (w, h) in zip(sprites, sprite_dims):
         vals, w2, h2 = load_vals(path)
         if (w2, h2) != (w, h):
             raise RuntimeError(f"{path.name}: size changed unexpectedly ({w}x{h} -> {w2}x{h2})")
-        macro_base = f"MENU_{camel_to_screaming_snake(name[: -len('Sprite')] if name.endswith('Sprite') else name)}"
-        emit_array(c_lines, name, f"{macro_base}_WIDTH", f"{macro_base}_HEIGHT", vals)
+        emit_array(c_lines, name, f"BAG_MENU_{macro_base}_WIDTH", f"BAG_MENU_{macro_base}_HEIGHT", vals)
 
-    c_lines.append("const unsigned short* const menuSprites[MENU_SPRITE_COUNT] = {")
-    for i, (name, _) in enumerate(sprites):
+    c_lines.append("const unsigned short* const bagMenuSprites[BAG_MENU_SPRITE_COUNT] = {")
+    for i, (name, _, _) in enumerate(sprites):
         end = "," if i + 1 < len(sprites) else ""
         c_lines.append(f"    {name}{end}")
     c_lines.append("};")
     c_lines.append("")
 
-    c_lines.append("const uint16_t menuSpriteWidths[MENU_SPRITE_COUNT] = {")
+    c_lines.append("const uint16_t bagMenuSpritesWidths[BAG_MENU_SPRITE_COUNT] = {")
     for i, (w, _) in enumerate(sprite_dims):
         end = "," if i + 1 < len(sprite_dims) else ""
         c_lines.append(f"    {w}{end}")
     c_lines.append("};")
     c_lines.append("")
 
-    c_lines.append("const uint16_t menuSpriteHeights[MENU_SPRITE_COUNT] = {")
+    c_lines.append("const uint16_t bagMenuSpritesHeights[BAG_MENU_SPRITE_COUNT] = {")
     for i, (_, h) in enumerate(sprite_dims):
         end = "," if i + 1 < len(sprite_dims) else ""
         c_lines.append(f"    {h}{end}")
@@ -170,3 +170,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

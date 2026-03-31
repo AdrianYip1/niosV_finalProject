@@ -89,6 +89,8 @@ SRCS := software/main.c \
         software/graphics/sprites/pcMenu/pcMenuSprites.c \
         software/graphics/sprites/pokedexMenu/pokedexMenuSprites.c \
         software/graphics/sprites/pokedexTypes/pokedexTypesSprites.c \
+        software/graphics/sprites/bagMenu/bagMenuSprites.c \
+        software/graphics/sprites/mainMenuUi/mainMenuUiSprites.c \
         software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
