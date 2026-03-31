@@ -1501,17 +1501,6 @@ int main(void)
                         } else if (currentGameState == GAME_STATE_MAIN_MENU_UI) {
                             currentGameState = GAME_STATE_MAP;
                         }
-                    } else if (ch == '9') {
-                        // Evolution placeholder (debug).
-                        if (currentGameState == GAME_STATE_MAP) {
-                            currentGameState = GAME_STATE_EVOLUTION;
-                            evolutionPokemonIndex = findNextPendingEvolutionIndex(&playerParty, -1);
-                            evolutionReturnState = GAME_STATE_MAP;
-                            evolutionFrame = 0;
-                            evolutionTimer = 0;
-                            evolutionPhase = 0;
-                            evolutionPhaseTimer = 0;
-                        }
                     } else if (ch == '\n') {
                         enterPressed = true;
                     }
@@ -4213,7 +4202,7 @@ int main(void)
         }
 
         case GAME_STATE_EVOLUTION: {
-            // Evolution screen: animate backdrop, then show base sprite -> evolved sprite.
+            // animate backdrop, then show base sprite -> evolved sprite.
             draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
                             EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
                             0, 0,
@@ -4226,7 +4215,7 @@ int main(void)
                 evolutionFrame = (evolutionFrame + 1) % EVOLUTIONBACKDROP_FRAME_COUNT;
             }
 
-            // Find a valid pending evolution target.
+            // Find pending evolution target.
             if (evolutionPokemonIndex < 0 || evolutionPokemonIndex >= playerParty.count) {
                 evolutionPokemonIndex = findNextPendingEvolutionIndex(&playerParty, -1);
             }
