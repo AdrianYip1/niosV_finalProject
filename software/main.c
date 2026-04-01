@@ -1948,47 +1948,31 @@ int main(void)
             } MenuPulseDir;
 
 
-            static int menuSelX = 0; 
-            static int menuSelY = 0; 
-            if (upPressed && !downPressed) menuSelY = -1;
-            else if (downPressed && !upPressed) menuSelY = 1;
-            else if (upPressed && downPressed) menuSelY = 0;
+            int heldX = 0;
+            int heldY = 0;
+            if (upDown && !downDown) heldY = -1;
+            else if (downDown && !upDown) heldY = 1;
+            if (leftDown && !rightDown) heldX = -1;
+            else if (rightDown && !leftDown) heldX = 1;
 
-            if (leftPressed && !rightPressed) menuSelX = -1;
-            else if (rightPressed && !leftPressed) menuSelX = 1;
-            else if (leftPressed && rightPressed) menuSelX = 0;
-
-            MenuPulseDir selectedDir = MENU_DIR_NONE;
-            if (menuSelX == 0 && menuSelY == -1) selectedDir = MENU_DIR_N;
-            else if (menuSelX == 1 && menuSelY == -1) selectedDir = MENU_DIR_NE;
-            else if (menuSelX == 1 && menuSelY == 0) selectedDir = MENU_DIR_E;
-            else if (menuSelX == 1 && menuSelY == 1) selectedDir = MENU_DIR_SE;
-            else if (menuSelX == 0 && menuSelY == 1) selectedDir = MENU_DIR_S;
-            else if (menuSelX == -1 && menuSelY == 1) selectedDir = MENU_DIR_SW;
-            else if (menuSelX == -1 && menuSelY == 0) selectedDir = MENU_DIR_W;
-            else if (menuSelX == -1 && menuSelY == -1) selectedDir = MENU_DIR_NW;
+            MenuPulseDir heldDir = MENU_DIR_NONE;
+            if (heldX == 0 && heldY == -1) heldDir = MENU_DIR_N;
+            else if (heldX == 1 && heldY == -1) heldDir = MENU_DIR_NE;
+            else if (heldX == 1 && heldY == 0) heldDir = MENU_DIR_E;
+            else if (heldX == 1 && heldY == 1) heldDir = MENU_DIR_SE;
+            else if (heldX == 0 && heldY == 1) heldDir = MENU_DIR_S;
+            else if (heldX == -1 && heldY == 1) heldDir = MENU_DIR_SW;
+            else if (heldX == -1 && heldY == 0) heldDir = MENU_DIR_W;
+            else if (heldX == -1 && heldY == -1) heldDir = MENU_DIR_NW;
 
             static MenuPulseDir lastPulseDir = MENU_DIR_NONE;
             static int lastPulseTimer = 0;
-            MenuPulseDir pulseDir = MENU_DIR_NONE;
-            if (upDown && !downDown) {
-                if (leftDown && !rightDown) pulseDir = MENU_DIR_NW;
-                else if (rightDown && !leftDown) pulseDir = MENU_DIR_NE;
-                else pulseDir = MENU_DIR_N;
-            } else if (downDown && !upDown) {
-                if (leftDown && !rightDown) pulseDir = MENU_DIR_SW;
-                else if (rightDown && !leftDown) pulseDir = MENU_DIR_SE;
-                else pulseDir = MENU_DIR_S;
-            } else if (leftDown && !rightDown) {
-                pulseDir = MENU_DIR_W;
-            } else if (rightDown && !leftDown) {
-                pulseDir = MENU_DIR_E;
-            }
+            const MenuPulseDir pulseVisualDir = (heldDir != MENU_DIR_NONE)
+                ? heldDir
+                : (lastPulseTimer > 0 ? lastPulseDir : MENU_DIR_NONE);
 
-            const MenuPulseDir pulseVisualDir = (selectedDir != MENU_DIR_NONE) ? selectedDir : pulseDir;
-
-            if (pulseVisualDir != MENU_DIR_NONE) {
-                lastPulseDir = pulseVisualDir;
+            if (heldDir != MENU_DIR_NONE) {
+                lastPulseDir = heldDir;
                 lastPulseTimer = 15;
             } else if (lastPulseTimer > 0) {
                 lastPulseTimer--;
@@ -2106,11 +2090,9 @@ int main(void)
             if (escPressed) {
                 currentGameState = GAME_STATE_MAP;
             } else if (spacePressed) {
-                const MenuPulseDir selectionDir = (selectedDir != MENU_DIR_NONE)
-                    ? selectedDir
-                    : (pulseDir != MENU_DIR_NONE
-                           ? pulseDir
-                           : (lastPulseTimer > 0 ? lastPulseDir : MENU_DIR_NONE));
+                const MenuPulseDir selectionDir = (heldDir != MENU_DIR_NONE)
+                    ? heldDir
+                    : (lastPulseTimer > 0 ? lastPulseDir : MENU_DIR_NONE);
 
                 switch (selectionDir) {
                     case MENU_DIR_NW: // Bag
@@ -2164,6 +2146,12 @@ int main(void)
                             TRAINER_CARD_SPRITE_WIDTH, TRAINER_CARD_SPRITE_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
+
+            draw_string_f(55, 80, "Name:", BLACK, FONT_5X9);
+            draw_string_f(55, 96, "$", BLACK, FONT_5X9);
+            draw_string_f(55, 112, "Pokedex", BLACK, FONT_5X9);
+            draw_string_f(55, 128, "Time Played", BLACK, FONT_5X9);
+            draw_string_f(55, 152, "Location", BLACK, FONT_5X9);
             if (escPressed) {
                 currentGameState = GAME_STATE_MAIN_MENU_UI;
             } else if (spacePressed) {
