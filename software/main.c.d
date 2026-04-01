@@ -83,6 +83,10 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/graphics/sprites/menu/cancelSprite.h \
  software/graphics/sprites/menuPokemon/menuPokemonSprites.h \
  software/graphics/sprites/mainMenuUi/mainMenuUiSprites.h \
+ software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.h \
+ software/graphics/sprites/trainerCard/trainerCardSprite.h \
+ software/graphics/sprites/trainerCard/trainerCardBackSprite.h \
+ software/graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h \
  software/graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h \
  software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h
 software/graphics/graphics.h:
@@ -174,5 +178,9 @@ software/graphics/sprites/menu/menuSprites.h:
 software/graphics/sprites/menu/cancelSprite.h:
 software/graphics/sprites/menuPokemon/menuPokemonSprites.h:
 software/graphics/sprites/mainMenuUi/mainMenuUiSprites.h:
+software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.h:
+software/graphics/sprites/trainerCard/trainerCardSprite.h:
+software/graphics/sprites/trainerCard/trainerCardBackSprite.h:
+software/graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h:
 software/graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h:
 software/graphics/sprites/pokeballThrow/pokeballThrow_frames.h:
