@@ -108,6 +108,8 @@ SRCS := software/main.c \
         software/graphics/sprites/bagMenu/bagMenuSprites.c \
         software/graphics/sprites/mainMenuUi/mainMenuUiSprites.c \
         software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.c \
+        software/graphics/sprites/itemShopUI/pokemartBuyScreenSprite.c \
+        software/graphics/sprites/itemShopUI/pokemartSelectCursorSprite.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/graphics/sprites/pokeballSprites/smallPokeballSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \

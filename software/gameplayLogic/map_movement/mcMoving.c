@@ -15,11 +15,21 @@ static bool tryMoveLeft(void);
 static bool tryMoveRight(void);
 static McMoveResult mcEdgeExitResult(McDirection dir);
 
+// Tick state is kept across frames; reset on map load/teleport so held directions work correctly.
+static McDirection g_lastDir = MC_DIR_INVALID;
+static unsigned int g_stepCounter = 0;
+static bool g_bumpLatch = false;
+
 void mcMovingInit(int startX, int startY, McFacing facing) {
     initMCWalkingSprite(startX, startY, facing);
     // Default to idle on spawn/teleport
     initMCIdle();
     drawMCIdleAnimation();
+
+    // Force the first tick on the new map to re-initialize the walking animation if a direction is held.
+    g_lastDir = MC_DIR_INVALID;
+    g_stepCounter = 0;
+    g_bumpLatch = false;
 }
 
 static bool moveDiagonal(McDirection dir, unsigned int stepCounter) {
@@ -103,14 +113,10 @@ static bool tryMoveRight(void) {
 
 //connect to keyboard polling
 McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift) {
-    static McDirection lastDir = MC_DIR_NONE;
-    static unsigned int stepCounter = 0;
-    static bool bumpLatch = false;
-
     const McDirection dir = mcPickDirection(up, down, left, right);
 
-    if (dir != lastDir) {
-        lastDir = dir;
+    if (dir != g_lastDir) {
+        g_lastDir = dir;
         switch (dir) {
             case MC_DIR_N:  initMCWalkingNorth(); break;
             case MC_DIR_S:  initMCWalkingSouth(); break;
@@ -128,10 +134,10 @@ McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift)
     int speed_multiplier = shift ? 6 : 2;
     bool movedThisTick = false;
     for (int i = 0; i < speed_multiplier; i++) {
-        stepCounter++;
+        g_stepCounter++;
         // only when mc is walking
         if (dir !=MC_DIR_NONE && dir !=MC_DIR_INVALID){
-            if (stepCounter % 10 == 0) play_step_sound();
+            if (g_stepCounter % 10 == 0) play_step_sound();
         }
         switch (dir) {
             case MC_DIR_N:
@@ -150,7 +156,7 @@ McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift)
             case MC_DIR_NW:
             case MC_DIR_SE:
             case MC_DIR_SW:
-                movedThisTick = moveDiagonal(dir, stepCounter) || movedThisTick;
+                movedThisTick = moveDiagonal(dir, g_stepCounter) || movedThisTick;
                 break;
             default:
                 break;
@@ -158,12 +164,12 @@ McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift)
     }
 
     if (dir == MC_DIR_NONE || dir == MC_DIR_INVALID) {
-        bumpLatch = false;
+        g_bumpLatch = false;
     } else if (movedThisTick) {
-        bumpLatch = false;
-    } else if (!bumpLatch) {
+        g_bumpLatch = false;
+    } else if (!g_bumpLatch) {
         play_sfx(wallbump_audio, wallbump_audio_len);
-        bumpLatch = true;
+        g_bumpLatch = true;
     }
 
     if (dir == MC_DIR_NONE) {

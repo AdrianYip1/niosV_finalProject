@@ -2011,11 +2011,32 @@ int main(void)
             draw_sprite_any(mainMenuUiFrontFacingMcSprite, MAIN_MENU_UI_FRONT_FACING_MC_WIDTH, MAIN_MENU_UI_FRONT_FACING_MC_HEIGHT, 128, 80, TRANSPARENT_COLOUR);
 
             // Party sprites beside the left/right (W/E) icons: 3 on the left, 3 on the right.
+
+            //239,97 for 4 in right
+            //278,81 for 5 in right 
+            //278, 111 for 6 in right
+
+            //-2, 79 in left for 2
+            //-2, 110 in left for 3
+            //41,94 in left for 1
             {
-                const int leftX = 10;
-                const int rightX = SCREEN_WIDTH - 10 - MENU_POKEMON_SPRITE_WIDTH;
-                const int y0 = 55;
-                const int yGap = 55;
+
+                static const int partySpriteX[6] = {
+                    41,  // 1 (left)
+                    -2,  // 2 (left)
+                    -2,  // 3 (left)
+                    239, // 4 (right)
+                    278, // 5 (right)
+                    278, // 6 (right)
+                };
+                static const int partySpriteY[6] = {
+                    94,  // 1 (left)
+                    79,  // 2 (left)
+                    110, // 3 (left)
+                    97,  // 4 (right)
+                    81,  // 5 (right)
+                    111, // 6 (right)
+                };
 
                 for (int i = 0; i < 6; i++) {
                     pokemonInBattle *p = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
@@ -2024,8 +2045,8 @@ int main(void)
                     if (spr == NULL) continue;
 
                     const bool leftSide = (i < 3);
-                    const int x = leftSide ? leftX : rightX;
-                    const int y = y0 + ((leftSide ? i : (i - 3)) * yGap);
+                    const int x = partySpriteX[i];
+                    const int y = partySpriteY[i];
 
                     const bool pulseSide = leftSide ? pulseLeft : pulseRight;
                     if (!p->alive) {
