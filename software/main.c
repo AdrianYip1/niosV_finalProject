@@ -83,6 +83,7 @@
 #include "graphics/sprites/trainerCard/trainerCardSprite.h"
 #include "graphics/sprites/trainerCard/trainerCardBackSprite.h"
 #include "graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h"
+#include "graphics/sprites/itemShopUI/pokemartSelectCursorSprite.h"
 #include "graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
@@ -1572,6 +1573,10 @@ int main(void)
     GameState bagMenuReturnState = GAME_STATE_MAP;
     int bagMenuCursor = 0;
     BagMenuFocus bagMenuFocus = BAG_FOCUS_LIST;
+
+    // Shop UI state.
+    int shopCursor = 0;
+    bool shopCancelFocused = false;
 
     // Evolution UI state (runs after battles).
     int evolutionFrame = 0;
@@ -5299,6 +5304,7 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -5426,6 +5432,7 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -5892,6 +5899,8 @@ int main(void)
                 if (spacePressed || enterPressed) {
                     currentGameState =  GAME_STATE_SHOP_UI;
                     clearShopOpen = false;
+                    shopCursor = 0;
+                    shopCancelFocused = false;
                 }
             }
             else if (spacePressed || enterPressed) {
@@ -6226,11 +6235,112 @@ int main(void)
                             0, 0,
                             TRANSPARENT_COLOUR);
 
+            // UI coordinates (user-provided)
             const int cursorX0 = 121;
             const int cursorY0 = 32;
-            const int cursordY = 53- 32;
+            const int cursorDy = 53 - 32;
+            const int cancelSelX = 130;
+            const int cancelUnselX = 129;
+            const int cancelY = 151;
+            const int selectedNameX = 34;
+            const int selectedNameY = 179;
+            const int moneyLabelX = 5;
+            const int moneyLabelY = 40;
+            const int moneyValX = 68;
+            const int moneyValY = 60;
+            const int selectedIconX = 16;
+            const int selectedIconY = 182;
 
-            if (escPressed) currentGameState = GAME_STATE_MAP;
+            // Items sold in the shop
+            static const ItemId shopItems[] = {
+                ITEM_POTION,
+                ITEM_SUPER_POTION,
+                ITEM_HYPER_POTION,
+                ITEM_POKEBALL,
+                ITEM_GREAT_BALL,
+                ITEM_ULTRA_BALL,
+                ITEM_REVIVE,
+                ITEM_MAX_REVIVE,
+            };
+            const int shopItemCount = (int)(sizeof(shopItems) / sizeof(shopItems[0]));
+            if (shopCursor < 0) shopCursor = 0;
+            if (shopCursor >= shopItemCount) shopCursor = shopItemCount - 1;
+
+
+            if (!shopCancelFocused) {
+                const int prev = shopCursor;
+                if (upPressed) shopCursor--;
+                if (downPressed) {
+                    if (shopCursor >= shopItemCount - 1) {
+                        shopCancelFocused = true;
+                    } else {
+                        shopCursor++;
+                    }
+                }
+                shopCursor = clamp_int(shopCursor, 0, shopItemCount - 1);
+                if (shopCursor != prev) play_sfx(plink_audio, plink_audio_len);
+            } else {
+                if (upPressed) {
+                    shopCancelFocused = false;
+                    shopCursor = shopItemCount - 1;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            }
+
+            if (escPressed) {
+                currentGameState = GAME_STATE_MAP;
+                break;
+            }
+
+            if (spacePressed && shopCancelFocused) {
+                currentGameState = GAME_STATE_MAP;
+                play_sfx(plink_audio, plink_audio_len);
+                break;
+            }
+
+            // Cursor highlight
+            if (!shopCancelFocused) {
+                draw_sprite_any(pokemartSelectCursorSprite,
+                                POKEMART_SELECT_CURSOR_SPRITE_WIDTH, POKEMART_SELECT_CURSOR_SPRITE_HEIGHT,
+                                cursorX0, cursorY0 + shopCursor * cursorDy,
+                                TRANSPARENT_COLOUR);
+            }
+
+            // Cancel button label
+            draw_string_f(shopCancelFocused ? cancelSelX : cancelUnselX, cancelY, "CANCEL", BLACK, FONT_5X9);
+
+            // Money
+            draw_string_f(moneyLabelX, moneyLabelY, "MONEY:", BLACK, FONT_5X9);
+            {
+                char moneyBuf[24];
+                snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
+                draw_string_f(moneyValX, moneyValY, moneyBuf, BLACK, FONT_5X9);
+            }
+
+            // Selected item name + icon preview
+            if (!shopCancelFocused && shopItemCount > 0) {
+                const ItemId selected = shopItems[shopCursor];
+                draw_string_f(selectedNameX, selectedNameY, itemName(selected), BLACK, FONT_5X9);
+
+                const unsigned short *icon = NULL;
+                int iconW = 0;
+                int iconH = 0;
+                if (selected == ITEM_POKEBALL) { icon = pokeballIcon_poke; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                else if (selected == ITEM_GREAT_BALL) { icon = pokeballIcon_great; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                else if (selected == ITEM_ULTRA_BALL) { icon = pokeballIcon_ultra; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                else if (selected == ITEM_PREMIER_BALL) { icon = pokeballIcon_premier; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                else if (selected == ITEM_MASTER_BALL) { icon = pokeballIcon_master; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
+                else if (selected == ITEM_POTION) { icon = healingItemIcon_potion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                else if (selected == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                else if (selected == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                else if (selected == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                else if (selected == ITEM_REVIVE) { icon = healingItemIcon_revive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                else if (selected == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+
+                if (icon != NULL && iconW > 0 && iconH > 0) {
+                    draw_sprite_any(icon, iconW, iconH, selectedIconX, selectedIconY, TRANSPARENT_COLOUR);
+                }
+            }
                                
             break;
         }
