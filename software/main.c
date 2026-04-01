@@ -406,6 +406,100 @@ static inline bool isBagMenuState(GameState state) {
            state == GAME_STATE_BAG_MENU_KEY_ITEMS;
 }
 
+typedef enum {
+    BAG_FOCUS_LIST = 0,
+    BAG_FOCUS_RIGHT_ARROW = 1,
+    BAG_FOCUS_LEFT_ARROW = 2,
+    BAG_FOCUS_CANCEL = 3,
+} BagMenuFocus;
+
+static inline int bagMenuVisibleCountForState(GameState state, const Bag *bag) {
+    if (bag == NULL) return 0;
+    if (state == GAME_STATE_BAG_MENU_ITEMS) return bagHpVisibleCount(bag);
+    if (state == GAME_STATE_BAG_MENU_POKEBALLS) return bagBallVisibleCount(bag);
+    return 0;
+}
+
+static inline ItemId bagMenuVisibleAtForState(GameState state, const Bag *bag, int visibleIndex) {
+    if (bag == NULL) return ITEM_NONE;
+    if (state == GAME_STATE_BAG_MENU_ITEMS) return bagHpVisibleAt(bag, visibleIndex);
+    if (state == GAME_STATE_BAG_MENU_POKEBALLS) return bagBallVisibleAt(bag, visibleIndex);
+    return ITEM_NONE;
+}
+
+static inline GameState bagMenuNextPageState(GameState state) {
+    switch (state) {
+        case GAME_STATE_BAG_MENU_ITEMS: return GAME_STATE_BAG_MENU_POKEBALLS;
+        case GAME_STATE_BAG_MENU_POKEBALLS: return GAME_STATE_BAG_MENU_TMS;
+        case GAME_STATE_BAG_MENU_TMS: return GAME_STATE_BAG_MENU_BERRIES;
+        case GAME_STATE_BAG_MENU_BERRIES: return GAME_STATE_BAG_MENU_KEY_ITEMS;
+        case GAME_STATE_BAG_MENU_KEY_ITEMS: return GAME_STATE_BAG_MENU_ITEMS;
+        default: return GAME_STATE_BAG_MENU_ITEMS;
+    }
+}
+
+static inline GameState bagMenuPrevPageState(GameState state) {
+    switch (state) {
+        case GAME_STATE_BAG_MENU_ITEMS: return GAME_STATE_BAG_MENU_KEY_ITEMS;
+        case GAME_STATE_BAG_MENU_POKEBALLS: return GAME_STATE_BAG_MENU_ITEMS;
+        case GAME_STATE_BAG_MENU_TMS: return GAME_STATE_BAG_MENU_POKEBALLS;
+        case GAME_STATE_BAG_MENU_BERRIES: return GAME_STATE_BAG_MENU_TMS;
+        case GAME_STATE_BAG_MENU_KEY_ITEMS: return GAME_STATE_BAG_MENU_BERRIES;
+        default: return GAME_STATE_BAG_MENU_ITEMS;
+    }
+}
+
+static void draw_wrapped_string_fixed_width_f(int x, int y, const char *text, short colour, FontId font, int maxCharsPerLine, int maxLines) {
+    if (text == NULL || text[0] == '\0' || maxCharsPerLine <= 0 || maxLines <= 0) return;
+
+    // Build a small wrapped buffer with '\n' inserted.
+    char buf[256];
+    int out = 0;
+
+    const char *p = text;
+    for (int line = 0; line < maxLines && *p; line++) {
+        // Skip leading spaces on each line.
+        while (*p == ' ') p++;
+        if (!*p) break;
+
+        int count = 0;
+        int lastSpaceOut = -1;
+        int lineStartOut = out;
+
+        while (*p && *p != '\n' && count < maxCharsPerLine && out < (int)sizeof(buf) - 2) {
+            buf[out] = *p;
+            if (*p == ' ') lastSpaceOut = out;
+            out++;
+            p++;
+            count++;
+        }
+
+        // If we hit max width in the middle of a word, wrap back to the last space.
+        if (count >= maxCharsPerLine && lastSpaceOut >= 0) {
+            // rewind input pointer to after that space
+            const int rewind = out - (lastSpaceOut + 1);
+            p -= rewind;
+            out = lastSpaceOut; // drop trailing part incl space
+        }
+
+        // Consume explicit newline.
+        if (*p == '\n') p++;
+
+        // If we wrote nothing on this line (very long word), force a break to avoid infinite loop.
+        if (out == lineStartOut) {
+            while (*p && *p != '\n') p++;
+            if (*p == '\n') p++;
+        }
+
+        if (line != maxLines - 1 && *p && out < (int)sizeof(buf) - 2) {
+            buf[out++] = '\n';
+        }
+    }
+
+    buf[out] = '\0';
+    draw_string_f(x, y, buf, colour, font);
+}
+
 static int findNextPendingEvolutionIndex(const Party *party, int afterIndex) {
     if (party == NULL) return -1;
     for (int i = afterIndex + 1; i < party->count; i++) {
@@ -1307,7 +1401,7 @@ int main(void)
     initParty(&playerParty);
     int playerMoney = STARTING_MONEY;
     unsigned int playTimeFrames = 0;
-    const unsigned int GAME_FPS = 60;
+    const unsigned int GAME_FPS = 20;
 
     bagInit(&playerBag);
     // Starter bag 
@@ -1476,6 +1570,8 @@ int main(void)
 
     // Bag menu return state (Esc to close).
     GameState bagMenuReturnState = GAME_STATE_MAP;
+    int bagMenuCursor = 0;
+    BagMenuFocus bagMenuFocus = BAG_FOCUS_LIST;
 
     // Evolution UI state (runs after battles).
     int evolutionFrame = 0;
@@ -1553,6 +1649,8 @@ int main(void)
                         if (currentGameState == GAME_STATE_MAP) {
                             currentGameState = GAME_STATE_BAG_MENU_ITEMS;
                             bagMenuReturnState = GAME_STATE_MAP;
+                            bagMenuCursor = 0;
+                            bagMenuFocus = BAG_FOCUS_LIST;
                         } else if (isBagMenuState(currentGameState)) {
                             currentGameState = GAME_STATE_MAP;
                         }
@@ -2102,6 +2200,8 @@ int main(void)
                         play_sfx(plink_audio, plink_audio_len);
                         currentGameState = GAME_STATE_BAG_MENU_ITEMS;
                         bagMenuReturnState = GAME_STATE_MAIN_MENU_UI;
+                        bagMenuCursor = 0;
+                        bagMenuFocus = BAG_FOCUS_LIST;
                         break;
                     case MENU_DIR_N: // Ball (Party menu)
                         play_sfx(plink_audio, plink_audio_len);
@@ -2150,20 +2250,20 @@ int main(void)
                             0, 0,
                             TRANSPARENT_COLOUR);
 
-            draw_string_f(55, 80 -4, "Name:", BLACK, FONT_5X9);
-            draw_string_f(55, 96 - 4, "$", BLACK, FONT_5X9);
-            draw_string_f(55, 112 - 4, "Pokedex", BLACK, FONT_5X9);
-            draw_string_f(55, 128 - 4, "Time Played", BLACK, FONT_5X9);
-            draw_string_f(55, 152 - 4, "Location", BLACK, FONT_5X9);
+            draw_string_f(55, 80 -5, "Name:", BLACK, FONT_5X9);
+            draw_string_f(55, 96 - 5, "$     ", BLACK, FONT_5X9);
+            draw_string_f(55, 112 - 5, "Pokedex: ", BLACK, FONT_5X9);
+            draw_string_f(55, 128 - 5, "Time Played: ", BLACK, FONT_5X9);
+            draw_string_f(55, 152 - 5, "Location: ", BLACK, FONT_5X9);
 
             {
                 const char *name = getUserText();
                 if (name == NULL || name[0] == '\0') name = "???";
-                draw_string_f(120, 80 -4, name, BLACK, FONT_5X9);
+                draw_string_f(120, 80 -5, name, BLACK, FONT_5X9);
 
                 char moneyNumBuf[16];
                 snprintf(moneyNumBuf, sizeof(moneyNumBuf), "%d", playerMoney);
-                draw_string_f(65, 96 - 4, moneyNumBuf, BLACK, FONT_5X9);
+                draw_string_f(65 + 5, 96 - 5, moneyNumBuf, BLACK, FONT_5X9);
 
                 int seenCount = 0;
                 int caughtCount = 0;
@@ -2173,7 +2273,7 @@ int main(void)
                 }
                 char dexBuf[32];
                 snprintf(dexBuf, sizeof(dexBuf), "C:%d S:%d", caughtCount, seenCount);
-                draw_string_f(120, 112 - 4, dexBuf, BLACK, FONT_5X9);
+                draw_string_f(120, 112 - 5, dexBuf, BLACK, FONT_5X9);
 
                 const unsigned int totalSeconds = (GAME_FPS > 0) ? (playTimeFrames / GAME_FPS) : 0;
                 const unsigned int hours = totalSeconds / 3600U;
@@ -2181,11 +2281,11 @@ int main(void)
                 const unsigned int seconds = totalSeconds % 60U;
                 char timeBuf[24];
                 snprintf(timeBuf, sizeof(timeBuf), "%02u:%02u:%02u", hours, minutes, seconds);
-                draw_string_f(120, 128 - 4, timeBuf, BLACK, FONT_5X9);
+                draw_string_f(125, 152 - 4, timeBuf, BLACK, FONT_5X9);
 
                 const char *location = world_map_display_name(currentMapId);
                 if (location == NULL) location = "Unknown";
-                draw_string_f(120, 152 - 4, location, BLACK, FONT_5X9);
+                draw_string_f(120, 128 - 4, location, BLACK, FONT_5X9);
             }
             if (escPressed) {
                 currentGameState = GAME_STATE_MAIN_MENU_UI;
@@ -5050,70 +5150,479 @@ int main(void)
 
         case GAME_STATE_BAG_MENU_ITEMS:
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                draw_sprite_any_shade_pulse(bagMenuBackButtonSprite, BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            }
             draw_sprite_any(bagMenuItemsSprite, BAG_MENU_ITEMS_WIDTH,BAG_MENU_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            }
+            if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            }
             draw_sprite_any(bagMenuItemsBagSprite,BAG_MENU_ITEMS_BAG_WIDTH,BAG_MENU_ITEMS_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
 
+            {
+                // coords for cursor in bag
+                const int cursorX0 = 154;
+                const int cursorY0 = 58;
+                const int cursorDy = 12;
+                const int cursorMaxY = 166;
+                const int itemNameX = 145;
+                const int itemNameY = 152;
+                const int descX = 47;
+                const int descY = 169;
+
+                const int listTextX = cursorX0 + 10;
+                const int listTextY0 = cursorY0 - 1;
+
+                const int visibleCount = bagMenuVisibleCountForState(currentGameState, &playerBag);
+
+                if (bagMenuFocus == BAG_FOCUS_LIST) {
+                    if (visibleCount > 0) {
+                        const int oldCursor = bagMenuCursor;
+                        if (upPressed) bagMenuCursor--;
+                        if (downPressed) bagMenuCursor++;
+                        bagMenuCursor = clamp_int(bagMenuCursor, 0, visibleCount - 1);
+                        if (bagMenuCursor != oldCursor) play_sfx(plink_audio, plink_audio_len);
+                    } else {
+                        bagMenuCursor = 0;
+                    }
+                    if (leftPressed) {
+                        bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                } else if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    if (leftPressed) {
+                        bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (rightPressed) {
+                        bagMenuFocus = BAG_FOCUS_LIST;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    if (downPressed) {
+                        bagMenuFocus = BAG_FOCUS_CANCEL;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (rightPressed) {
+                        bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                } else { // BAG_FOCUS_CANCEL
+                    if (rightPressed) {
+                        bagMenuFocus = BAG_FOCUS_LIST;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (upPressed) {
+                        bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                }
+
+                if (spacePressed) {
+                    if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                        currentGameState = bagMenuNextPageState(currentGameState);
+                        play_sfx(plink_audio, plink_audio_len);
+                        break;
+                    } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                        currentGameState = bagMenuPrevPageState(currentGameState);
+                        play_sfx(plink_audio, plink_audio_len);
+                        break;
+                    } else if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                        currentGameState = bagMenuReturnState;
+                        play_sfx(plink_audio, plink_audio_len);
+                        break;
+                    }
+                }
+
+                if (visibleCount > 0) bagMenuCursor = clamp_int(bagMenuCursor, 0, visibleCount - 1);
+                else bagMenuCursor = 0;
+
+                if (bagMenuFocus == BAG_FOCUS_LIST && visibleCount > 0) {
+                    const int cy = cursorY0 + bagMenuCursor * cursorDy;
+                    if (cy <= cursorMaxY) {
+                        draw_sprite_any(bagMenuCursorIndicatorSprite,
+                                        BAG_MENU_CURSOR_INDICATOR_WIDTH, BAG_MENU_CURSOR_INDICATOR_HEIGHT,
+                                        cursorX0, cy,
+                                        TRANSPARENT_COLOUR);
+                    }
+                }
+
+                    const int maxRows = ((cursorMaxY - cursorY0) / cursorDy) + 1;
+                    const int rows = (visibleCount < maxRows) ? visibleCount : maxRows;
+                    for (int i = 0; i < rows; i++) {
+                        const ItemId it = bagMenuVisibleAtForState(currentGameState, &playerBag, i);
+                        if (it == ITEM_NONE) continue;
+                        draw_string_f(listTextX, listTextY0 + i * cursorDy, itemName(it), BLACK, FONT_5X9);
+                    }
+
+                    if (visibleCount > 0) {
+                        const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
+                        if (selected != ITEM_NONE) {
+                            draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+                        }
+                    }
+                }
+            }
+
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
-            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_POKEBALLS;
         break;
 
         case GAME_STATE_BAG_MENU_POKEBALLS:
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                draw_sprite_any_shade_pulse(bagMenuBackButtonSprite, BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            }
             draw_sprite_any(bagMenuPokeballsSprite, BAG_MENU_POKEBALLS_WIDTH,BAG_MENU_POKEBALLS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag2Sprite, BAG_MENU_BAG2_WIDTH,BAG_MENU_BAG2_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            }
+            if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            }
             draw_sprite_any(bagMenuPokeballBagSprite,BAG_MENU_POKEBALL_BAG_WIDTH,BAG_MENU_POKEBALL_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+
+            {
+                // coords for cursor
+                const int cursorX0 = 154;
+                const int cursorY0 = 58;
+                const int cursorDy = 12;
+                const int cursorMaxY = 166;
+                const int itemNameX = 145;
+                const int itemNameY = 152;
+                const int descX = 47;
+                const int descY = 169;
+
+                const int listTextX = cursorX0 + 10;
+                const int listTextY0 = cursorY0 - 1;
+
+                const int visibleCount = bagMenuVisibleCountForState(currentGameState, &playerBag);
+
+                if (bagMenuFocus == BAG_FOCUS_LIST) {
+                    if (visibleCount > 0) {
+                        const int oldCursor = bagMenuCursor;
+                        if (upPressed) bagMenuCursor--;
+                        if (downPressed) bagMenuCursor++;
+                        bagMenuCursor = clamp_int(bagMenuCursor, 0, visibleCount - 1);
+                        if (bagMenuCursor != oldCursor) play_sfx(plink_audio, plink_audio_len);
+                    } else {
+                        bagMenuCursor = 0;
+                    }
+                    if (leftPressed) {
+                        bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                } else if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    if (leftPressed) {
+                        bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (rightPressed) {
+                        bagMenuFocus = BAG_FOCUS_LIST;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    if (downPressed) {
+                        bagMenuFocus = BAG_FOCUS_CANCEL;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (rightPressed) {
+                        bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                } else { // BAG_FOCUS_CANCEL
+                    if (rightPressed) {
+                        bagMenuFocus = BAG_FOCUS_LIST;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (upPressed) {
+                        bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                }
+
+                if (spacePressed) {
+                    if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                        currentGameState = bagMenuNextPageState(currentGameState);
+                        play_sfx(plink_audio, plink_audio_len);
+                        break;
+                    } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                        currentGameState = bagMenuPrevPageState(currentGameState);
+                        play_sfx(plink_audio, plink_audio_len);
+                        break;
+                    } else if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                        currentGameState = bagMenuReturnState;
+                        play_sfx(plink_audio, plink_audio_len);
+                        break;
+                    }
+                }
+
+                if (visibleCount > 0) bagMenuCursor = clamp_int(bagMenuCursor, 0, visibleCount - 1);
+                else bagMenuCursor = 0;
+
+                if (bagMenuFocus == BAG_FOCUS_LIST && visibleCount > 0) {
+                    const int cy = cursorY0 + bagMenuCursor * cursorDy;
+                    if (cy <= cursorMaxY) {
+                        draw_sprite_any(bagMenuCursorIndicatorSprite,
+                                        BAG_MENU_CURSOR_INDICATOR_WIDTH, BAG_MENU_CURSOR_INDICATOR_HEIGHT,
+                                        cursorX0, cy,
+                                        TRANSPARENT_COLOUR);
+                    }
+                }
+
+                    const int maxRows = ((cursorMaxY - cursorY0) / cursorDy) + 1;
+                    const int rows = (visibleCount < maxRows) ? visibleCount : maxRows;
+                    for (int i = 0; i < rows; i++) {
+                        const ItemId it = bagMenuVisibleAtForState(currentGameState, &playerBag, i);
+                        if (it == ITEM_NONE) continue;
+                        draw_string_f(listTextX, listTextY0 + i * cursorDy, itemName(it), BLACK, FONT_5X9);
+                    }
+
+                    if (visibleCount > 0) {
+                        const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
+                        if (selected != ITEM_NONE) {
+                            draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+                        }
+                    }
+                }
+            }
+
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
-            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_TMS;
         break;
 
         case GAME_STATE_BAG_MENU_TMS:
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                draw_sprite_any_shade_pulse(bagMenuBackButtonSprite, BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            }
             draw_sprite_any(bagMenuTmsSprite, BAG_MENU_TMS_WIDTH,BAG_MENU_TMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag3Sprite, BAG_MENU_BAG3_WIDTH,BAG_MENU_BAG3_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            }
+            if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            }
             draw_sprite_any(bagMenuTmBagSprite,BAG_MENU_TM_BAG_WIDTH,BAG_MENU_TM_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
 
+            if (bagMenuFocus == BAG_FOCUS_LIST) {
+                if (leftPressed) {
+                    bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                if (leftPressed) {
+                    bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_LIST;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                if (downPressed) {
+                    bagMenuFocus = BAG_FOCUS_CANCEL;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else { // BAG_FOCUS_CANCEL
+                if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_LIST;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (upPressed) {
+                    bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            }
+
+            if (spacePressed) {
+                if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    currentGameState = bagMenuNextPageState(currentGameState);
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    currentGameState = bagMenuPrevPageState(currentGameState);
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                } else if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                    currentGameState = bagMenuReturnState;
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                }
+            }
+
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
-            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_BERRIES;
         break;
 
         case GAME_STATE_BAG_MENU_BERRIES:
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                draw_sprite_any_shade_pulse(bagMenuBackButtonSprite, BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            }
             draw_sprite_any(bagMenuBerriesSprite, BAG_MENU_BERRIES_WIDTH,BAG_MENU_BERRIES_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag4Sprite, BAG_MENU_BAG4_WIDTH,BAG_MENU_BAG4_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            }
+            if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            }
             draw_sprite_any(bagMenuBerryBagSprite,BAG_MENU_BERRY_BAG_WIDTH,BAG_MENU_BERRY_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+
+            if (bagMenuFocus == BAG_FOCUS_LIST) {
+                if (leftPressed) {
+                    bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                if (leftPressed) {
+                    bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_LIST;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                if (downPressed) {
+                    bagMenuFocus = BAG_FOCUS_CANCEL;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else { // BAG_FOCUS_CANCEL
+                if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_LIST;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (upPressed) {
+                    bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            }
+
+            if (spacePressed) {
+                if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    currentGameState = bagMenuNextPageState(currentGameState);
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    currentGameState = bagMenuPrevPageState(currentGameState);
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                } else if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                    currentGameState = bagMenuReturnState;
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                }
+            }
+
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
-            if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_KEY_ITEMS;
         break;
 
         case GAME_STATE_BAG_MENU_KEY_ITEMS:
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+            if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                draw_sprite_any_shade_pulse(bagMenuBackButtonSprite, BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
+            }
             draw_sprite_any(bagMenuKeyItemsSprite, BAG_MENU_KEY_ITEMS_WIDTH,BAG_MENU_KEY_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag5Sprite, BAG_MENU_BAG5_WIDTH,BAG_MENU_BAG5_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
-            draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
+            }
+            if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                draw_sprite_any_shade_pulse(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
+            }
             draw_sprite_any(bagMenuKeyItemBagSprite,BAG_MENU_KEY_ITEM_BAG_WIDTH,BAG_MENU_KEY_ITEM_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
 
+            if (bagMenuFocus == BAG_FOCUS_LIST) {
+                if (leftPressed) {
+                    bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                if (leftPressed) {
+                    bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_LIST;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                if (downPressed) {
+                    bagMenuFocus = BAG_FOCUS_CANCEL;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_RIGHT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            } else { // BAG_FOCUS_CANCEL
+                if (rightPressed) {
+                    bagMenuFocus = BAG_FOCUS_LIST;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else if (upPressed) {
+                    bagMenuFocus = BAG_FOCUS_LEFT_ARROW;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            }
+
+            if (spacePressed) {
+                if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    currentGameState = bagMenuNextPageState(currentGameState);
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    currentGameState = bagMenuPrevPageState(currentGameState);
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                } else if (bagMenuFocus == BAG_FOCUS_CANCEL) {
+                    currentGameState = bagMenuReturnState;
+                    play_sfx(plink_audio, plink_audio_len);
+                    break;
+                }
+            }
+
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
-            if (spacePressed) currentGameState = GAME_STATE_MAP;
         break;
 
         case GAME_STATE_PC_MENU: {
@@ -5166,7 +5675,7 @@ int main(void)
                             PC_MENU_PARTY_BOX_X + 10, PC_MENU_PARTY_BOX_Y,
                             TRANSPARENT_COLOUR);
 
-            // PC storage: show owned Pokemon that arent currently in the party.
+            //show owned Pokemon that arent currently in the party.
             pokemonInBattle *pcDisplay[PC_MAX];
             int pcDisplayCount = 0;
             for (int i = 0; i < playerPc.count && pcDisplayCount < PC_MAX; i++) {
@@ -5270,7 +5779,6 @@ int main(void)
                 }
             }
 
-            // Party slots (0..5) map to cursor indices 27..32.
             for (int i = 0; i < 6; i++) {
                 int x = 0, y = 0;
                 pcMenuCursorPos(27 + i, &x, &y);
@@ -5520,7 +6028,7 @@ int main(void)
                             }
                         }
                     } else {
-                        // Not seen: show black silhouette sprite(s) + placeholder name.
+                        // Not seen: show black silhouette sprite + placeholder name.
                         make_sprite_black(menuPokemonSpriteForId(i),
                                           MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
                                           120, -5 + (30 * number),
@@ -5538,7 +6046,7 @@ int main(void)
                 }
 
                 if (spacePressed) {
-                    pokedexInfoCursor = 1; // default to "down" arrow
+                    pokedexInfoCursor = 1; // default to down arrow
                     currentGameState = GAME_STATE_POKEDEX_INFO;
                 }
                 if (escPressed) currentGameState = pokedexMenuReturnState;
