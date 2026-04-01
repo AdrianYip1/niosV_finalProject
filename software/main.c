@@ -1110,6 +1110,23 @@ static void battleUiSetSingleMessage(BattleState *state, const char *msg) {
     state->messageCount = 1;
 }
 
+static void battleUiAppendMessage(BattleState *state, const char *msg) {
+    if (state == NULL || msg == NULL) return;
+    if (state->messageCount < 0) state->messageCount = 0;
+    if (state->messageReadIndex < 0) state->messageReadIndex = 0;
+    if (state->messageCount >= BATTLE_MSG_MAX) return;
+
+    const int i = state->messageCount;
+    snprintf(state->messages[i], sizeof(state->messages[i]), "%s", msg);
+    state->messageFlags[i] = 0;
+    state->hitEffects[i] = (signed char)BATTLE_HIT_EFFECT_NORMAL;
+    state->hpAfterPlayer[i] = -1;
+    state->hpAfterEnemy[i] = -1;
+    state->displayPlayerIndex[i] = (state->playerParty != NULL) ? (signed char)state->playerParty->activeIndex : (signed char)-1;
+    state->displayEnemyIndex[i] = (state->enemyParty != NULL) ? (signed char)state->enemyParty->activeIndex : (signed char)-1;
+    state->messageCount++;
+}
+
 static int stringPixelWidth(FontId font, const char *s, int maxChars) {
     if (s == NULL) return 0;
     if (maxChars < 0) maxChars = 0;
@@ -2000,11 +2017,6 @@ int main(void)
                                 TRANSPARENT_COLOUR);
             }
 
-            {
-                char moneyBuf[32];
-                snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
-                draw_string_f(39, 174, moneyBuf, BLACK, 1);
-            }
 
             // Space selects a pokemon to swap; pressing Space on another swaps the two.
             if (escPressed) {
@@ -2275,7 +2287,7 @@ int main(void)
                             TRANSPARENT_COLOUR);
 
             draw_string_f(55, 80 -5, "Name:", BLACK, FONT_5X9);
-            draw_string_f(55, 96 - 5 - 3, "$", BLACK, FONT_5X9);
+            draw_string_f(55, 96 - 5 - 1, "$", BLACK, FONT_5X9);
             draw_string_f(55, 112 - 5, "Pokedex: ", BLACK, FONT_5X9);
             draw_string_f(55, 152 - 5, "Time Played: ", BLACK, FONT_5X9);
             draw_string_f(55, 128 - 5, "Location: ", BLACK, FONT_5X9);
@@ -2296,7 +2308,8 @@ int main(void)
                     if (g_pokedexCaught[i]) caughtCount++;
                 }
                 char dexBuf[32];
-                snprintf(dexBuf, sizeof(dexBuf), "C:%d S:%d", caughtCount, seenCount);
+                const int totalPokemon = POKEMON_ID_TOGEKISS + 1;
+                snprintf(dexBuf, sizeof(dexBuf), "%d/%d", caughtCount, totalPokemon);
                 draw_string_f(120, 112 - 5, dexBuf, BLACK, FONT_5X9);
 
                 const unsigned int totalSeconds = (GAME_FPS > 0) ? (playTimeFrames / GAME_FPS) : 0;
@@ -4240,6 +4253,29 @@ int main(void)
                             drawStaticSprite(&partyBoxSprites[i]);
                         }
                     }
+
+                    // Status icon overlay 
+                    if (slotPokemon != NULL) {
+                        const unsigned short *statusSprite = NULL;
+                        int statusW = 0, statusH = 0;
+                        switch (slotPokemon->status) {
+                            case STATUS_BURN: statusSprite = burned; statusW = BURNED_WIDTH; statusH = BURNED_HEIGHT; break;
+                            case STATUS_POISON: statusSprite = poison; statusW = POISON_WIDTH; statusH = POISON_HEIGHT; break;
+                            case STATUS_PARALYSIS: statusSprite = para; statusW = PARA_WIDTH; statusH = PARA_HEIGHT; break;
+                            case STATUS_SLEEP: statusSprite = sleep; statusW = SLEEP_WIDTH; statusH = SLEEP_HEIGHT; break;
+                            case STATUS_FREEZE: statusSprite = frozen; statusW = FROZEN_WIDTH; statusH = FROZEN_HEIGHT; break;
+                            default: break;
+                        }
+                        if (statusSprite != NULL) {
+                            const int sx = partyBoxSprites[i].x + partyBoxSprites[i].width - statusW - 2;
+                            const int sy = partyBoxSprites[i].y + 2;
+                            if (slotFainted) {
+                                draw_sprite_any_greyscale(statusSprite, statusW, statusH, sx, sy, TRANSPARENT_COLOUR);
+                            } else {
+                                draw_sprite_any(statusSprite, statusW, statusH, sx, sy, TRANSPARENT_COLOUR);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -4329,7 +4365,6 @@ int main(void)
             if (itemTargetIndex < 0) itemTargetIndex = 0;
             if (itemTargetIndex > 5) itemTargetIndex = 5;
 
-            //  3x2 navigation across slots 0..5 
             const int prev = itemTargetIndex;
             int row = itemTargetIndex / 3;
             int col = itemTargetIndex % 3;
@@ -4396,6 +4431,29 @@ int main(void)
                             );
                         } else {
                             drawStaticSprite(&partyBoxSprites[i]);
+                        }
+                    }
+
+                    // Status icon overlay (top-right of each party box).
+                    if (slotPokemon != NULL) {
+                        const unsigned short *statusSprite = NULL;
+                        int statusW = 0, statusH = 0;
+                        switch (slotPokemon->status) {
+                            case STATUS_BURN: statusSprite = burned; statusW = BURNED_WIDTH; statusH = BURNED_HEIGHT; break;
+                            case STATUS_POISON: statusSprite = poison; statusW = POISON_WIDTH; statusH = POISON_HEIGHT; break;
+                            case STATUS_PARALYSIS: statusSprite = para; statusW = PARA_WIDTH; statusH = PARA_HEIGHT; break;
+                            case STATUS_SLEEP: statusSprite = sleep; statusW = SLEEP_WIDTH; statusH = SLEEP_HEIGHT; break;
+                            case STATUS_FREEZE: statusSprite = frozen; statusW = FROZEN_WIDTH; statusH = FROZEN_HEIGHT; break;
+                            default: break;
+                        }
+                        if (statusSprite != NULL) {
+                            const int sx = partyBoxSprites[i].x + partyBoxSprites[i].width - statusW - 2;
+                            const int sy = partyBoxSprites[i].y + 2;
+                            if (!slotSelectable) {
+                                draw_sprite_any_greyscale(statusSprite, statusW, statusH, sx, sy, TRANSPARENT_COLOUR);
+                            } else {
+                                draw_sprite_any(statusSprite, statusW, statusH, sx, sy, TRANSPARENT_COLOUR);
+                            }
                         }
                     }
                 }
@@ -4964,7 +5022,7 @@ int main(void)
 
                         if (!pokeballCatchEscape) {
                             if (pokeballCatchSeqFrame >= POKEBALLTHROW_FRAME_COUNT) {
-                                // Done (caught).
+                                // caught
                                 stop_bgm();
                                 play_sfx(caught_pokemon_audio, caught_pokemon_audio_len);
                                 battleUiSetSingleMessage(&battleState, "Gotcha!");
@@ -4977,6 +5035,35 @@ int main(void)
                                         int pcIndex = -1;
                                         (void)pcAdd(&playerPc, caughtPokemon->id.data, caughtPokemon->level, &pcIndex);
                                         pokedex_mark_caught(caughtPokemon->id.frontFrame_ID);
+                                    }
+                                }
+
+                                // Award EXP on capture .
+                                {
+                                    pokemonInBattle *playerActive = (battleState.playerParty != NULL) ? getActivePokemon(battleState.playerParty) : NULL;
+                                    const pokemonInBattle *caughtPokemon = (battleState.enemyParty != NULL) ? getActivePokemon(battleState.enemyParty) : NULL;
+                                    if (playerActive != NULL && caughtPokemon != NULL) {
+                                        const int prevLevel = playerActive->level;
+                                        const int prevExp = playerActive->exp;
+                                        const int expGained = experienceGained(playerActive->level, caughtPokemon->level);
+
+                                        if (expGained > 0) {
+                                            actionTextExpStartLevel = prevLevel;
+                                            actionTextExpStartExp = prevExp;
+
+                                            gainExp(playerActive, (pokemonInBattle *)caughtPokemon);
+
+                                            char expBuf[96];
+                                            snprintf(expBuf, sizeof(expBuf), "Gained %d EXP!", expGained);
+                                            battleUiAppendMessage(&battleState, expBuf);
+
+                                            if (playerActive->level > prevLevel) {
+                                                const char *name = (playerActive->id.data != NULL && playerActive->id.data->name != NULL) ? playerActive->id.data->name : "???";
+                                                char lvlBuf[96];
+                                                snprintf(lvlBuf, sizeof(lvlBuf), "%s grew to level %d!", name, playerActive->level);
+                                                battleUiAppendMessage(&battleState, lvlBuf);
+                                            }
+                                        }
                                     }
                                 }
                                 actionTextReturnUi = BATTLE_UI_MENU;
@@ -5027,7 +5114,7 @@ int main(void)
         }
 
         case GAME_STATE_EVOLUTION: {
-            // Evolution screen: backdrop + front sprite + mandatory animation (can't skip).
+            // Evolution screen
             draw_sprite_any(evolutionBackdropFrames[evolutionFrame],
                             EVOLUTIONBACKDROP_WIDTH, EVOLUTIONBACKDROP_HEIGHT,
                             0, 0,
@@ -5064,7 +5151,6 @@ int main(void)
                 break;
             }
 
-            // During phase 2 we intentionally allow pendingEvolutionInto to be NULL (it typically gets cleared by applyPendingEvolution()).
             if (evolutionPhase != 2 && mon->pendingEvolutionInto == NULL) {
                 mon->pendingEvolutionInto = (mon->id.data != NULL) ? checkEvolution(mon->id.data, mon->level) : NULL;
             }
@@ -5321,6 +5407,7 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -5448,6 +5535,7 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -6069,8 +6157,8 @@ int main(void)
                         } else {
                             // Seen but not caught
                             if (number == 0) {
-                                draw_sprite_any_greyscale(pokedexCaughtSprite,
-                                                          POKEDEX_MENU_CAUGHT_WIDTH, POKEDEX_MENU_CAUGHT_HEIGHT,
+                                draw_sprite_any_greyscale(pokedexCaughtSelectedSprite,
+                                                          POKEDEX_MENU_CAUGHT_SELECTED_WIDTH, POKEDEX_MENU_CAUGHT_SELECTED_HEIGHT,
                                                           167, 0,
                                                           TRANSPARENT_COLOUR);
                             } else {
