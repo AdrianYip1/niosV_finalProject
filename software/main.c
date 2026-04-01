@@ -1450,6 +1450,7 @@ int main(void)
     prevSpaceDown = false;
     int menuCursor = 0; // 0..5 (2 columns x 3 rows)
     int menuSwapIndex = -1; // first picked index for swapping in the party menu
+    GameState partyMenuReturnState = GAME_STATE_MAP;
     char battleEndMsg[96] = "WIN";
 
     int pcCursor = 0; // 6 + 2 + max storage in pc
@@ -1515,6 +1516,7 @@ int main(void)
                     currentGameState = GAME_STATE_MENU;
                     menuCursor = 0;
                     menuSwapIndex = -1;
+                    partyMenuReturnState = GAME_STATE_MAP;
                 } else if (ch == '4' && currentGameState == GAME_STATE_MENU) {
                     currentGameState = GAME_STATE_MAP;
                     menuSwapIndex = -1;
@@ -1615,10 +1617,6 @@ int main(void)
         const bool escDown = is_key_escape_pressed();
         const bool escPressed = escDown && !prevEsc;
         prevEsc = escDown;
-
-        if (currentGameState == GAME_STATE_MENU && escPressed) {
-            menuSwapIndex = -1;
-        }
 
         if (isBattleMenuState(currentGameState) && escPressed) {
             if (battleUi == BATTLE_UI_ATTACK_MENU) {
@@ -1791,7 +1789,7 @@ int main(void)
                                     TRANSPARENT_COLOUR);
                 }
 
-                // Pokemon sprite + name/level (text drawn after sprite).
+                // Pokemon sprite + name/level 
                 const unsigned short *pokeSprite = menuPokemonSpriteForId(p->id.frontFrame_ID);
                 const int pokeX = slotX + NON_SELECTED_POKEMON_X + 12 - 20 + slotXOffsetForFrame;
                 const int pokeY = slotY + NON_SELECTED_POKEMON_Y + 14 + colYOffset + slotYOffsetForFrame - 20;
@@ -1843,7 +1841,7 @@ int main(void)
                               1);
             }
 
-            // Cancel button (replaces ESC-to-exit).
+            // Cancel button 
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
             const int cancelX = 232;
             const int cancelY = 188;
@@ -1867,9 +1865,18 @@ int main(void)
             }
 
             // Space selects a pokemon to swap; pressing Space on another swaps the two.
+            if (escPressed) {
+                if (menuSwapIndex >= 0) {
+                    menuSwapIndex = -1;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else {
+                    currentGameState = partyMenuReturnState;
+                    break;
+                }
+            }
             if (spacePressed) {
                 if (menuCursor == 6) {
-                    currentGameState = GAME_STATE_MAP;
+                    currentGameState = partyMenuReturnState;
                     menuSwapIndex = -1;
                     break;
                 }
@@ -1998,8 +2005,47 @@ int main(void)
                 draw_sprite_any(mainMenuUiTrainerCardMenuSprite, MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH, MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT, 178, 113, TRANSPARENT_COLOUR);
             }
 
-            if (spacePressed || escPressed) {
+            if (escPressed) {
                 currentGameState = GAME_STATE_MAP;
+            } else if (spacePressed) {
+
+                switch (pulseDir) {
+                    case MENU_DIR_NW: // Bag
+                        play_sfx(plink_audio, plink_audio_len);
+                        currentGameState = GAME_STATE_BAG_MENU_ITEMS;
+                        break;
+                    case MENU_DIR_N: // Ball (Party menu)
+                        play_sfx(plink_audio, plink_audio_len);
+                        currentGameState = GAME_STATE_MENU;
+                        menuCursor = 0;
+                        menuSwapIndex = -1;
+                        partyMenuReturnState = GAME_STATE_MAIN_MENU_UI;
+                        break;
+                    case MENU_DIR_NE: // Dex
+                        currentGameState = GAME_STATE_POKEDEX_MENU;
+                        pokedexScrollIndex = POKEMON_ID_CHARMANDER;
+                        pokedexSelectedId = POKEMON_ID_CHARMANDER;
+                        play_sfx(pc_se_audio, pc_se_audio_len);
+                        break;
+                    case MENU_DIR_W: // PC
+                    case MENU_DIR_E: // PC
+                        currentGameState = GAME_STATE_PC_MENU;
+                        pcCursor = 0;
+                        pcSwapIndex = -1;
+                        play_sfx(pc_se_audio, pc_se_audio_len);
+                        break;
+                    case MENU_DIR_SW: //placeholder
+                        break;
+                    case MENU_DIR_S: //placeholder
+                        break;
+                    case MENU_DIR_SE: //placeholder
+                        break;
+                    case MENU_DIR_NONE:
+                    default:
+                        play_sfx(plink_audio, plink_audio_len);
+                        currentGameState = GAME_STATE_MAP;
+                        break;
+                }
             }
             break;
         }
@@ -4670,7 +4716,25 @@ int main(void)
             }
 
             pokemonInBattle *mon = playerParty.slots[evolutionPokemonIndex];
-            if (mon == NULL || !mon->alive || mon->pendingEvolutionInto == NULL) {
+            if (mon == NULL || !mon->alive) {
+                const int next = findNextPendingEvolutionIndex(&playerParty, evolutionPokemonIndex);
+                if (next >= 0) {
+                    evolutionPokemonIndex = next;
+                    evolutionPhase = 0;
+                    evolutionPhaseTimer = 0;
+                    evolutionFromName[0] = '\0';
+                    evolutionIntoName[0] = '\0';
+                } else {
+                    currentGameState = evolutionReturnState;
+                }
+                break;
+            }
+
+            // During phase 2 we intentionally allow pendingEvolutionInto to be NULL (it typically gets cleared by applyPendingEvolution()).
+            if (evolutionPhase != 2 && mon->pendingEvolutionInto == NULL) {
+                mon->pendingEvolutionInto = (mon->id.data != NULL) ? checkEvolution(mon->id.data, mon->level) : NULL;
+            }
+            if (evolutionPhase != 2 && mon->pendingEvolutionInto == NULL) {
                 const int next = findNextPendingEvolutionIndex(&playerParty, evolutionPokemonIndex);
                 if (next >= 0) {
                     evolutionPokemonIndex = next;
@@ -4775,6 +4839,9 @@ int main(void)
                         break;
                     }
 
+                    if (mon->pendingEvolutionInto == NULL) {
+                        mon->pendingEvolutionInto = (mon->id.data != NULL) ? checkEvolution(mon->id.data, mon->level) : NULL;
+                    }
                     if (mon->pendingEvolutionInto != NULL) {
                         // Same Pokemon can evolve again.
                         evolutionPhase = 0;
