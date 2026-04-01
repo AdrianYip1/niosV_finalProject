@@ -299,7 +299,7 @@
 #define SELECTED_POKEMON_DIFFERENCE_X (-1)
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
-static const char TRAINER_A_GREETING_TEXT[] = "Trainer A: Hey! I've been waiting for you.";
+static const char TRAINER_A_GREETING_TEXT[] = "Trainer A: Hey! \nI've been waiting for you.";
 static const char TRAINER_A_BATTLE_TEXT[] = "When two Trainers' eyes meet,\n it's battle time!";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
 static const char NPC1_GREETING_TEXT[] = "ECE243 is the best!";
@@ -479,13 +479,13 @@ static void draw_wrapped_string_fixed_width_f(int x, int y, const char *text, sh
             // rewind input pointer to after that space
             const int rewind = out - (lastSpaceOut + 1);
             p -= rewind;
-            out = lastSpaceOut; // drop trailing part incl space
+            out = lastSpaceOut; 
         }
 
-        // Consume explicit newline.
+ 
         if (*p == '\n') p++;
 
-        // If we wrote nothing on this line (very long word), force a break to avoid infinite loop.
+        // if nothing, force a break to avoid infinite loop.
         if (out == lineStartOut) {
             while (*p && *p != '\n') p++;
             if (*p == '\n') p++;
@@ -5299,7 +5299,6 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -5336,7 +5335,7 @@ int main(void)
                 const int cursorY0 = 58;
                 const int cursorDy = 12;
                 const int cursorMaxY = 166;
-                const int itemNameX = 145;
+                const int itemNameX = 45;
                 const int itemNameY = 152;
                 const int descX = 47;
                 const int descY = 169;
@@ -5427,7 +5426,6 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
