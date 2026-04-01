@@ -1947,6 +1947,8 @@ int main(void)
                 MENU_DIR_NW,
             } MenuPulseDir;
 
+            static MenuPulseDir lastPulseDir = MENU_DIR_NONE;
+            static int lastPulseTimer = 0;
             MenuPulseDir pulseDir = MENU_DIR_NONE;
             if (upDown && !downDown) {
                 if (leftDown && !rightDown) pulseDir = MENU_DIR_NW;
@@ -1960,6 +1962,13 @@ int main(void)
                 pulseDir = MENU_DIR_W;
             } else if (rightDown && !leftDown) {
                 pulseDir = MENU_DIR_E;
+            }
+
+            if (pulseDir != MENU_DIR_NONE) {
+                lastPulseDir = pulseDir;
+                lastPulseTimer = 15;
+            } else if (lastPulseTimer > 0) {
+                lastPulseTimer--;
             }
 
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
@@ -2074,8 +2083,11 @@ int main(void)
             if (escPressed) {
                 currentGameState = GAME_STATE_MAP;
             } else if (spacePressed) {
+                const MenuPulseDir selectionDir = (pulseDir != MENU_DIR_NONE)
+                    ? pulseDir
+                    : (lastPulseTimer > 0 ? lastPulseDir : MENU_DIR_NONE);
 
-                switch (pulseDir) {
+                switch (selectionDir) {
                     case MENU_DIR_NW: // Bag
                         play_sfx(plink_audio, plink_audio_len);
                         currentGameState = GAME_STATE_BAG_MENU_ITEMS;
