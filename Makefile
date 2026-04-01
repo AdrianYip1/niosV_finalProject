@@ -151,7 +151,7 @@ SRCS := software/main.c \
 
 SHELL   := cmd.exe
 
-# DE1-SoC
+#  DE1-SoC
 JTAG_INDEX_SoC  := 2
 
 # The following variables are set based on the value of the INSTALL variable
