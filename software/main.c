@@ -5271,7 +5271,6 @@ int main(void)
                             draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
-                }
             }
 
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
@@ -5400,7 +5399,6 @@ int main(void)
                             draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
-                }
             }
 
             if (escPressed) { currentGameState = bagMenuReturnState; break; }
