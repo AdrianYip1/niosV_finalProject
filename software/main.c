@@ -2251,19 +2251,19 @@ int main(void)
                             TRANSPARENT_COLOUR);
 
             draw_string_f(55, 80 -5, "Name:", BLACK, FONT_5X9);
-            draw_string_f(55, 96 - 5, "$     ", BLACK, FONT_5X9);
+            draw_string_f(55, 96 - 5, "$", BLACK, FONT_5X9);
             draw_string_f(55, 112 - 5, "Pokedex: ", BLACK, FONT_5X9);
-            draw_string_f(55, 128 - 5, "Time Played: ", BLACK, FONT_5X9);
-            draw_string_f(55, 152 - 5, "Location: ", BLACK, FONT_5X9);
+            draw_string_f(55, 152 - 5, "Time Played: ", BLACK, FONT_5X9);
+            draw_string_f(55, 128 - 5, "Location: ", BLACK, FONT_5X9);
 
             {
                 const char *name = getUserText();
                 if (name == NULL || name[0] == '\0') name = "???";
-                draw_string_f(120, 80 -5, name, BLACK, FONT_5X9);
+                draw_string_f(120 - 5, 80 -5, name, BLACK, FONT_5X9);
 
                 char moneyNumBuf[16];
                 snprintf(moneyNumBuf, sizeof(moneyNumBuf), "%d", playerMoney);
-                draw_string_f(65 + 5, 96 - 5, moneyNumBuf, BLACK, FONT_5X9);
+                draw_string_f(65 + 5 + 5, 96 - 5, moneyNumBuf, BLACK, FONT_5X9);
 
                 int seenCount = 0;
                 int caughtCount = 0;
@@ -6196,6 +6196,11 @@ int main(void)
                             POKEMART_BUY_SCREEN_SPRITE_WIDTH, POKEMART_BUY_SCREEN_SPRITE_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
+
+            const int cursorX0 = 121;
+            const int cursorY0 = 32;
+            const int cursordY = 53- 32;
+
             if (escPressed) currentGameState = GAME_STATE_MAP;
                                
             break;
