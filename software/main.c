@@ -30,6 +30,7 @@
 #include "../software/se/poke_mart_audio.h"
 #include "../software/se/pokemon_center_audio.h"
 #include "../software/se/plink_audio.h"
+#include "../software/se/wallbump_audio.h"
 #include "../software/se/pokeball_audio.h"
 #include "../software/se/pokeball_shaking_audio.h"  
 #include "../software/se/caught_pokemon_audio.h"
@@ -446,6 +447,20 @@ static inline GameState bagMenuPrevPageState(GameState state) {
         case GAME_STATE_BAG_MENU_BERRIES: return GAME_STATE_BAG_MENU_TMS;
         case GAME_STATE_BAG_MENU_KEY_ITEMS: return GAME_STATE_BAG_MENU_BERRIES;
         default: return GAME_STATE_BAG_MENU_ITEMS;
+    }
+}
+
+static inline int shopItemPrice(ItemId item) {
+    switch (item) {
+        case ITEM_POTION: return 300;
+        case ITEM_SUPER_POTION: return 700;
+        case ITEM_HYPER_POTION: return 1200;
+        case ITEM_REVIVE: return 1500;
+        case ITEM_MAX_REVIVE: return 4000;
+        case ITEM_POKEBALL: return 200;
+        case ITEM_GREAT_BALL: return 600;
+        case ITEM_ULTRA_BALL: return 1200;
+        default: return 9999;
     }
 }
 
@@ -1576,6 +1591,9 @@ int main(void)
     // Shop UI state.
     int shopCursor = 0;
     bool shopCancelFocused = false;
+    int shopMsgTimer = 0;
+    char shopMsg[64];
+    shopMsg[0] = '\0';
 
     // Evolution UI state (runs after battles).
     int evolutionFrame = 0;
@@ -5898,6 +5916,8 @@ int main(void)
                     clearShopOpen = false;
                     shopCursor = 0;
                     shopCancelFocused = false;
+                    shopMsgTimer = 0;
+                    shopMsg[0] = '\0';
                 }
             }
             else if (spacePressed || enterPressed) {
@@ -6232,17 +6252,24 @@ int main(void)
                             0, 0,
                             TRANSPARENT_COLOUR);
 
-            // UI coordinates (user-provided)
+            // UI coords
             const int cursorX0 = 121;
             const int cursorY0 = 32;
             const int cursorDy = 53 - 32;
+            const int itemTextX0 = 130;
+            const int itemTextY0 = 50;
+            const int itemSelectedDy = -4; // selected text moves up by 4
             const int cancelSelX = 130;
             const int cancelUnselX = 129;
-            const int cancelY = 151 - 4;
+            const int cancelY = 151;
+            const int selectedNameX = 34;
+            const int selectedNameY = 179;
+            const int shopMsgX = 34;
+            const int shopMsgY = 200;
             const int moneyLabelX = 5;
-            const int moneyLabelY = 40 - 5;
+            const int moneyLabelY = 40;
             const int moneyValX = 68;
-            const int moneyValY = 60 - 15;
+            const int moneyValY = 60;
             const int selectedIconX = 16;
             const int selectedIconY = 182;
 
@@ -6301,6 +6328,14 @@ int main(void)
                                 TRANSPARENT_COLOUR);
             }
 
+            // Item list names
+            for (int i = 0; i < shopItemCount; i++) {
+                const ItemId it = shopItems[i];
+                int y = itemTextY0 + i * cursorDy;
+                if (!shopCancelFocused && i == shopCursor) y += itemSelectedDy;
+                draw_string_f(itemTextX0, y, itemName(it), BLACK, FONT_5X9);
+            }
+
             // Cancel button label
             draw_string_f(shopCancelFocused ? cancelSelX : cancelUnselX, cancelY, "CANCEL", BLACK, FONT_5X9);
 
@@ -6315,6 +6350,8 @@ int main(void)
             // Selected item icon preview
             if (!shopCancelFocused && shopItemCount > 0) {
                 const ItemId selected = shopItems[shopCursor];
+
+                draw_string_f(selectedNameX, selectedNameY, itemName(selected), BLACK, FONT_5X9);
 
                 const unsigned short *icon = NULL;
                 int iconW = 0;
@@ -6334,6 +6371,28 @@ int main(void)
                 if (icon != NULL && iconW > 0 && iconH > 0) {
                     draw_sprite_any(icon, iconW, iconH, selectedIconX, selectedIconY, TRANSPARENT_COLOUR);
                 }
+            }
+
+            // Buy selected item
+            if (spacePressed && !shopCancelFocused && shopItemCount > 0) {
+                const ItemId selected = shopItems[shopCursor];
+                const int price = shopItemPrice(selected);
+                if (playerMoney >= price) {
+                    playerMoney -= price;
+                    (void)bagAdd(&playerBag, selected, 1);
+                    snprintf(shopMsg, sizeof(shopMsg), "Bought %s!", itemName(selected));
+                    shopMsgTimer = 90;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else {
+                    snprintf(shopMsg, sizeof(shopMsg), "Not enough money!");
+                    shopMsgTimer = 90;
+                    play_sfx(wallbump_audio, wallbump_audio_len);
+                }
+            }
+
+            if (shopMsgTimer > 0) {
+                draw_string_f(shopMsgX, shopMsgY, shopMsg, BLACK, FONT_5X9);
+                shopMsgTimer--;
             }
                                
             break;
