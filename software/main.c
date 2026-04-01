@@ -83,7 +83,6 @@
 #include "graphics/sprites/trainerCard/trainerCardSprite.h"
 #include "graphics/sprites/trainerCard/trainerCardBackSprite.h"
 #include "graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h"
-#include "graphics/sprites/itemShopUI/pokemartSelectCursorSprite.h"
 #include "graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
