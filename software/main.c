@@ -386,6 +386,7 @@ static inline bool isOverworldState(GameState state) {
            state == GAME_STATE_BAG_MENU_BERRIES|| 
            state == GAME_STATE_BAG_MENU_KEY_ITEMS ||
            state == GAME_STATE_MAIN_MENU_UI ||
+           state == GAME_STATE_SHOP_UI ||
            state == GAME_STATE_EVOLUTION;
 }
 
@@ -1533,8 +1534,8 @@ int main(void)
                         } else if (isBagMenuState(currentGameState)) {
                             currentGameState = GAME_STATE_MAP;
                         }
-                    } else if (ch == '8') {
-                        // Main menu UI toggle (overworld).
+                    } else if (ch == '\t') {
+
                         if (currentGameState == GAME_STATE_MAP) {
                             currentGameState = GAME_STATE_MAIN_MENU_UI;
                         } else if (currentGameState == GAME_STATE_MAIN_MENU_UI) {
@@ -1910,20 +1911,92 @@ int main(void)
                             MAIN_MENU_UI_BACKDROP_MENU_WIDTH, MAIN_MENU_UI_BACKDROP_MENU_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiPokemonLeftSprite, MAIN_MENU_UI_POKEMON_LEFT_WIDTH, MAIN_MENU_UI_POKEMON_LEFT_HEIGHT, 3, 70, TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiPokemonRightSprite,MAIN_MENU_UI_POKEMON_RIGHT_WIDTH,MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT,  227, 70, TRANSPARENT_COLOUR);
+            typedef enum {
+                MENU_DIR_NONE = -1,
+                MENU_DIR_N = 0,
+                MENU_DIR_NE,
+                MENU_DIR_E,
+                MENU_DIR_SE,
+                MENU_DIR_S,
+                MENU_DIR_SW,
+                MENU_DIR_W,
+                MENU_DIR_NW,
+            } MenuPulseDir;
+
+            MenuPulseDir pulseDir = MENU_DIR_NONE;
+            if (upDown && !downDown) {
+                if (leftDown && !rightDown) pulseDir = MENU_DIR_NW;
+                else if (rightDown && !leftDown) pulseDir = MENU_DIR_NE;
+                else pulseDir = MENU_DIR_N;
+            } else if (downDown && !upDown) {
+                if (leftDown && !rightDown) pulseDir = MENU_DIR_SW;
+                else if (rightDown && !leftDown) pulseDir = MENU_DIR_SE;
+                else pulseDir = MENU_DIR_S;
+            } else if (leftDown && !rightDown) {
+                pulseDir = MENU_DIR_W;
+            } else if (rightDown && !leftDown) {
+                pulseDir = MENU_DIR_E;
+            }
+
+            shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
+
+            const bool pulseTop = (pulseDir == MENU_DIR_N);
+            const bool pulseTopLeft = (pulseDir == MENU_DIR_NW);
+            const bool pulseTopRight = (pulseDir == MENU_DIR_NE);
+            const bool pulseLeft = (pulseDir == MENU_DIR_W);
+            const bool pulseRight = (pulseDir == MENU_DIR_E);
+            const bool pulseBottomLeft = (pulseDir == MENU_DIR_SW);
+            const bool pulseBottomRight = (pulseDir == MENU_DIR_SE);
+            const bool pulseBottom = (pulseDir == MENU_DIR_S);
+
+            if (pulseLeft) {
+                draw_sprite_any_shade_pulse(mainMenuUiPokemonLeftSprite, MAIN_MENU_UI_POKEMON_LEFT_WIDTH, MAIN_MENU_UI_POKEMON_LEFT_HEIGHT, 3, 70, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiPokemonLeftSprite, MAIN_MENU_UI_POKEMON_LEFT_WIDTH, MAIN_MENU_UI_POKEMON_LEFT_HEIGHT, 3, 70, TRANSPARENT_COLOUR);
+            }
+            if (pulseRight) {
+                draw_sprite_any_shade_pulse(mainMenuUiPokemonRightSprite, MAIN_MENU_UI_POKEMON_RIGHT_WIDTH, MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT, 227, 70, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiPokemonRightSprite, MAIN_MENU_UI_POKEMON_RIGHT_WIDTH, MAIN_MENU_UI_POKEMON_RIGHT_HEIGHT, 227, 70, TRANSPARENT_COLOUR);
+            }
+
             draw_sprite_any(mainMenuUiMenuBorderSprite,
                             MAIN_MENU_UI_MENU_BORDER_WIDTH, MAIN_MENU_UI_MENU_BORDER_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiUi3dsMenuSprite,MAIN_MENU_UI_UI3DS_MENU_WIDTH,MAIN_MENU_UI_UI3DS_MENU_HEIGHT, 82, 113, TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiBagMenuSprite,MAIN_MENU_UI_BAG_MENU_WIDTH,MAIN_MENU_UI_BAG_MENU_HEIGHT,  82, 58, TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiBallMenuSprite,MAIN_MENU_UI_BALL_MENU_WIDTH, MAIN_MENU_UI_BALL_MENU_HEIGHT, 130, 29, TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiDexMenuSprite, MAIN_MENU_UI_DEX_MENU_WIDTH, MAIN_MENU_UI_DEX_MENU_HEIGHT, 178, 58, TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiFrontFacingMcSprite,MAIN_MENU_UI_FRONT_FACING_MC_WIDTH,MAIN_MENU_UI_FRONT_FACING_MC_HEIGHT,  128, 80, TRANSPARENT_COLOUR);
 
-            draw_sprite_any(mainMenuUiSaveMenuSprite, MAIN_MENU_UI_SAVE_MENU_WIDTH,MAIN_MENU_UI_SAVE_MENU_HEIGHT, 130, 141, TRANSPARENT_COLOUR);
-            draw_sprite_any(mainMenuUiTrainerCardMenuSprite,MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH, MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT, 178, 113, TRANSPARENT_COLOUR);
+            if (pulseBottomLeft) {
+                draw_sprite_any_shade_pulse(mainMenuUiUi3dsMenuSprite, MAIN_MENU_UI_UI3DS_MENU_WIDTH, MAIN_MENU_UI_UI3DS_MENU_HEIGHT, 82, 113, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiUi3dsMenuSprite, MAIN_MENU_UI_UI3DS_MENU_WIDTH, MAIN_MENU_UI_UI3DS_MENU_HEIGHT, 82, 113, TRANSPARENT_COLOUR);
+            }
+            if (pulseTopLeft) {
+                draw_sprite_any_shade_pulse(mainMenuUiBagMenuSprite, MAIN_MENU_UI_BAG_MENU_WIDTH, MAIN_MENU_UI_BAG_MENU_HEIGHT, 82, 58, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiBagMenuSprite, MAIN_MENU_UI_BAG_MENU_WIDTH, MAIN_MENU_UI_BAG_MENU_HEIGHT, 82, 58, TRANSPARENT_COLOUR);
+            }
+            if (pulseTop) {
+                draw_sprite_any_shade_pulse(mainMenuUiBallMenuSprite, MAIN_MENU_UI_BALL_MENU_WIDTH, MAIN_MENU_UI_BALL_MENU_HEIGHT, 130, 29, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiBallMenuSprite, MAIN_MENU_UI_BALL_MENU_WIDTH, MAIN_MENU_UI_BALL_MENU_HEIGHT, 130, 29, TRANSPARENT_COLOUR);
+            }
+            if (pulseTopRight) {
+                draw_sprite_any_shade_pulse(mainMenuUiDexMenuSprite, MAIN_MENU_UI_DEX_MENU_WIDTH, MAIN_MENU_UI_DEX_MENU_HEIGHT, 178, 58, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiDexMenuSprite, MAIN_MENU_UI_DEX_MENU_WIDTH, MAIN_MENU_UI_DEX_MENU_HEIGHT, 178, 58, TRANSPARENT_COLOUR);
+            }
+            draw_sprite_any(mainMenuUiFrontFacingMcSprite, MAIN_MENU_UI_FRONT_FACING_MC_WIDTH, MAIN_MENU_UI_FRONT_FACING_MC_HEIGHT, 128, 80, TRANSPARENT_COLOUR);
+
+            if (pulseBottom) {
+                draw_sprite_any_shade_pulse(mainMenuUiSaveMenuSprite, MAIN_MENU_UI_SAVE_MENU_WIDTH, MAIN_MENU_UI_SAVE_MENU_HEIGHT, 130, 141, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiSaveMenuSprite, MAIN_MENU_UI_SAVE_MENU_WIDTH, MAIN_MENU_UI_SAVE_MENU_HEIGHT, 130, 141, TRANSPARENT_COLOUR);
+            }
+            if (pulseBottomRight) {
+                draw_sprite_any_shade_pulse(mainMenuUiTrainerCardMenuSprite, MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH, MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT, 178, 113, TRANSPARENT_COLOUR, shadePulseFrame);
+            } else {
+                draw_sprite_any(mainMenuUiTrainerCardMenuSprite, MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH, MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT, 178, 113, TRANSPARENT_COLOUR);
+            }
 
             if (spacePressed || escPressed) {
                 currentGameState = GAME_STATE_MAP;
@@ -3677,7 +3750,6 @@ int main(void)
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, learnMoveMsgBuf, BLACK);
 
             if (spacePressed) {
-                // Next: if more learn prompts exist, do them; otherwise, return to where we were.
                 learnMovePokemon = NULL;
                 learnMoveMove = NULL;
                 learnMoveForgottenMove = NULL;
@@ -3724,7 +3796,7 @@ int main(void)
             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
             if (forcedSwitchIndex > 5) forcedSwitchIndex = 5;
 
-            // Simple 3x2 navigation across slots 0..5 (do not skip invalid slots).
+            //  3x2 navigation across slots 0..5 
             const int prev = forcedSwitchIndex;
             int row = forcedSwitchIndex / 3;
             int col = forcedSwitchIndex % 3;
@@ -3812,7 +3884,7 @@ int main(void)
 
                 battleApplyPlayerAction(&battleState, ACTION_SWITCH, forcedSwitchIndex);
 
-                // If it failed, show the message(s) and come back here.
+                // If it failed, show the message and return here
                 if (battleState.playerMustSwitch) {
                     actionTextReturnUi = BATTLE_UI_MENU;
                     actionTextReturnCursor = 0;
@@ -3823,7 +3895,6 @@ int main(void)
                     break;
                 }
 
-                // Suppress any switch message; the throw animation handles "Go! <name>!"
                 battleState.messageCount = 0;
                 battleState.messageReadIndex = 0;
 
@@ -3878,7 +3949,7 @@ int main(void)
             if (itemTargetIndex < 0) itemTargetIndex = 0;
             if (itemTargetIndex > 5) itemTargetIndex = 5;
 
-            // Simple 3x2 navigation across slots 0..5 (do not skip invalid slots).
+            //  3x2 navigation across slots 0..5 
             const int prev = itemTargetIndex;
             int row = itemTargetIndex / 3;
             int col = itemTargetIndex % 3;
@@ -4205,7 +4276,7 @@ int main(void)
                 pokeballLandingTimer = 0;
                 pokeballLandingFrame = POKEBALLTHROW_LAND_FRAME_START;
 
-                // Start off-screen (left + below). We only draw it at/after the peak.
+                // Start off screen (left + below). only draw it at/after the peak.
                 pokeballX0 = -(float)POKEBALLTHROW_WIDTH;
 
                 const float landX = (float)(playerBackSprite.x + playerBackSprite.width / 2 - POKEBALLTHROW_WIDTH / 2);
@@ -4217,7 +4288,7 @@ int main(void)
                 float yPeak = (float)(playerBackSprite.y - 30);
                 if (yPeak < 5.0f) yPeak = 5.0f;
 
-                // Ensure the ball is visible on-screen at the peak (we only draw it at/after the peak).
+                // Ensure the ball is visible on screen at the peak (only draw it at/after the peak).
                 pokeballPeakX = pokeballLandX - 60.0f;
                 if (pokeballPeakX < 0.0f) pokeballPeakX = 0.0f;
                 if (pokeballPeakX > (float)(SCREEN_WIDTH - POKEBALLTHROW_WIDTH)) {
@@ -4746,7 +4817,7 @@ int main(void)
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuPokeballsSprite, BAG_MENU_POKEBALLS_WIDTH,BAG_MENU_POKEBALLS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag2Sprite, BAG_MENU_BAG2_WIDTH,BAG_MENU_BAG2_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
@@ -4758,7 +4829,7 @@ int main(void)
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuTmsSprite, BAG_MENU_TMS_WIDTH,BAG_MENU_TMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag3Sprite, BAG_MENU_BAG3_WIDTH,BAG_MENU_BAG3_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
@@ -4771,7 +4842,7 @@ int main(void)
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBerriesSprite, BAG_MENU_BERRIES_WIDTH,BAG_MENU_BERRIES_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag4Sprite, BAG_MENU_BAG4_WIDTH,BAG_MENU_BAG4_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
@@ -4783,7 +4854,7 @@ int main(void)
             draw_sprite_any(bagMenuBagMenuSprite,BAG_MENU_BAG_MENU_WIDTH,  BAG_MENU_BAG_MENU_HEIGHT, 0,0,TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuBackButtonSprite,BAG_MENU_BACK_BUTTON_WIDTH, BAG_MENU_BACK_BUTTON_HEIGHT, 44, 110, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuKeyItemsSprite, BAG_MENU_KEY_ITEMS_WIDTH,BAG_MENU_KEY_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagMenuBag5Sprite, BAG_MENU_BAG5_WIDTH,BAG_MENU_BAG5_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
