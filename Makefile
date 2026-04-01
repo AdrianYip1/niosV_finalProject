@@ -113,6 +113,7 @@ SRCS := software/main.c \
         software/graphics/sprites/trainerCard/trainerCardSprite.c \
         software/graphics/sprites/trainerCard/trainerCardBackSprite.c \
         software/graphics/sprites/itemShopUI/pokemartBuyScreenSprite.c \
+        software/graphics/sprites/itemShopUI/pokemartSelectCursorSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
         software/gameplayLogic/worldMap.c \
