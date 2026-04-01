@@ -2134,6 +2134,7 @@ int main(void)
             break;
         }
         case GAME_STATE_TRAINER_CARD_FRONT: {
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
             draw_sprite_any(trainerCardSprite,
                             TRAINER_CARD_SPRITE_WIDTH, TRAINER_CARD_SPRITE_HEIGHT,
                             0, 0,
@@ -2146,6 +2147,7 @@ int main(void)
             break;
         }
         case GAME_STATE_TRAINER_CARD_BACK: {
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
             draw_sprite_any(trainerCardBackSprite,
                             TRAINER_CARD_BACK_SPRITE_WIDTH, TRAINER_CARD_BACK_SPRITE_HEIGHT,
                             0, 0,
