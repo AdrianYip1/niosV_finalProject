@@ -178,6 +178,7 @@ CYGWIN_PATH := export PATH=/usr/local/bin:/usr/bin:$(CYGWIN_INSTALL)/fpgacademy/
 
 # Programs
 CC	:= $(COMPILER)/riscv32-unknown-elf-gcc.exe
+AR	:= $(COMPILER)/riscv32-unknown-elf-ar.exe
 LD	:= $(CC)
 OD	:= $(COMPILER)/riscv32-unknown-elf-objdump.exe
 NM	:= $(COMPILER)/riscv32-unknown-elf-nm.exe
@@ -194,7 +195,9 @@ LDFLAGS		:= $(USERLDFLAGS) $(ARCHLDFLAGS)
 # Files
 OBJS		:= $(patsubst %, %.o, $(SRCS))
 DEPS		:= $(OBJS:.o=.d)
-OBJ_RSP		:= $(basename $(MAIN)).objs.rsp
+MAIN_OBJ	:= $(MAIN).o
+LIB_OBJS	:= $(filter-out $(MAIN_OBJ),$(OBJS))
+LIBALL		:= $(basename $(MAIN)).a
 
 ############################################
 # GDB Macros
@@ -232,16 +235,20 @@ DEF_TEXT		:= @$(BASH) 'printf "\033[0m"'
 
 COMPILE: $(basename $(MAIN)).elf
 
-$(basename $(MAIN)).elf: $(OBJS)
+$(basename $(MAIN)).elf: $(MAIN_OBJ) $(LIBALL)
 	@$(BASH) 'cd "$(CURDIR)"; $(RM) $@'
 	$(CYAN_TEXT)
 	@echo Linking
 	@$(BASH) 'printf "$(LD) "'
 	$(DEF_TEXT)
-	@$(file >$(OBJ_RSP),$(OBJS))
-	@echo $(LDFLAGS) @$(OBJ_RSP) -lm -o $@
+	@echo $(LDFLAGS) $(MAIN_OBJ) $(LIBALL) -lm -o $@
 	@$(BASH) 'printf "\n"'
-	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) @$(OBJ_RSP) -lm -o $@'
+	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) $(MAIN_OBJ) $(LIBALL) -lm -o $@'
+
+$(LIBALL): $(LIB_OBJS)
+	@$(BASH) 'cd "$(CURDIR)"; $(RM) $@'
+	@echo Archiving $@
+$(foreach o,$(LIB_OBJS),	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(AR) rcs $(LIBALL) $(o)')
 
 %.c.o: %.c
 	@$(BASH) 'cd "$(CURDIR)"; $(RM) $@'
@@ -264,8 +271,8 @@ CLEAN:
 	$(RED_TEXT)
 	@$(BASH) 'printf "$(RM) "'
 	$(DEF_TEXT)
-	@echo $(basename $(MAIN)).elf $(OBJ_RSP) $(OBJS) $(DEPS)
-	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(OBJ_RSP) $(OBJS) $(DEPS)'
+	@echo $(basename $(MAIN)).elf $(LIBALL) $(OBJS) $(DEPS)
+	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(LIBALL) $(OBJS) $(DEPS)'
 
 clean: CLEAN
 
