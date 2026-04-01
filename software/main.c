@@ -80,6 +80,9 @@
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
   #include "graphics/sprites/mainMenuUi/mainMenuUiSprites.h"
   #include "graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.h"
+#include "graphics/sprites/trainerCard/trainerCardSprite.h"
+#include "graphics/sprites/trainerCard/trainerCardBackSprite.h"
+#include "graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h"
 #include "graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
@@ -347,6 +350,8 @@ typedef enum {
     GAME_STATE_BAG_MENU_BERRIES,
     GAME_STATE_BAG_MENU_KEY_ITEMS,
     GAME_STATE_MAIN_MENU_UI,
+    GAME_STATE_TRAINER_CARD_FRONT,
+    GAME_STATE_TRAINER_CARD_BACK,
     GAME_STATE_EVOLUTION,
     GAME_STATE_SHOP_UI,
 } GameState;
@@ -386,6 +391,8 @@ static inline bool isOverworldState(GameState state) {
            state == GAME_STATE_BAG_MENU_BERRIES|| 
            state == GAME_STATE_BAG_MENU_KEY_ITEMS ||
            state == GAME_STATE_MAIN_MENU_UI ||
+           state == GAME_STATE_TRAINER_CARD_FRONT ||
+           state == GAME_STATE_TRAINER_CARD_BACK ||
            state == GAME_STATE_SHOP_UI ||
            state == GAME_STATE_EVOLUTION;
 }
@@ -1467,12 +1474,6 @@ int main(void)
     // Bag menu return state (Esc to close).
     GameState bagMenuReturnState = GAME_STATE_MAP;
 
-    // Shop UI state
-    int shopCursor = 0;
-    bool shopShowingMsg = false;
-    char shopMsg[96];
-    shopMsg[0] = '\0';
-
     // Evolution UI state (runs after battles).
     int evolutionFrame = 0;
     int evolutionTimer = 0;
@@ -2107,7 +2108,9 @@ int main(void)
                         break;
                     case MENU_DIR_S: //placeholder
                         break;
-                    case MENU_DIR_SE: //placeholder
+                    case MENU_DIR_SE: // Trainer card
+                        play_sfx(plink_audio, plink_audio_len);
+                        currentGameState = GAME_STATE_TRAINER_CARD_FRONT;
                         break;
                     case MENU_DIR_NONE:
                     default:
@@ -2115,6 +2118,30 @@ int main(void)
                         currentGameState = GAME_STATE_MAP;
                         break;
                 }
+            }
+            break;
+        }
+        case GAME_STATE_TRAINER_CARD_FRONT: {
+            draw_sprite_any(trainerCardSprite,
+                            TRAINER_CARD_SPRITE_WIDTH, TRAINER_CARD_SPRITE_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
+            if (escPressed) {
+                currentGameState = GAME_STATE_MAIN_MENU_UI;
+            } else if (spacePressed) {
+                currentGameState = GAME_STATE_TRAINER_CARD_BACK;
+            }
+            break;
+        }
+        case GAME_STATE_TRAINER_CARD_BACK: {
+            draw_sprite_any(trainerCardBackSprite,
+                            TRAINER_CARD_BACK_SPRITE_WIDTH, TRAINER_CARD_BACK_SPRITE_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
+            if (escPressed) {
+                currentGameState = GAME_STATE_MAIN_MENU_UI;
+            } else if (spacePressed) {
+                currentGameState = GAME_STATE_TRAINER_CARD_FRONT;
             }
             break;
         }
@@ -5245,9 +5272,6 @@ int main(void)
                 if (spacePressed || enterPressed) {
                     currentGameState =  GAME_STATE_SHOP_UI;
                     clearShopOpen = false;
-                    shopCursor = 0;
-                    shopShowingMsg = false;
-                    shopMsg[0] = '\0';
                 }
             }
             else if (spacePressed || enterPressed) {
@@ -5577,99 +5601,12 @@ int main(void)
             break;
 
         case GAME_STATE_SHOP_UI: {
-            // Poke Mart buy screen (simple list UI over the current map).
-            typedef struct {
-                ItemId item;
-                int price;
-            } ShopItem;
-            static const ShopItem shopItems[] = {
-                {ITEM_POKEBALL, 200},
-                {ITEM_GREAT_BALL, 600},
-                {ITEM_POTION, 300},
-                {ITEM_SUPER_POTION, 700},
-                {ITEM_REVIVE, 1500},
-                {ITEM_MAX_REVIVE, 4000},
-            };
-            const int shopItemCount = (int)(sizeof(shopItems) / sizeof(shopItems[0]));
-            if (shopCursor < 0) shopCursor = 0;
-            if (shopCursor >= shopItemCount) shopCursor = shopItemCount - 1;
-
-            if (shopShowingMsg) {
-                if (spacePressed || enterPressed || escPressed) {
-                    shopShowingMsg = false;
-                    shopMsg[0] = '\0';
-                }
-            } else {
-                if (upPressed && shopCursor > 0) { shopCursor--; play_sfx(plink_audio, plink_audio_len); }
-                if (downPressed && shopCursor < shopItemCount - 1) { shopCursor++; play_sfx(plink_audio, plink_audio_len); }
-
-                if (escPressed) {
-                    currentGameState = GAME_STATE_MAP;
-                    break;
-                }
-
-                if (spacePressed || enterPressed) {
-                    const ShopItem si = shopItems[shopCursor];
-                    if (playerMoney < si.price) {
-                        snprintf(shopMsg, sizeof(shopMsg), "Not enough money!");
-                        shopShowingMsg = true;
-                        play_sfx(plink_audio, plink_audio_len);
-                    } else if (!bagAdd(&playerBag, si.item, 1)) {
-                        snprintf(shopMsg, sizeof(shopMsg), "Bag full!");
-                        shopShowingMsg = true;
-                        play_sfx(plink_audio, plink_audio_len);
-                    } else {
-                        playerMoney -= si.price;
-                        snprintf(shopMsg, sizeof(shopMsg), "Bought %s!", itemName(si.item));
-                        shopShowingMsg = true;
-                        play_sfx(plink_audio, plink_audio_len);
-                    }
-                }
-            }
-
-            draw_sprite_any(pokeBuildingInteriorSprite,
-                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_WIDTH,
-                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_HEIGHT,
+            draw_sprite_any(pokemartBuyScreenSprite,
+                            POKEMART_BUY_SCREEN_SPRITE_WIDTH, POKEMART_BUY_SCREEN_SPRITE_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
-
-            // Window
-            const int winX = 30;
-            const int winY = 22;
-            const int winW = 260;
-            const int winH = 150;
-            draw_rect(winX, winY, winW, winH, WHITE);
-            draw_rect_outline(winX, winY, winW, winH, BLACK);
-            draw_string_f(winX + 10, winY + 8, "Poke Mart - BUY", BLACK, FONT_5X9);
-
-            // Money
-            {
-                char moneyBuf[32];
-                snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
-                draw_string_f(winX + winW - 70, winY + 8, moneyBuf, BLACK, FONT_5X9);
-            }
-
-            // Items list
-            for (int i = 0; i < shopItemCount; i++) {
-                const int rowY = winY + 28 + (i * 18);
-                const bool sel = (i == shopCursor);
-                if (sel) {
-                    draw_rect(winX + 6, rowY - 2, winW - 12, 16, TURQ);
-                }
-
-                const ShopItem si = shopItems[i];
-                const char *name = itemName(si.item);
-                char priceBuf[16];
-                snprintf(priceBuf, sizeof(priceBuf), "$%d", si.price);
-                draw_string_f(winX + 12, rowY, name ? name : "???", BLACK, FONT_5X9);
-                draw_string_f(winX + winW - 55, rowY, priceBuf, BLACK, FONT_5X9);
-            }
-
-            draw_textbox_instant_text(textBoxSprite,
-                                      TEXTBOX_X, TEXTBOX_Y,
-                                      shopShowingMsg ? shopMsg : "Space: Buy   Esc: Exit",
-                                      BLACK);
-                                      
+            if (escPressed) currentGameState = GAME_STATE_MAP;
+                               
             break;
         }
 
