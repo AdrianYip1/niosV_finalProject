@@ -15,6 +15,9 @@ Sprite mcWalkingSprite;
 static McBounds g_mcBounds = {0, 0, -1, -1, 0}; //the stored bounding box
 static int g_mc_scale_num = 1;
 static int g_mc_scale_den = 1;
+static int g_mc_jump_frame = 0;
+static const int g_mc_jump_offsets[] = { 0, 3, 6, 9, 12, 9, 6, 3, 0 };
+static const int g_mc_jump_x_offsets[] = { 0, 1, 2, 3, 2, 1, 0, -1, 0 };
 
 typedef struct {
     int minX;
@@ -120,8 +123,16 @@ void drawMCAnimation(void) {
     const unsigned short* frame = MCsprite->frames[MCsprite->frameIndex];
     const int scaled_width = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
     const int scaled_height = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
-    const int draw_x = MCsprite->x - ((scaled_width - MCsprite->tileSize) / 2);
-    const int draw_y = MCsprite->y - (scaled_height - MCsprite->tileSize);
+    const int logical_draw_x = MCsprite->x - ((scaled_width - MCsprite->tileSize) / 2);
+    const int logical_draw_y = MCsprite->y - (scaled_height - MCsprite->tileSize);
+    const int jump_offset = (g_mc_jump_frame > 0 && g_mc_jump_frame <= (int)(sizeof(g_mc_jump_offsets) / sizeof(g_mc_jump_offsets[0])))
+                                ? g_mc_jump_offsets[g_mc_jump_frame - 1]
+                                : 0;
+    const int jump_x_offset = (g_mc_jump_frame > 0 && g_mc_jump_frame <= (int)(sizeof(g_mc_jump_x_offsets) / sizeof(g_mc_jump_x_offsets[0])))
+                                  ? g_mc_jump_x_offsets[g_mc_jump_frame - 1]
+                                  : 0;
+    const int draw_x = logical_draw_x + jump_x_offset;
+    const int draw_y = logical_draw_y - jump_offset;
 
     for (int y = 0; y < scaled_height; y++) {
         const int src_y = (y * g_mc_scale_den) / g_mc_scale_num;
@@ -133,13 +144,19 @@ void drawMCAnimation(void) {
         }
     }
 
-    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, draw_x, draw_y);
+    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, logical_draw_x, logical_draw_y);
 
     MCsprite->frameTimer++;
     if (MCsprite->frameTimer >= MCsprite->frameDelay) {
         MCsprite->frameTimer = 0;
         if (MCsprite->frameCount > 0) {
             MCsprite->frameIndex = (MCsprite->frameIndex + 1) % MCsprite->frameCount;
+        }
+    }
+    if (g_mc_jump_frame > 0) {
+        g_mc_jump_frame++;
+        if (g_mc_jump_frame > (int)(sizeof(g_mc_jump_offsets) / sizeof(g_mc_jump_offsets[0]))) {
+            g_mc_jump_frame = 0;
         }
     }
 }
@@ -149,8 +166,16 @@ void drawMCAnimationPaused(void) {
     const unsigned short* frame = MCsprite->frames[MCsprite->frameIndex];
     const int scaled_width = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
     const int scaled_height = (MCsprite->tileSize * g_mc_scale_num) / g_mc_scale_den;
-    const int draw_x = MCsprite->x - ((scaled_width - MCsprite->tileSize) / 2);
-    const int draw_y = MCsprite->y - (scaled_height - MCsprite->tileSize);
+    const int logical_draw_x = MCsprite->x - ((scaled_width - MCsprite->tileSize) / 2);
+    const int logical_draw_y = MCsprite->y - (scaled_height - MCsprite->tileSize);
+    const int jump_offset = (g_mc_jump_frame > 0 && g_mc_jump_frame <= (int)(sizeof(g_mc_jump_offsets) / sizeof(g_mc_jump_offsets[0])))
+                                ? g_mc_jump_offsets[g_mc_jump_frame - 1]
+                                : 0;
+    const int jump_x_offset = (g_mc_jump_frame > 0 && g_mc_jump_frame <= (int)(sizeof(g_mc_jump_x_offsets) / sizeof(g_mc_jump_x_offsets[0])))
+                                  ? g_mc_jump_x_offsets[g_mc_jump_frame - 1]
+                                  : 0;
+    const int draw_x = logical_draw_x + jump_x_offset;
+    const int draw_y = logical_draw_y - jump_offset;
 
     for (int y = 0; y < scaled_height; y++) {
         const int src_y = (y * g_mc_scale_den) / g_mc_scale_num;
@@ -162,7 +187,14 @@ void drawMCAnimationPaused(void) {
         }
     }
 
-    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, draw_x, draw_y);
+    updateMcBoundsFromFrameAt(frame, MCsprite->tileSize, logical_draw_x, logical_draw_y);
+
+    if (g_mc_jump_frame > 0) {
+        g_mc_jump_frame++;
+        if (g_mc_jump_frame > (int)(sizeof(g_mc_jump_offsets) / sizeof(g_mc_jump_offsets[0]))) {
+            g_mc_jump_frame = 0;
+        }
+    }
 }
 
 void drawMCIdleAnimation(void) { drawMCAnimation(); }
@@ -189,6 +221,12 @@ void setMCScale(int numerator, int denominator) {
     }
     g_mc_scale_num = numerator;
     g_mc_scale_den = denominator;
+}
+
+void startMCJumpEffect(void) {
+    if (g_mc_jump_frame == 0) {
+        g_mc_jump_frame = 1;
+    }
 }
 
 void goUp(void) {

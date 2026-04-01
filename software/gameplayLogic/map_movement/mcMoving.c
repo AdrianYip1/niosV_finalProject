@@ -62,7 +62,9 @@ static bool mcCanMoveBy(int dx, int dy) {
     return map_bounds_are_walkable(bounds.x0 + dx,
                                    bounds.y0 + dy,
                                    bounds.x1 + dx,
-                                   bounds.y1 + dy);
+                                   bounds.y1 + dy,
+                                   dx,
+                                   dy);
 }
 
 static bool tryMoveUp(void) {
@@ -121,7 +123,7 @@ McMoveResult mcMovingTick(bool up, bool down, bool left, bool right, bool shift)
         }
     }
 
-    int speed_multiplier = shift ? 3 : 1;
+    int speed_multiplier = shift ? 6 : 2;
     bool movedThisTick = false;
     for (int i = 0; i < speed_multiplier; i++) {
         stepCounter++;

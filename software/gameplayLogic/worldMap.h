@@ -10,6 +10,8 @@ typedef enum {
     WORLD_MAP_ROUTE_B = 1,
     WORLD_MAP_POKEMON_CENTER_1 = 2,
     WORLD_MAP_POKE_MART_1 = 3,
+    WORLD_MAP_HOUSE_1 = 4,
+    WORLD_MAP_GYM_1 = 5,
     WORLD_MAP_COUNT,
 } WorldMapId;
 

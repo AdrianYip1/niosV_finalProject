@@ -1,0 +1,6 @@
+#pragma once
+
+#define PROFESSOR_OAK_RIGHT_MAP_WIDTH  23
+#define PROFESSOR_OAK_RIGHT_MAP_HEIGHT 34
+
+extern const unsigned short professorOakRightMapSprite[PROFESSOR_OAK_RIGHT_MAP_WIDTH * PROFESSOR_OAK_RIGHT_MAP_HEIGHT];
