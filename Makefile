@@ -226,7 +226,7 @@ DEF_TEXT		:= @$(BASH) 'printf "\033[0m"'
 ############################################
 # Compilation Targets
 
-.PHONY: COMPILE SYMBOLS OBJDUMP CLEAN clean rebuild
+.PHONY: COMPILE SYMBOLS OBJDUMP CLEAN clean rebuild GDB_SERVER GDB_CLIENT gdb_server gdb_client
 
 COMPILE: $(basename $(MAIN)).elf
 
@@ -291,8 +291,12 @@ TERMINAL:
 GDB_SERVER: 
 	$(GDB_SERVER) --device 02D120DD --gdb-port 2454 --instance 1 --probe-type USB-Blaster-2 --transport-type jtag --auto-detect true
 
-GDB_CLIENT: 
+GDB_CLIENT: $(basename $(MAIN)).elf
 	$(GDB_CLIENT) -silent -ex "target remote:2454" -ex "set $$mstatus=0" -ex "set $$mtvec=0" -ex "load" -ex "set $$pc=_start" -ex "info reg pc" "$(basename $(MAIN)).elf"
+
+gdb_server: GDB_SERVER
+
+gdb_client: GDB_CLIENT
 
 ############################################
 # EXTRAS
