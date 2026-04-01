@@ -1594,9 +1594,11 @@ int main(void)
     BattleUiState learnMoveReturnUi = BATTLE_UI_MENU;
     int learnMoveReturnCursor = 0;
     char learnMoveMsgBuf[192];
+    bool learnMoveForgetShowPrompt = true;
 
     // Forced switch UI state.
     int forcedSwitchIndex = 0;
+    bool forcedSwitchShowPrompt = true;
 
     // Item target select (Revive/Max Revive) state.
     ItemId itemTargetItem = ITEM_NONE;
@@ -3824,6 +3826,7 @@ int main(void)
                             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
                             currentGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
                             previousGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
+                            forcedSwitchShowPrompt = true;
                         } else {
                             battleUi = actionTextReturnUi;
                             battleCursor = actionTextReturnCursor;
@@ -3913,6 +3916,7 @@ int main(void)
             if (spacePressed) {
                 currentGameState = GAME_STATE_LEARN_MOVE_FORGET;
                 previousGameState = GAME_STATE_LEARN_MOVE_FORGET;
+                learnMoveForgetShowPrompt = true;
             } else if (escPressed) {
                 // declined: continue
                 learnMovePokemon = NULL;
@@ -3953,6 +3957,25 @@ int main(void)
                 if (front.pixels != NULL) {
                     draw_sprite_any(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
                 }
+            } else {
+                // Clear the textbox area from the previous learn-move screen.
+                draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+            }
+
+            if (learnMoveForgetShowPrompt) {
+                const char *newMoveName = (learnMoveMove != NULL && learnMoveMove->name != NULL) ? learnMoveMove->name : "???";
+                char promptBuf[192];
+                snprintf(promptBuf, sizeof(promptBuf), "Choose a move to forget\nto learn %s", newMoveName);
+                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, promptBuf, BLACK);
+
+                if (escPressed) {
+                    currentGameState = GAME_STATE_LEARN_MOVE_YESNO;
+                    previousGameState = GAME_STATE_LEARN_MOVE_YESNO;
+                } else if (spacePressed) {
+                    learnMoveForgetShowPrompt = false;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+                break;
             }
 
             // Show current 4 moves (battle attack menu layout) and pick one to replace.
@@ -4123,7 +4146,19 @@ int main(void)
             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
             if (forcedSwitchIndex > 5) forcedSwitchIndex = 5;
 
-            //  3x2 navigation across slots 0..5 
+            draw_map();
+            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
+
+            // First show the prompt alone (space to exit), then show the party selector.
+            if (forcedSwitchShowPrompt) {
+                draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Choose a Pokemon to send out!", BLACK);
+                if (spacePressed) {
+                    forcedSwitchShowPrompt = false;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+                break;
+            }
+
             const int prev = forcedSwitchIndex;
             int row = forcedSwitchIndex / 3;
             int col = forcedSwitchIndex % 3;
@@ -4136,10 +4171,6 @@ int main(void)
             if (next > 5) next = 5;
             forcedSwitchIndex = next;
             if (forcedSwitchIndex != prev) play_sfx(plink_audio, plink_audio_len);
-
-            draw_map();
-            draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, "Choose a Pokemon to send out!", BLACK);
 
             // Party slot background + box sprites (same layout as the battle menu party selector).
             {
