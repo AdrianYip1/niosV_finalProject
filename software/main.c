@@ -2257,7 +2257,7 @@ int main(void)
                             TRANSPARENT_COLOUR);
 
             draw_string_f(55, 80 -5, "Name:", BLACK, FONT_5X9);
-            draw_string_f(55, 96 - 5, "$", BLACK, FONT_5X9);
+            draw_string_f(55, 96 - 5 - 3, "$", BLACK, FONT_5X9);
             draw_string_f(55, 112 - 5, "Pokedex: ", BLACK, FONT_5X9);
             draw_string_f(55, 152 - 5, "Time Played: ", BLACK, FONT_5X9);
             draw_string_f(55, 128 - 5, "Location: ", BLACK, FONT_5X9);
@@ -2269,7 +2269,7 @@ int main(void)
 
                 char moneyNumBuf[16];
                 snprintf(moneyNumBuf, sizeof(moneyNumBuf), "%d", playerMoney);
-                draw_string_f(65 + 5 + 5, 96 - 5, moneyNumBuf, BLACK, FONT_5X9);
+                draw_string_f(65 + 5 + 5 + 5, 96 - 5, moneyNumBuf, BLACK, FONT_5X9);
 
                 int seenCount = 0;
                 int caughtCount = 0;
@@ -2287,11 +2287,11 @@ int main(void)
                 const unsigned int seconds = totalSeconds % 60U;
                 char timeBuf[24];
                 snprintf(timeBuf, sizeof(timeBuf), "%02u:%02u:%02u", hours, minutes, seconds);
-                draw_string_f(125, 152 - 4, timeBuf, BLACK, FONT_5X9);
+                draw_string_f(130, 152 - 5, timeBuf, BLACK, FONT_5X9);
 
                 const char *location = world_map_display_name(currentMapId);
                 if (location == NULL) location = "Unknown";
-                draw_string_f(120, 128 - 4, location, BLACK, FONT_5X9);
+                draw_string_f(120, 128 - 5, location, BLACK, FONT_5X9);
             }
             if (escPressed) {
                 currentGameState = GAME_STATE_MAIN_MENU_UI;
@@ -5212,7 +5212,7 @@ int main(void)
                 const int cursorY0 = 58;
                 const int cursorDy = 12;
                 const int cursorMaxY = 166;
-                const int itemNameX = 145;
+                const int itemNameX = 45;
                 const int itemNameY = 152;
                 const int descX = 47;
                 const int descY = 169;
@@ -5303,7 +5303,6 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -5431,7 +5430,6 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -6240,13 +6238,11 @@ int main(void)
             const int cursorDy = 53 - 32;
             const int cancelSelX = 130;
             const int cancelUnselX = 129;
-            const int cancelY = 151;
-            const int selectedNameX = 34;
-            const int selectedNameY = 179;
+            const int cancelY = 151 - 4;
             const int moneyLabelX = 5;
-            const int moneyLabelY = 40;
+            const int moneyLabelY = 40 - 5;
             const int moneyValX = 68;
-            const int moneyValY = 60;
+            const int moneyValY = 60 - 15;
             const int selectedIconX = 16;
             const int selectedIconY = 182;
 
@@ -6316,10 +6312,9 @@ int main(void)
                 draw_string_f(moneyValX, moneyValY, moneyBuf, BLACK, FONT_5X9);
             }
 
-            // Selected item name + icon preview
+            // Selected item icon preview
             if (!shopCancelFocused && shopItemCount > 0) {
                 const ItemId selected = shopItems[shopCursor];
-                draw_string_f(selectedNameX, selectedNameY, itemName(selected), BLACK, FONT_5X9);
 
                 const unsigned short *icon = NULL;
                 int iconW = 0;
