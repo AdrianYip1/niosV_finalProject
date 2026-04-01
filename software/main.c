@@ -78,7 +78,8 @@
 #include "graphics/sprites/menu/menuSprites.h"
 #include "graphics/sprites/menu/cancelSprite.h"
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
-#include "graphics/sprites/mainMenuUi/mainMenuUiSprites.h"
+  #include "graphics/sprites/mainMenuUi/mainMenuUiSprites.h"
+  #include "graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.h"
 #include "graphics/sprites/evolutionBackdrop/evolutionBackdrop_frames.h"
 #include "graphics/sprites/pokeballThrow/pokeballThrow_frames.h"
 #include <stdbool.h>
@@ -343,6 +344,7 @@ typedef enum {
     GAME_STATE_BAG_MENU_KEY_ITEMS,
     GAME_STATE_MAIN_MENU_UI,
     GAME_STATE_EVOLUTION,
+    GAME_STATE_SHOP_UI,
 } GameState;
 
 typedef enum {
@@ -1092,6 +1094,8 @@ static AttackTypeSpriteRef attackTypeSpriteFor(PokemonType type) {
 
 int main(void)
 {
+
+    bool clearShopOpen = false;
     //transition into battle
     int transitionFrame = 0;
     int transitionTimer = 0;
@@ -1455,7 +1459,6 @@ int main(void)
     pokemonInBattle *learnMovePokemon = NULL;
     const AttackData *learnMoveMove = NULL;
     const AttackData *learnMoveForgottenMove = NULL;
-    int learnMoveYesNo = 0; // 0=yes, 1=no
     int learnMoveForgetIndex = 0; // 0..3
     GameState learnMoveReturnState = GAME_STATE_MAP;
     BattleUiState learnMoveReturnUi = BATTLE_UI_MENU;
@@ -3342,7 +3345,6 @@ int main(void)
 
                     bool startedLearnFlow = false;
                     if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
-                        learnMoveYesNo = 0;
                         learnMoveForgetIndex = 0;
                         learnMoveReturnUi = actionTextReturnUi;
                         learnMoveReturnCursor = actionTextReturnCursor;
@@ -3438,7 +3440,7 @@ int main(void)
                                        : "???";
             const char *moveName = (learnMoveMove != NULL && learnMoveMove->name != NULL) ? learnMoveMove->name : "???";
             char buf[192];
-            snprintf(buf, sizeof(buf), "%s wants to learn %s!\nForget a move to learn it?", pokeName, moveName);
+            snprintf(buf, sizeof(buf), "%s wants to learn %s!", pokeName, moveName);
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, buf, BLACK);
 
             if (spacePressed) {
@@ -3472,31 +3474,30 @@ int main(void)
                     draw_sprite_any(front.pixels, front.width, front.height, front.x, front.y, TRANSPARENT_COLOUR);
                 }
             }
-            
-            if (leftPressed || upPressed) learnMoveYesNo = 0;
-            if (rightPressed || downPressed) learnMoveYesNo = 1;
 
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y,
-                                      (learnMoveYesNo == 0) ? "YES / no" : "yes / NO",
-                                      BLACK);
+            const char *pokeName = (learnMovePokemon != NULL && learnMovePokemon->id.data != NULL && learnMovePokemon->id.data->name != NULL)
+                                       ? learnMovePokemon->id.data->name
+                                       : "???";
+            const char *moveName = (learnMoveMove != NULL && learnMoveMove->name != NULL) ? learnMoveMove->name : "???";
+            char buf[192];
+            snprintf(buf, sizeof(buf), "Teach %s %s?\nSPACE=Yes  ESC=No", pokeName, moveName);
+            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, buf, BLACK);
 
             if (spacePressed) {
-                if (learnMoveYesNo == 0) {
-                    currentGameState = GAME_STATE_LEARN_MOVE_FORGET;
-                    previousGameState = GAME_STATE_LEARN_MOVE_FORGET;
+                currentGameState = GAME_STATE_LEARN_MOVE_FORGET;
+                previousGameState = GAME_STATE_LEARN_MOVE_FORGET;
+            } else if (escPressed) {
+                // declined: continue
+                learnMovePokemon = NULL;
+                learnMoveMove = NULL;
+                if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
+                    currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                    previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
                 } else {
-                    // declined: continue 
-                    learnMovePokemon = NULL;
-                    learnMoveMove = NULL;
-                    if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
-                        currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                        previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                    } else {
-                        battleUi = learnMoveReturnUi;
-                        battleCursor = learnMoveReturnCursor;
-                        currentGameState = learnMoveReturnState;
-                        previousGameState = learnMoveReturnState;
-                    }
+                    battleUi = learnMoveReturnUi;
+                    battleCursor = learnMoveReturnCursor;
+                    currentGameState = learnMoveReturnState;
+                    previousGameState = learnMoveReturnState;
                 }
             }
             break;
@@ -3527,6 +3528,64 @@ int main(void)
                 }
             }
 
+            // Show current 4 moves (battle attack menu layout) and pick one to replace.
+            {
+                const int mxLeft = 18;
+                const int mxRight = 160 + 18;
+                const int myTop = 240 - 89;
+                const int myBottom = 240 - 45;
+                const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
+                const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
+
+                // Text box inside each move sprite
+                const int nameBoxW = 97;
+                const int nameBoxH = 9;
+                const int nameBoxDx = 10;
+                const int nameBoxDy = 11;
+
+                const char *newMoveName = (learnMoveMove != NULL && learnMoveMove->name != NULL) ? learnMoveMove->name : "???";
+                char titleBuf[96];
+                snprintf(titleBuf, sizeof(titleBuf), "Choose a move to forget (learn %s)", newMoveName);
+                draw_string_f(8, 8, titleBuf, BLACK, FONT_5X9);
+
+                for (int i = 0; i < 4; i++) {
+                    const AttackData *move = (learnMovePokemon != NULL) ? learnMovePokemon->attacks[i] : NULL;
+                    const char *moveName = (move != NULL && move->name != NULL) ? move->name : "";
+
+                    AttackTypeSpriteRef moveTypeSprite = (move != NULL) ? attackTypeSpriteFor(move->type)
+                                                                       : (AttackTypeSpriteRef){normalTypeSprite, NORMAL_TYPE_WIDTH, NORMAL_TYPE_HEIGHT };
+
+                    if (learnMoveForgetIndex == i) {
+                        draw_sprite_any_shade_pulse(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
+                                                    mxs[i], mys[i], TRANSPARENT_COLOUR, shadePulseFrame);
+                    } else {
+                        draw_sprite_any(moveTypeSprite.pixels, moveTypeSprite.width, moveTypeSprite.height,
+                                        mxs[i], mys[i], TRANSPARENT_COLOUR);
+                    }
+
+                    drawCenteredStringInBox(mxs[i] + nameBoxDx, mys[i] + nameBoxDy, nameBoxW, nameBoxH,
+                                            moveName, BLACK, FONT_5X9);
+
+                    if (learnMovePokemon != NULL && move != NULL) {
+                        const int ppX = mxs[i] + CURRENT_PP_X_FROM_ATTACK_SPRITE;
+                        const int ppY = mys[i] + CURRENT_PP_Y_FROM_ATTACK_SPRITE;
+
+                        const int ppTotalX = mxs[i] + CURRENT_PP_X_FROM_ATTACK_SPRITE + TOTAL_PP_X_FROM_CURRENT_PP;
+                        const int ppTotalY = mys[i] + CURRENT_PP_Y_FROM_ATTACK_SPRITE + TOTAL_PP_Y_FROM_CURRENT_PP;
+
+                        const int ppCur = learnMovePokemon->currentPP[i];
+                        const int ppMax = move->maxPP;
+                        char ppBufCurrent[16];
+                        char ppBufTotal[16];
+
+                        snprintf(ppBufCurrent, sizeof(ppBufCurrent), "%d", ppCur);
+                        snprintf(ppBufTotal, sizeof(ppBufTotal), "%d", ppMax);
+                        draw_string_f(ppX, ppY, ppBufCurrent, BLACK, FONT_5X9);
+                        draw_string_f(ppTotalX, ppTotalY, ppBufTotal, BLACK, FONT_5X9);
+                    }
+                }
+            }
+
             if (leftPressed && learnMoveForgetIndex > 0) learnMoveForgetIndex--;
             if (rightPressed && learnMoveForgetIndex < 3) learnMoveForgetIndex++;
             if (upPressed && learnMoveForgetIndex >= 2) learnMoveForgetIndex -= 2;
@@ -3534,11 +3593,10 @@ int main(void)
             if (learnMoveForgetIndex < 0) learnMoveForgetIndex = 0;
             if (learnMoveForgetIndex > 3) learnMoveForgetIndex = 3;
 
-            char buf[96];
-            snprintf(buf, sizeof(buf), "Choose move to forget: slot %d", learnMoveForgetIndex + 1);
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, buf, BLACK);
-
-            if (spacePressed) {
+            if (escPressed) {
+                currentGameState = GAME_STATE_LEARN_MOVE_YESNO;
+                previousGameState = GAME_STATE_LEARN_MOVE_YESNO;
+            } else if (spacePressed) {
                 if (learnMovePokemon != NULL && learnMoveMove != NULL) {
                     learnMoveForgottenMove = (learnMoveForgetIndex >= 0 && learnMoveForgetIndex < 4) ? learnMovePokemon->attacks[learnMoveForgetIndex] : NULL;
                     (void)learnMove(learnMovePokemon, learnMoveMove, learnMoveForgetIndex);
@@ -4571,6 +4629,8 @@ int main(void)
                 if (evolutionPhaseTimer >= phase1Ticks) {
                     (void)applyPendingEvolution(mon);
                     syncPartyBoxSpritesToParty(partyBoxSprites, &playerParty);
+                    // register in pokedex
+                    if (mon != NULL) pokedex_mark_caught(mon->id.frontFrame_ID);
                     evolutionPhase = 2;
                     evolutionPhaseTimer = 0;
                 }
@@ -4602,7 +4662,6 @@ int main(void)
                     }
 
                     if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
-                        learnMoveYesNo = 0;
                         learnMoveForgetIndex = 0;
                         learnMoveReturnState = GAME_STATE_EVOLUTION;
                         currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
@@ -4927,7 +4986,13 @@ int main(void)
             draw_map();
             drawMCAnimationPaused();
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, dialogueText ? dialogueText : "", BLACK);
-            if (spacePressed || enterPressed) {
+            if (clearShopOpen) {
+                if (spacePressed || enterPressed) {
+                    currentGameState =  GAME_STATE_SHOP_UI;
+                    clearShopOpen = false;
+                }
+            }
+            else if (spacePressed || enterPressed) {
                 currentGameState = dialogueReturnState;
             }
             break;
@@ -5253,6 +5318,16 @@ int main(void)
             }
             break;
 
+        case GAME_STATE_SHOP_UI: {
+            draw_sprite_any(pokeBuildingInteriorSprite,
+                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_WIDTH,
+                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_HEIGHT,
+                            0, 0, TRANSPARENT_COLOUR);
+
+            if (escPressed) currentGameState = GAME_STATE_MAP;
+            break;
+        }
+
         case GAME_STATE_MAP:
         default:
             {
@@ -5292,6 +5367,7 @@ int main(void)
                            map_can_talk_to_poke_mart_clerk(&mcBounds)) {
                     dialogueText = CLERK_GREETING_TEXT;
                     dialogueReturnState = GAME_STATE_MAP;
+                    clearShopOpen = true;
                     currentGameState = GAME_STATE_DIALOGUE;
                 } else if (currentMapId == WORLD_MAP_ROUTE_B &&
                            spacePressed &&
