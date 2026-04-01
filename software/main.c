@@ -1947,6 +1947,27 @@ int main(void)
                 MENU_DIR_NW,
             } MenuPulseDir;
 
+
+            static int menuSelX = 0; 
+            static int menuSelY = 0; 
+            if (upPressed && !downPressed) menuSelY = -1;
+            else if (downPressed && !upPressed) menuSelY = 1;
+            else if (upPressed && downPressed) menuSelY = 0;
+
+            if (leftPressed && !rightPressed) menuSelX = -1;
+            else if (rightPressed && !leftPressed) menuSelX = 1;
+            else if (leftPressed && rightPressed) menuSelX = 0;
+
+            MenuPulseDir selectedDir = MENU_DIR_NONE;
+            if (menuSelX == 0 && menuSelY == -1) selectedDir = MENU_DIR_N;
+            else if (menuSelX == 1 && menuSelY == -1) selectedDir = MENU_DIR_NE;
+            else if (menuSelX == 1 && menuSelY == 0) selectedDir = MENU_DIR_E;
+            else if (menuSelX == 1 && menuSelY == 1) selectedDir = MENU_DIR_SE;
+            else if (menuSelX == 0 && menuSelY == 1) selectedDir = MENU_DIR_S;
+            else if (menuSelX == -1 && menuSelY == 1) selectedDir = MENU_DIR_SW;
+            else if (menuSelX == -1 && menuSelY == 0) selectedDir = MENU_DIR_W;
+            else if (menuSelX == -1 && menuSelY == -1) selectedDir = MENU_DIR_NW;
+
             static MenuPulseDir lastPulseDir = MENU_DIR_NONE;
             static int lastPulseTimer = 0;
             MenuPulseDir pulseDir = MENU_DIR_NONE;
@@ -1964,8 +1985,10 @@ int main(void)
                 pulseDir = MENU_DIR_E;
             }
 
-            if (pulseDir != MENU_DIR_NONE) {
-                lastPulseDir = pulseDir;
+            const MenuPulseDir pulseVisualDir = (selectedDir != MENU_DIR_NONE) ? selectedDir : pulseDir;
+
+            if (pulseVisualDir != MENU_DIR_NONE) {
+                lastPulseDir = pulseVisualDir;
                 lastPulseTimer = 15;
             } else if (lastPulseTimer > 0) {
                 lastPulseTimer--;
@@ -1973,14 +1996,14 @@ int main(void)
 
             shadePulseFrame = (shadePulseFrame + 1) % SHADE_PULSE_FRAME_COUNT;
 
-            const bool pulseTop = (pulseDir == MENU_DIR_N);
-            const bool pulseTopLeft = (pulseDir == MENU_DIR_NW);
-            const bool pulseTopRight = (pulseDir == MENU_DIR_NE);
-            const bool pulseLeft = (pulseDir == MENU_DIR_W);
-            const bool pulseRight = (pulseDir == MENU_DIR_E);
-            const bool pulseBottomLeft = (pulseDir == MENU_DIR_SW);
-            const bool pulseBottomRight = (pulseDir == MENU_DIR_SE);
-            const bool pulseBottom = (pulseDir == MENU_DIR_S);
+            const bool pulseTop = (pulseVisualDir == MENU_DIR_N);
+            const bool pulseTopLeft = (pulseVisualDir == MENU_DIR_NW);
+            const bool pulseTopRight = (pulseVisualDir == MENU_DIR_NE);
+            const bool pulseLeft = (pulseVisualDir == MENU_DIR_W);
+            const bool pulseRight = (pulseVisualDir == MENU_DIR_E);
+            const bool pulseBottomLeft = (pulseVisualDir == MENU_DIR_SW);
+            const bool pulseBottomRight = (pulseVisualDir == MENU_DIR_SE);
+            const bool pulseBottom = (pulseVisualDir == MENU_DIR_S);
 
             if (pulseLeft) {
                 draw_sprite_any_shade_pulse(mainMenuUiPokemonLeftSprite, MAIN_MENU_UI_POKEMON_LEFT_WIDTH, MAIN_MENU_UI_POKEMON_LEFT_HEIGHT, 3, 70, TRANSPARENT_COLOUR, shadePulseFrame);
@@ -2033,11 +2056,11 @@ int main(void)
 
                 static const int partySpriteX[6] = {
                     41,  // 1 (left)
-                    -2,  // 2 (left)
-                    -2,  // 3 (left)
+                    -2 + 5,  // 2 (left)
+                    -2 + 5,  // 3 (left)
                     239, // 4 (right)
-                    278, // 5 (right)
-                    278, // 6 (right)
+                    278 - 2, // 5 (right)
+                    278 - 2, // 6 (right)
                 };
                 static const int partySpriteY[6] = {
                     94,  // 1 (left)
@@ -2083,9 +2106,11 @@ int main(void)
             if (escPressed) {
                 currentGameState = GAME_STATE_MAP;
             } else if (spacePressed) {
-                const MenuPulseDir selectionDir = (pulseDir != MENU_DIR_NONE)
-                    ? pulseDir
-                    : (lastPulseTimer > 0 ? lastPulseDir : MENU_DIR_NONE);
+                const MenuPulseDir selectionDir = (selectedDir != MENU_DIR_NONE)
+                    ? selectedDir
+                    : (pulseDir != MENU_DIR_NONE
+                           ? pulseDir
+                           : (lastPulseTimer > 0 ? lastPulseDir : MENU_DIR_NONE));
 
                 switch (selectionDir) {
                     case MENU_DIR_NW: // Bag
