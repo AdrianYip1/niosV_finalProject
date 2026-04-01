@@ -5669,6 +5669,7 @@ int main(void)
                                       TEXTBOX_X, TEXTBOX_Y,
                                       shopShowingMsg ? shopMsg : "Space: Buy   Esc: Exit",
                                       BLACK);
+                                      
             break;
         }
 
