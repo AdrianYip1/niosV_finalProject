@@ -300,7 +300,7 @@
 
 static const char CYNTHIA_GREETING_TEXT[] = "Cynthia: Good to see you again!";
 static const char TRAINER_A_GREETING_TEXT[] = "Trainer A: Hey! I've been waiting for you.";
-static const char TRAINER_A_BATTLE_TEXT[] = "When two Trainers' eys meet,\n it's battle time!";
+static const char TRAINER_A_BATTLE_TEXT[] = "When two Trainers' eyes meet,\n it's battle time!";
 static const char NURSE_GREETING_TEXT[] = "Nurse: Welcome to the Pokemon Center!\nShall I heal your Pokemon?";
 static const char NPC1_GREETING_TEXT[] = "ECE243 is the best!";
 static const char NURSE_HEALED_TEXT[] = "Nurse: We hope to see you again!";
@@ -308,6 +308,7 @@ static const char CLERK_GREETING_TEXT[] = "Clerk: Welcome to the Poke Mart!\nWha
 static const char FOUND_POKEBALL_TEXT[] = "You found a Poke Ball!";
 
 static void play_world_map_bgm(WorldMapId map_id);
+static const char *world_map_display_name(WorldMapId map_id);
 
 
 // Game States
@@ -1305,6 +1306,8 @@ int main(void)
     pcInit(&playerPc);
     initParty(&playerParty);
     int playerMoney = STARTING_MONEY;
+    unsigned int playTimeFrames = 0;
+    const unsigned int GAME_FPS = 60;
 
     bagInit(&playerBag);
     // Starter bag 
@@ -2147,11 +2150,43 @@ int main(void)
                             0, 0,
                             TRANSPARENT_COLOUR);
 
-            draw_string_f(55, 80, "Name:", BLACK, FONT_5X9);
-            draw_string_f(55, 96, "$", BLACK, FONT_5X9);
-            draw_string_f(55, 112, "Pokedex", BLACK, FONT_5X9);
-            draw_string_f(55, 128, "Time Played", BLACK, FONT_5X9);
-            draw_string_f(55, 152, "Location", BLACK, FONT_5X9);
+            draw_string_f(55, 80 -4, "Name:", BLACK, FONT_5X9);
+            draw_string_f(55, 96 - 4, "$", BLACK, FONT_5X9);
+            draw_string_f(55, 112 - 4, "Pokedex", BLACK, FONT_5X9);
+            draw_string_f(55, 128 - 4, "Time Played", BLACK, FONT_5X9);
+            draw_string_f(55, 152 - 4, "Location", BLACK, FONT_5X9);
+
+            {
+                const char *name = getUserText();
+                if (name == NULL || name[0] == '\0') name = "???";
+                draw_string_f(120, 80 -4, name, BLACK, FONT_5X9);
+
+                char moneyNumBuf[16];
+                snprintf(moneyNumBuf, sizeof(moneyNumBuf), "%d", playerMoney);
+                draw_string_f(65, 96 - 4, moneyNumBuf, BLACK, FONT_5X9);
+
+                int seenCount = 0;
+                int caughtCount = 0;
+                for (int i = 0; i <= POKEMON_ID_TOGEKISS; i++) {
+                    if (g_pokedexSeen[i]) seenCount++;
+                    if (g_pokedexCaught[i]) caughtCount++;
+                }
+                char dexBuf[32];
+                snprintf(dexBuf, sizeof(dexBuf), "C:%d S:%d", caughtCount, seenCount);
+                draw_string_f(120, 112 - 4, dexBuf, BLACK, FONT_5X9);
+
+                const unsigned int totalSeconds = (GAME_FPS > 0) ? (playTimeFrames / GAME_FPS) : 0;
+                const unsigned int hours = totalSeconds / 3600U;
+                const unsigned int minutes = (totalSeconds % 3600U) / 60U;
+                const unsigned int seconds = totalSeconds % 60U;
+                char timeBuf[24];
+                snprintf(timeBuf, sizeof(timeBuf), "%02u:%02u:%02u", hours, minutes, seconds);
+                draw_string_f(120, 128 - 4, timeBuf, BLACK, FONT_5X9);
+
+                const char *location = world_map_display_name(currentMapId);
+                if (location == NULL) location = "Unknown";
+                draw_string_f(120, 152 - 4, location, BLACK, FONT_5X9);
+            }
             if (escPressed) {
                 currentGameState = GAME_STATE_MAIN_MENU_UI;
             } else if (spacePressed) {
@@ -2165,6 +2200,29 @@ int main(void)
                             TRAINER_CARD_BACK_SPRITE_WIDTH, TRAINER_CARD_BACK_SPRITE_HEIGHT,
                             0, 0,
                             TRANSPARENT_COLOUR);
+
+            // Party Pokemon positions on the back of the trainer card.
+            static const int partyX[6] = { 67, 127, 187, 86, 146, 206 };
+            static const int partyY[6] = { 52,  52,  52,  85,  85,  85 };
+            for (int i = 0; i < 6; i++) {
+                pokemonInBattle *p = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
+                if (p == NULL) continue;
+
+                const unsigned short *spr = menuPokemonSpriteForId(p->id.frontFrame_ID);
+                if (spr == NULL) continue;
+
+                if (!p->alive) {
+                    draw_sprite_any_greyscale(spr,
+                                              MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                              partyX[i], partyY[i],
+                                              TRANSPARENT_COLOUR);
+                } else {
+                    draw_sprite_any(spr,
+                                    MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT,
+                                    partyX[i], partyY[i],
+                                    TRANSPARENT_COLOUR);
+                }
+            }
             if (escPressed) {
                 currentGameState = GAME_STATE_MAIN_MENU_UI;
             } else if (spacePressed) {
@@ -5076,7 +5134,7 @@ int main(void)
             }
 
             // Base UI
-
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
                   draw_sprite_any_rot90_cw(pcBoxBlueSprite,
                                      PC_MENU_PC_BOX_BLUE_WIDTH, PC_MENU_PC_BOX_BLUE_HEIGHT,
                                      (340 - PC_MENU_PC_BOX_BLUE_WIDTH) + 40, (120 - (PC_MENU_PC_BOX_BLUE_HEIGHT / 2)) - 20 + 3,
@@ -5734,11 +5792,27 @@ int main(void)
             break;
         }
 
+        playTimeFrames++;
         wait_for_vsync();
     }
 
     return 0;
 }
+
+static const char *world_map_display_name(WorldMapId map_id) {
+    switch (map_id) {
+        case WORLD_MAP_ROUTE_A: return "Route A";
+        case WORLD_MAP_ROUTE_B: return "Route B";
+        case WORLD_MAP_POKEMON_CENTER_1: return "Pokemon Center";
+        case WORLD_MAP_POKE_MART_1: return "Poke Mart";
+        case WORLD_MAP_HOUSE_1: return "House";
+        case WORLD_MAP_GYM_1: return "Gym";
+        case WORLD_MAP_COUNT:
+        default:
+            return "Unknown";
+    }
+}
+
 static void play_world_map_bgm(WorldMapId map_id) {
     if (map_id == WORLD_MAP_POKEMON_CENTER_1) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
         play_bgm(pokemon_center_audio, pokemon_center_audio_len);
