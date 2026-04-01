@@ -1456,11 +1456,22 @@ int main(void)
     int pcCursor = 0; // 6 + 2 + max storage in pc
     int pcSwapIndex = -1; //first picked index for swapping in pc
     pokemonInBattle *pcHeldMon = NULL;
+    GameState pcMenuReturnState = GAME_STATE_MAP;
 
     // Pokedex UI state
     int pokedexSelectedId = POKEMON_ID_CHARMANDER;
     int pokedexScrollIndex = POKEMON_ID_CHARMANDER;
     int pokedexInfoCursor = 1; // 0=up arrow, 1=down arrow, 2=X
+    GameState pokedexMenuReturnState = GAME_STATE_MAP;
+
+    // Bag menu return state (Esc to close).
+    GameState bagMenuReturnState = GAME_STATE_MAP;
+
+    // Shop UI state
+    int shopCursor = 0;
+    bool shopShowingMsg = false;
+    char shopMsg[96];
+    shopMsg[0] = '\0';
 
     // Evolution UI state (runs after battles).
     int evolutionFrame = 0;
@@ -1523,16 +1534,21 @@ int main(void)
                 } else if (ch == '5' && currentGameState == GAME_STATE_MAP) {
                     currentGameState = GAME_STATE_PC_MENU;
                     pcCursor = 0;
+                    pcSwapIndex = -1;
+                    pcHeldMon = NULL;
+                    pcMenuReturnState = GAME_STATE_MAP;
                     play_sfx(pc_se_audio, pc_se_audio_len);
                     } else if (ch == '6' && currentGameState == GAME_STATE_MAP) {
                         currentGameState = GAME_STATE_POKEDEX_MENU;
                         pokedexScrollIndex = POKEMON_ID_CHARMANDER;
                         pokedexSelectedId = POKEMON_ID_CHARMANDER;
+                        pokedexMenuReturnState = GAME_STATE_MAP;
                         play_sfx(pc_se_audio, pc_se_audio_len);
                     } else if (ch == '7') {
                         
                         if (currentGameState == GAME_STATE_MAP) {
                             currentGameState = GAME_STATE_BAG_MENU_ITEMS;
+                            bagMenuReturnState = GAME_STATE_MAP;
                         } else if (isBagMenuState(currentGameState)) {
                             currentGameState = GAME_STATE_MAP;
                         }
@@ -1994,6 +2010,34 @@ int main(void)
             }
             draw_sprite_any(mainMenuUiFrontFacingMcSprite, MAIN_MENU_UI_FRONT_FACING_MC_WIDTH, MAIN_MENU_UI_FRONT_FACING_MC_HEIGHT, 128, 80, TRANSPARENT_COLOUR);
 
+            // Party sprites beside the left/right (W/E) icons: 3 on the left, 3 on the right.
+            {
+                const int leftX = 10;
+                const int rightX = SCREEN_WIDTH - 10 - MENU_POKEMON_SPRITE_WIDTH;
+                const int y0 = 55;
+                const int yGap = 55;
+
+                for (int i = 0; i < 6; i++) {
+                    pokemonInBattle *p = (i >= 0 && i < playerParty.count) ? playerParty.slots[i] : NULL;
+                    if (p == NULL) continue;
+                    const unsigned short *spr = menuPokemonSpriteForId(p->id.frontFrame_ID);
+                    if (spr == NULL) continue;
+
+                    const bool leftSide = (i < 3);
+                    const int x = leftSide ? leftX : rightX;
+                    const int y = y0 + ((leftSide ? i : (i - 3)) * yGap);
+
+                    const bool pulseSide = leftSide ? pulseLeft : pulseRight;
+                    if (!p->alive) {
+                        draw_sprite_any_greyscale(spr, MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT, x, y, TRANSPARENT_COLOUR);
+                    } else if (pulseSide) {
+                        draw_sprite_any_shade_pulse(spr, MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT, x, y, TRANSPARENT_COLOUR, shadePulseFrame);
+                    } else {
+                        draw_sprite_any(spr, MENU_POKEMON_SPRITE_WIDTH, MENU_POKEMON_SPRITE_HEIGHT, x, y, TRANSPARENT_COLOUR);
+                    }
+                }
+            }
+
             if (pulseBottom) {
                 draw_sprite_any_shade_pulse(mainMenuUiSaveMenuSprite, MAIN_MENU_UI_SAVE_MENU_WIDTH, MAIN_MENU_UI_SAVE_MENU_HEIGHT, 130, 141, TRANSPARENT_COLOUR, shadePulseFrame);
             } else {
@@ -2013,6 +2057,7 @@ int main(void)
                     case MENU_DIR_NW: // Bag
                         play_sfx(plink_audio, plink_audio_len);
                         currentGameState = GAME_STATE_BAG_MENU_ITEMS;
+                        bagMenuReturnState = GAME_STATE_MAIN_MENU_UI;
                         break;
                     case MENU_DIR_N: // Ball (Party menu)
                         play_sfx(plink_audio, plink_audio_len);
@@ -2025,6 +2070,7 @@ int main(void)
                         currentGameState = GAME_STATE_POKEDEX_MENU;
                         pokedexScrollIndex = POKEMON_ID_CHARMANDER;
                         pokedexSelectedId = POKEMON_ID_CHARMANDER;
+                        pokedexMenuReturnState = GAME_STATE_MAIN_MENU_UI;
                         play_sfx(pc_se_audio, pc_se_audio_len);
                         break;
                     case MENU_DIR_W: // PC
@@ -2032,6 +2078,8 @@ int main(void)
                         currentGameState = GAME_STATE_PC_MENU;
                         pcCursor = 0;
                         pcSwapIndex = -1;
+                        pcHeldMon = NULL;
+                        pcMenuReturnState = GAME_STATE_MAIN_MENU_UI;
                         play_sfx(pc_se_audio, pc_se_audio_len);
                         break;
                     case MENU_DIR_SW: //placeholder
@@ -4877,6 +4925,7 @@ int main(void)
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuItemsBagSprite,BAG_MENU_ITEMS_BAG_WIDTH,BAG_MENU_ITEMS_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
 
+            if (escPressed) { currentGameState = bagMenuReturnState; break; }
             if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_POKEBALLS;
         break;
 
@@ -4889,6 +4938,7 @@ int main(void)
             draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuPokeballBagSprite,BAG_MENU_POKEBALL_BAG_WIDTH,BAG_MENU_POKEBALL_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+            if (escPressed) { currentGameState = bagMenuReturnState; break; }
             if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_TMS;
         break;
 
@@ -4902,6 +4952,7 @@ int main(void)
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuTmBagSprite,BAG_MENU_TM_BAG_WIDTH,BAG_MENU_TM_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
 
+            if (escPressed) { currentGameState = bagMenuReturnState; break; }
             if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_BERRIES;
         break;
 
@@ -4914,6 +4965,7 @@ int main(void)
             draw_sprite_any(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuBerryBagSprite,BAG_MENU_BERRY_BAG_WIDTH,BAG_MENU_BERRY_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
+            if (escPressed) { currentGameState = bagMenuReturnState; break; }
             if (spacePressed) currentGameState = GAME_STATE_BAG_MENU_KEY_ITEMS;
         break;
 
@@ -4927,6 +4979,7 @@ int main(void)
             draw_sprite_any(bagMenuRightArrowSprite, BAG_MENU_RIGHT_ARROW_WIDTH,BAG_MENU_RIGHT_ARROW_HEIGHT, 137, 49, TRANSPARENT_COLOUR);
             draw_sprite_any(bagMenuKeyItemBagSprite,BAG_MENU_KEY_ITEM_BAG_WIDTH,BAG_MENU_KEY_ITEM_BAG_HEIGHT, 85, 91, TRANSPARENT_COLOUR);
 
+            if (escPressed) { currentGameState = bagMenuReturnState; break; }
             if (spacePressed) currentGameState = GAME_STATE_MAP;
         break;
 
@@ -4943,7 +4996,7 @@ int main(void)
             if (escPressed) {
                 pcSwapIndex = -1;
                 pcHeldMon = NULL;
-                currentGameState = GAME_STATE_MAP;
+                currentGameState = pcMenuReturnState;
                 break;
             }
 
@@ -5171,6 +5224,9 @@ int main(void)
                 if (spacePressed || enterPressed) {
                     currentGameState =  GAME_STATE_SHOP_UI;
                     clearShopOpen = false;
+                    shopCursor = 0;
+                    shopShowingMsg = false;
+                    shopMsg[0] = '\0';
                 }
             }
             else if (spacePressed || enterPressed) {
@@ -5355,7 +5411,7 @@ int main(void)
                     pokedexInfoCursor = 1; // default to "down" arrow
                     currentGameState = GAME_STATE_POKEDEX_INFO;
                 }
-                if (escPressed) currentGameState = GAME_STATE_MAP;
+                if (escPressed) currentGameState = pokedexMenuReturnState;
             }
             break;
     
@@ -5495,17 +5551,99 @@ int main(void)
                     }
                 }
 
-                if (escPressed) currentGameState = GAME_STATE_POKEDEX_MENU;
+                if (escPressed) currentGameState = pokedexMenuReturnState;
             }
             break;
 
         case GAME_STATE_SHOP_UI: {
-            draw_sprite_any(pokeBuildingInteriorSprite,
-                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_WIDTH,
-                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_HEIGHT,
-                            0, 0, TRANSPARENT_COLOUR);
+            // Poke Mart buy screen (simple list UI over the current map).
+            typedef struct {
+                ItemId item;
+                int price;
+            } ShopItem;
+            static const ShopItem shopItems[] = {
+                {ITEM_POKEBALL, 200},
+                {ITEM_GREAT_BALL, 600},
+                {ITEM_POTION, 300},
+                {ITEM_SUPER_POTION, 700},
+                {ITEM_REVIVE, 1500},
+                {ITEM_MAX_REVIVE, 4000},
+            };
+            const int shopItemCount = (int)(sizeof(shopItems) / sizeof(shopItems[0]));
+            if (shopCursor < 0) shopCursor = 0;
+            if (shopCursor >= shopItemCount) shopCursor = shopItemCount - 1;
 
-            if (escPressed) currentGameState = GAME_STATE_MAP;
+            if (shopShowingMsg) {
+                if (spacePressed || enterPressed || escPressed) {
+                    shopShowingMsg = false;
+                    shopMsg[0] = '\0';
+                }
+            } else {
+                if (upPressed && shopCursor > 0) { shopCursor--; play_sfx(plink_audio, plink_audio_len); }
+                if (downPressed && shopCursor < shopItemCount - 1) { shopCursor++; play_sfx(plink_audio, plink_audio_len); }
+
+                if (escPressed) {
+                    currentGameState = GAME_STATE_MAP;
+                    break;
+                }
+
+                if (spacePressed || enterPressed) {
+                    const ShopItem si = shopItems[shopCursor];
+                    if (playerMoney < si.price) {
+                        snprintf(shopMsg, sizeof(shopMsg), "Not enough money!");
+                        shopShowingMsg = true;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else if (!bagAdd(&playerBag, si.item, 1)) {
+                        snprintf(shopMsg, sizeof(shopMsg), "Bag full!");
+                        shopShowingMsg = true;
+                        play_sfx(plink_audio, plink_audio_len);
+                    } else {
+                        playerMoney -= si.price;
+                        snprintf(shopMsg, sizeof(shopMsg), "Bought %s!", itemName(si.item));
+                        shopShowingMsg = true;
+                        play_sfx(plink_audio, plink_audio_len);
+                    }
+                }
+            }
+
+            draw_map();
+
+            // Window
+            const int winX = 30;
+            const int winY = 22;
+            const int winW = 260;
+            const int winH = 150;
+            draw_rect(winX, winY, winW, winH, WHITE);
+            draw_rect_outline(winX, winY, winW, winH, BLACK);
+            draw_string_f(winX + 10, winY + 8, "Poke Mart - BUY", BLACK, FONT_5X9);
+
+            // Money
+            {
+                char moneyBuf[32];
+                snprintf(moneyBuf, sizeof(moneyBuf), "$%d", playerMoney);
+                draw_string_f(winX + winW - 70, winY + 8, moneyBuf, BLACK, FONT_5X9);
+            }
+
+            // Items list
+            for (int i = 0; i < shopItemCount; i++) {
+                const int rowY = winY + 28 + (i * 18);
+                const bool sel = (i == shopCursor);
+                if (sel) {
+                    draw_rect(winX + 6, rowY - 2, winW - 12, 16, TURQ);
+                }
+
+                const ShopItem si = shopItems[i];
+                const char *name = itemName(si.item);
+                char priceBuf[16];
+                snprintf(priceBuf, sizeof(priceBuf), "$%d", si.price);
+                draw_string_f(winX + 12, rowY, name ? name : "???", BLACK, FONT_5X9);
+                draw_string_f(winX + winW - 55, rowY, priceBuf, BLACK, FONT_5X9);
+            }
+
+            draw_textbox_instant_text(textBoxSprite,
+                                      TEXTBOX_X, TEXTBOX_Y,
+                                      shopShowingMsg ? shopMsg : "Space: Buy   Esc: Exit",
+                                      BLACK);
             break;
         }
 
@@ -5551,6 +5689,7 @@ int main(void)
                     pcCursor = 0;
                     pcSwapIndex = -1;
                     pcHeldMon = NULL;
+                    pcMenuReturnState = GAME_STATE_MAP;
                     play_sfx(pc_se_audio, pc_se_audio_len);
                 } else if (!routeBTrainerLock &&
                            (spacePressed || enterPressed) &&

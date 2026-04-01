@@ -17,7 +17,9 @@ static McMoveResult mcEdgeExitResult(McDirection dir);
 
 void mcMovingInit(int startX, int startY, McFacing facing) {
     initMCWalkingSprite(startX, startY, facing);
-    drawMCWalkingAnimation(); // show MC on frame 0
+    // Default to idle on spawn/teleport
+    initMCIdle();
+    drawMCIdleAnimation();
 }
 
 static bool moveDiagonal(McDirection dir, unsigned int stepCounter) {
