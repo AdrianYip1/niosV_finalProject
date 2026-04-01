@@ -5627,7 +5627,11 @@ int main(void)
                 }
             }
 
-            draw_map();
+            draw_sprite_any(pokeBuildingInteriorSprite,
+                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_WIDTH,
+                            NEW_POKEMART_IDEA_POKE_BUILDING_INTERIOR_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
 
             // Window
             const int winX = 30;
