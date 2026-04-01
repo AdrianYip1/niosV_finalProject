@@ -194,6 +194,7 @@ LDFLAGS		:= $(USERLDFLAGS) $(ARCHLDFLAGS)
 # Files
 OBJS		:= $(patsubst %, %.o, $(SRCS))
 DEPS		:= $(OBJS:.o=.d)
+OBJ_RSP		:= $(basename $(MAIN)).objs.rsp
 
 ############################################
 # GDB Macros
@@ -237,9 +238,10 @@ $(basename $(MAIN)).elf: $(OBJS)
 	@echo Linking
 	@$(BASH) 'printf "$(LD) "'
 	$(DEF_TEXT)
-	@echo $(LDFLAGS) $(OBJS) -lm -o $@
+	@$(file >$(OBJ_RSP),$(OBJS))
+	@echo $(LDFLAGS) @$(OBJ_RSP) -lm -o $@
 	@$(BASH) 'printf "\n"'
-	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) $(OBJS) -lm -o $@'
+	@$(BASH) 'cd "$(CURDIR)"; $(CYGWIN_PATH); $(LD) $(LDFLAGS) @$(OBJ_RSP) -lm -o $@'
 
 %.c.o: %.c
 	@$(BASH) 'cd "$(CURDIR)"; $(RM) $@'
@@ -262,8 +264,8 @@ CLEAN:
 	$(RED_TEXT)
 	@$(BASH) 'printf "$(RM) "'
 	$(DEF_TEXT)
-	@echo $(basename $(MAIN)).elf $(OBJS) $(DEPS)
-	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(OBJS) $(DEPS)'
+	@echo $(basename $(MAIN)).elf $(OBJ_RSP) $(OBJS) $(DEPS)
+	@$(BASH) 'cd "$(CURDIR)"; $(RM) $(basename $(MAIN)).elf $(OBJ_RSP) $(OBJS) $(DEPS)'
 
 clean: CLEAN
 
