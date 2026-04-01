@@ -110,6 +110,8 @@ SRCS := software/main.c \
         software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/graphics/sprites/pokeballSprites/smallPokeballSprite.c \
+        software/graphics/sprites/trainerCard/trainerCardSprite.c \
+        software/graphics/sprites/trainerCard/trainerCardBackSprite.c \
         software/gameplayLogic/map_movement/mcDirectionChecker.c \
         software/gameplayLogic/map_movement/mcMoving.c \
         software/gameplayLogic/worldMap.c \
