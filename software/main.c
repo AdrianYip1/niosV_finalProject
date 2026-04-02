@@ -2266,17 +2266,15 @@ int main(void)
                             TRANSPARENT_COLOUR);
 
             // Page overlays 
-            const int panelX = 80;
-            const int panelY = 50;
             if (summaryPage == 1) {
                 draw_sprite_any(pokemonSummarySummary2Sprite,
                                 POKEMON_SUMMARY_SUMMARY2_WIDTH, POKEMON_SUMMARY_SUMMARY2_HEIGHT,
-                                panelX, panelY,
+                                119, 60,
                                 TRANSPARENT_COLOUR);
             } else if (summaryPage == 2) {
                 draw_sprite_any(pokemonSummarySummary3Sprite,
                                 POKEMON_SUMMARY_SUMMARY3_WIDTH, POKEMON_SUMMARY_SUMMARY3_HEIGHT,
-                                panelX, panelY,
+                                119, 60,
                                 TRANSPARENT_COLOUR);
             }
 
@@ -2288,33 +2286,33 @@ int main(void)
 
                 if (summaryPage == 1) {
                     snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
-                    draw_string_f(panelX + 10, panelY + 10, buf, BLACK, FONT_5X9);
+                    draw_string_f(55, 178, buf, WHITE, FONT_5X9);
 
+                } else if (summaryPage == 2) {
                     snprintf(buf, sizeof(buf), "HP %d/%d", getHp(summaryMon), summaryMon->maxHp);
-                    draw_string_f(panelX + 10, panelY + 25, buf, BLACK, FONT_5X9);
+                    draw_string_f(129, 103, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "ATK %d", getAttack(summaryMon));
-                    draw_string_f(panelX + 10, panelY + 40, buf, BLACK, FONT_5X9);
+                    draw_string_f(129,103 + 9, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "DEF %d", getDef(summaryMon));
-                    draw_string_f(panelX + 10, panelY + 55, buf, BLACK, FONT_5X9);
+                    draw_string_f(129, 103 + 18, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPA %d", getSpAttack(summaryMon));
-                    draw_string_f(panelX + 10, panelY + 70, buf, BLACK, FONT_5X9);
+                    draw_string_f(129, 103 + 27, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPD %d", getSpDef(summaryMon));
-                    draw_string_f(panelX + 10, panelY + 85, buf, BLACK, FONT_5X9);
+                    draw_string_f(129,103 + 36, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPE %d", getSpd(summaryMon));
-                    draw_string_f(panelX + 10, panelY + 100, buf, BLACK, FONT_5X9);
-                } else if (summaryPage == 2) {
+                    draw_string_f(129, 103 + 46, buf, BLACK, FONT_5X9);
                     // Count available moves (non-NULL pointers).
                     int moveCount = 0;
                     for (int i = 0; i < 4; i++) {
                         if (summaryMon->attacks[i] != NULL) moveCount++;
                     }
                     if (moveCount <= 0) {
-                        draw_string_f(panelX + 10, panelY + 10, "No moves", BLACK, FONT_5X9);
+                        draw_string_f(126, 84, "No moves", BLACK, FONT_5X9);
                         summaryShowAttackEffect = false;
                     } else {
                         if (summaryAttackCursor < 0) summaryAttackCursor = 0;
@@ -2336,9 +2334,8 @@ int main(void)
                             play_sfx(plink_audio, plink_audio_len);
                         }
 
-                        // Render up to 4 moves in order, skipping NULLs, and map the cursor into that list.
-                        const int listX = panelX + 10;
-                        const int listY = panelY + 10;
+                        const int listX = 126;
+                        const int listY = 84;
                         const int rowH = 14;
                         int visibleIndex = 0;
                         for (int i = 0; i < 4; i++) {
@@ -2354,16 +2351,12 @@ int main(void)
                         }
 
                         if (summaryShowAttackEffect) {
-                            // Popup: show effect sprite + basic info for selected move.
-                            const int popupX = 320 - POKEMON_SUMMARY_EFFECT_WIDTH - 6;
-                            const int popupY = 240 - POKEMON_SUMMARY_EFFECT_HEIGHT - 6;
-
                             draw_sprite_any(pokemonSummaryEffectSprite,
                                             POKEMON_SUMMARY_EFFECT_WIDTH, POKEMON_SUMMARY_EFFECT_HEIGHT,
-                                            popupX, popupY,
+                                            40, 149,
                                             TRANSPARENT_COLOUR);
 
-                            // Find the selected move again (by visible index).
+                            // Find the selected move again 
                             const AttackData *selectedMove = NULL;
                             int idx = 0;
                             for (int i = 0; i < 4; i++) {
@@ -2375,9 +2368,9 @@ int main(void)
 
                             if (selectedMove != NULL) {
                                 snprintf(buf, sizeof(buf), "PWR %d", selectedMove->power);
-                                draw_string_f(popupX + 6, popupY + 6, buf, BLACK, FONT_5X9);
+                                draw_string_f(40 + 6, 149 + 6 + 10, buf, BLACK, FONT_5X9);
                                 snprintf(buf, sizeof(buf), "ACC %d", selectedMove->accuracy);
-                                draw_string_f(popupX + 6, popupY + 20, buf, BLACK, FONT_5X9);
+                                draw_string_f(40 + 6, 149 + 20 + 10, buf, BLACK, FONT_5X9);
                             }
                         }
                     }
