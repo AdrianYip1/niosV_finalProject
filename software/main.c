@@ -1535,7 +1535,7 @@ int main(void)
     for (int i = 0; i < 6; i++) {
         const PokemonData *species = speciesFromPokemonSpriteId(playerTeamSpriteIds[i]);
         int ownedIndex = -1;
-        if (species != NULL && pcAdd(&playerPc, species, 19 + i, &ownedIndex)) {
+        if (species != NULL && pcAdd(&playerPc, species, 60 + i, &ownedIndex)) {
             addPokemonToParty(&playerParty, pcGet(&playerPc, ownedIndex));
         }
     }
