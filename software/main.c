@@ -2456,6 +2456,10 @@ int main(void)
                     draw_string_f(12, 12, buf, BLACK, FONT_5X9);
 
                 if (summaryPage == 0) {
+                    // Pokemon name on page 1 (main summary page).
+                    snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
+                    draw_string_f(130, 75, buf, BLACK, FONT_5X9);
+
                     //  (125,153) to (276,198).
                     const int memoX = 125;
                     const int memoY = 153;
@@ -2483,10 +2487,6 @@ int main(void)
                         draw_string_f(55, 178 - 10, buf, WHITE, FONT_5X9);
                     }
                 } else if (summaryPage == 1) {
-                    // Pokemon name on page 2 (stats page).
-                    snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
-                    draw_string_f(130, 75, buf, BLACK, FONT_5X9);
-
                     {
                         const int expReq = expRequiredAtLevel(summaryMon->level);
                         int curExp = summaryMon->exp;
@@ -2495,13 +2495,13 @@ int main(void)
                         const int toNext = (expReq > curExp) ? (expReq - curExp) : 0;
 
                         snprintf(buf, sizeof(buf), "EXP: %d", curExp);
-                        draw_string_f(130, 148, buf, BLACK, FONT_5X9);
-                        snprintf(buf, sizeof(buf), "NEXT: %d", toNext);
                         draw_string_f(130, 158, buf, BLACK, FONT_5X9);
+                        snprintf(buf, sizeof(buf), "NEXT: %d", toNext);
+                        draw_string_f(130, 168, buf, BLACK, FONT_5X9);
 
                         // exp (208,186) to (271,188).
-                        const int barX = 209;
-                        const int barY = 187;
+                        const int barX = 208;
+                        const int barY = 186;
                         const int barW = 271 - 208;
                         const int barH = 188 - 186;
                         draw_rect(barX, barY, barW, barH, WHITE);
@@ -2517,7 +2517,8 @@ int main(void)
                     const int statY0 = 103;
                     const int statDy = 9;
 
-                    snprintf(buf, sizeof(buf), "HP %d/%d", getHp(summaryMon), summaryMon->maxHp);
+                    const int curHp = (summaryMon->scaledStatsWithLevel[0] < 0) ? 0 : summaryMon->scaledStatsWithLevel[0];
+                    snprintf(buf, sizeof(buf), "HP %d/%d", curHp, summaryMon->maxHp);
                     draw_string_f(statLeftX, statY0, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "ATK %d", getAttack(summaryMon));
