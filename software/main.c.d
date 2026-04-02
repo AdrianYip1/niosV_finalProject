@@ -31,6 +31,7 @@ software/main.c.o: software/main.c software/graphics/graphics.h \
  software/../software/se/poke_mart_audio.h \
  software/../software/se/pokemon_center_audio.h \
  software/../software/se/plink_audio.h \
+ software/../software/se/wallbump_audio.h \
  software/../software/se/pokeball_audio.h \
  software/../software/se/pokeball_shaking_audio.h \
  software/../software/se/caught_pokemon_audio.h \
@@ -126,6 +127,7 @@ software/../software/se/map_audio.h:
 software/../software/se/poke_mart_audio.h:
 software/../software/se/pokemon_center_audio.h:
 software/../software/se/plink_audio.h:
+software/../software/se/wallbump_audio.h:
 software/../software/se/pokeball_audio.h:
 software/../software/se/pokeball_shaking_audio.h:
 software/../software/se/caught_pokemon_audio.h:

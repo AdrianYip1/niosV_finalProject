@@ -5408,7 +5408,6 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
@@ -5536,7 +5535,6 @@ int main(void)
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
                             draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                         }
                     }
             }
