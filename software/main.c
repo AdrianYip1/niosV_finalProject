@@ -1917,18 +1917,6 @@ int main(void)
                     mapReturnY = 112;
                     currentGameState = GAME_STATE_MAP;
                     nextBattleType = BATTLE_WILD;
-                } else if (ch == 's' && currentGameState == GAME_STATE_MENU) {
-                    if (menuCursor >= 0 && menuCursor < 6) {
-                        pokemonInBattle *selected = (menuCursor < playerParty.count) ? playerParty.slots[menuCursor] : NULL;
-                        if (selected != NULL) {
-                            summaryPokemonIndex = menuCursor;
-                            summaryReturnState = GAME_STATE_MENU;
-                            summaryPage = 0;
-                            summaryAttackCursor = 0;
-                            summaryShowAttackEffect = false;
-                            currentGameState = GAME_STATE_SUMMARY;
-                        }
-                    }
                 } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
                     nextBattleType = BATTLE_WILD;
                     currentGameState = GAME_STATE_WILD_BATTLE;
@@ -1967,11 +1955,27 @@ int main(void)
                             currentGameState = GAME_STATE_MAP;
                         }
                     } else if (ch == '\t') {
-                        if (currentGameState == GAME_STATE_MENU || currentGameState == GAME_STATE_SUMMARY) {
-                            mainMenuUiReturnState = currentGameState;
+                        if (currentGameState == GAME_STATE_MAP) {
+                            mainMenuUiReturnState = GAME_STATE_MAP;
                             currentGameState = GAME_STATE_MAIN_MENU_UI;
                         } else if (currentGameState == GAME_STATE_MAIN_MENU_UI) {
                             currentGameState = mainMenuUiReturnState;
+                        } else if (currentGameState == GAME_STATE_MENU) {
+                            // Party menu: Tab opens summary for selected Pokemon.
+                            if (menuCursor >= 0 && menuCursor < 6) {
+                                pokemonInBattle *selected = (menuCursor < playerParty.count) ? playerParty.slots[menuCursor] : NULL;
+                                if (selected != NULL) {
+                                    summaryPokemonIndex = menuCursor;
+                                    summaryReturnState = GAME_STATE_MENU;
+                                    summaryPage = 0;
+                                    summaryAttackCursor = 0;
+                                    summaryShowAttackEffect = false;
+                                    currentGameState = GAME_STATE_SUMMARY;
+                                }
+                            }
+                        } else if (currentGameState == GAME_STATE_SUMMARY) {
+                            // Summary: Tab returns to party menu.
+                            currentGameState = summaryReturnState;
                         }
                     } else if (ch == '\n') {
                         enterPressed = true;
@@ -2363,12 +2367,12 @@ int main(void)
             if (summaryPage == 1) {
                 draw_sprite_any(pokemonSummarySummary2Sprite,
                                 POKEMON_SUMMARY_SUMMARY2_WIDTH, POKEMON_SUMMARY_SUMMARY2_HEIGHT,
-                                119, 60,
+                                120, 61,
                                 TRANSPARENT_COLOUR);
             } else if (summaryPage == 2) {
                 draw_sprite_any(pokemonSummarySummary3Sprite,
                                 POKEMON_SUMMARY_SUMMARY3_WIDTH, POKEMON_SUMMARY_SUMMARY3_HEIGHT,
-                                119, 60,
+                                120, 61,
                                 TRANSPARENT_COLOUR);
             }
 
@@ -2378,39 +2382,27 @@ int main(void)
                                 128, 40,
                                 TRANSPARENT_COLOUR);
             } else if (summaryPage == 2) {
-                draw_sprite_any(pokemonSummarySummaryscroll3Sprite,
-                                POKEMON_SUMMARY_SUMMARYSCROLL3_WIDTH, POKEMON_SUMMARY_SUMMARYSCROLL3_HEIGHT,
-                                128, 40,
-                                TRANSPARENT_COLOUR);
+                // Attacks page: when effect popup is open, show scroll4 instead of scroll3.
+                if (summaryShowAttackEffect) {
+                    draw_sprite_any(pokemonSummarySummaryscroll4Sprite,
+                                    POKEMON_SUMMARY_SUMMARYSCROLL4_WIDTH, POKEMON_SUMMARY_SUMMARYSCROLL4_HEIGHT,
+                                    128, 40,
+                                    TRANSPARENT_COLOUR);
+                } else {
+                    draw_sprite_any(pokemonSummarySummaryscroll3Sprite,
+                                    POKEMON_SUMMARY_SUMMARYSCROLL3_WIDTH, POKEMON_SUMMARY_SUMMARYSCROLL3_HEIGHT,
+                                    128, 40,
+                                    TRANSPARENT_COLOUR);
+                }
             }
 
        
             if (summaryMon != NULL) {
                 char buf[64];
-                snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
-                draw_string_f(12, 12, buf, BLACK, FONT_5X9);
+                    snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
+                    draw_string_f(12, 12, buf, BLACK, FONT_5X9);
 
                 if (summaryPage == 0) {
-                    const int expReq = expRequiredAtLevel(summaryMon->level);
-                    int curExp = summaryMon->exp;
-                    if (curExp < 0) curExp = 0;
-                    if (curExp > expReq) curExp = expReq;
-                    const int toNext = (expReq > curExp) ? (expReq - curExp) : 0;
-
-                    snprintf(buf, sizeof(buf), "EXP: %d", curExp);
-                    draw_string_f(150, 168, buf, BLACK, FONT_5X9);
-                    snprintf(buf, sizeof(buf), "NEXT: %d", toNext);
-                    draw_string_f(150, 178, buf, BLACK, FONT_5X9);
-
-                    // exp (208,186) to (271,188).
-                    const int barX = 208;
-                    const int barY = 186;
-                    const int barW = 271 - 208;
-                    const int barH = 188 - 186;
-                    draw_rect(barX, barY, barW, barH, WHITE);
-                    const int fillW = (expReq > 0) ? (barW * curExp) / expReq : 0;
-                    if (fillW > 0) draw_rect(barX, barY, fillW, barH, GREEN);
-
                     //  (125,153) to (276,198).
                     const int memoX = 125;
                     const int memoY = 153;
@@ -2436,6 +2428,29 @@ int main(void)
                         draw_string_f(124 + 4, 88 + 2, buf, BLACK, FONT_5X9);
                     }
                 } else if (summaryPage == 1) {
+                    // EXP belongs on page 2 (stats page).
+                    {
+                        const int expReq = expRequiredAtLevel(summaryMon->level);
+                        int curExp = summaryMon->exp;
+                        if (curExp < 0) curExp = 0;
+                        if (curExp > expReq) curExp = expReq;
+                        const int toNext = (expReq > curExp) ? (expReq - curExp) : 0;
+
+                        snprintf(buf, sizeof(buf), "EXP: %d", curExp);
+                        draw_string_f(150, 168, buf, BLACK, FONT_5X9);
+                        snprintf(buf, sizeof(buf), "NEXT: %d", toNext);
+                        draw_string_f(150, 178, buf, BLACK, FONT_5X9);
+
+                        // exp (208,186) to (271,188).
+                        const int barX = 208;
+                        const int barY = 186;
+                        const int barW = 271 - 208;
+                        const int barH = 188 - 186;
+                        draw_rect(barX, barY, barW, barH, WHITE);
+                        const int fillW = (expReq > 0) ? (barW * curExp) / expReq : 0;
+                        if (fillW > 0) draw_rect(barX, barY, fillW, barH, GREEN);
+                    }
+
                     snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
                     draw_string_f(55, 178, buf, WHITE, FONT_5X9);
 
@@ -2486,7 +2501,7 @@ int main(void)
                         }
 
                         const int listX = 126;
-                        const int listY = 84;
+                        const int listY = 74;
                         const int rowH = 14;
                         int visibleIndex = 0;
                         const AttackData *descMove = NULL;
@@ -2507,22 +2522,11 @@ int main(void)
 
                         // Attack description box (126,161) to (276,190).
                         if (descMove != NULL) {
-                            int ppCur = 0;
-                            if (descMoveSlot >= 0 && descMoveSlot < 4) ppCur = summaryMon->currentPP[descMoveSlot];
-
-                            const int boxTextX = 126 + 4;
+                            const int boxTextX = 126 + 4 - 5;
                             const int boxTextY = 161 + 4;
                             char descLine[64];
                             copy_ellipsis(descLine, sizeof(descLine), descMove->desc, 24);
                             draw_string_f(boxTextX, boxTextY, descLine, BLACK, FONT_5X9);
-
-                            char statsLine[64];
-                            if (descMove->category == ATTACK_STATUS) {
-                                snprintf(statsLine, sizeof(statsLine), "ACC %d  PP %d/%d", descMove->accuracy, ppCur, descMove->maxPP);
-                            } else {
-                                snprintf(statsLine, sizeof(statsLine), "PWR %d  ACC %d  PP %d/%d", descMove->power, descMove->accuracy, ppCur, descMove->maxPP);
-                            }
-                            draw_string_f(boxTextX, boxTextY + 10, statsLine, BLACK, FONT_5X9);
                         }
 
                         if (summaryShowAttackEffect) {
@@ -2546,10 +2550,6 @@ int main(void)
                                 draw_string_f(40 + 6, 149 + 6 + 10, buf, BLACK, FONT_5X9);
                                 snprintf(buf, sizeof(buf), "ACC %d", selectedMove->accuracy);
                                 draw_string_f(40 + 6, 149 + 20 + 10, buf, BLACK, FONT_5X9);
-
-                                char descBuf[64];
-                                copy_ellipsis(descBuf, sizeof(descBuf), selectedMove->desc, 18);
-                                draw_string_f(40 + 6, 149 + 34 + 10, descBuf, BLACK, FONT_5X9);
                             }
                         }
                     }
