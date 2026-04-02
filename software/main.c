@@ -4391,28 +4391,12 @@ int main(void)
                     battleState.messageCount = 0;
                     actionTextLastMsgIndex = -1;
 
-                    // If a move was learned automatically (empty slot), show that message before returning.
-                    pokemonInBattle *learnedP = NULL;
-                    const AttackData *learnedM = NULL;
-                    const AttackData *forgotM = NULL;
-                    if (popNextLearnedMoveMsg(&playerParty, &learnedP, &learnedM, &forgotM)) {
-                        learnMovePokemon = learnedP;
-                        learnMoveMove = learnedM;
-                        learnMoveForgottenMove = forgotM;
-                        currentGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
-                        previousGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
-                        break;
-                    }
+                    const BattleUiState returnUi = actionTextReturnUi;
+                    const int returnCursor = actionTextReturnCursor;
+                    GameState returnState = actionTextReturnGameState;
 
-                    bool startedLearnFlow = false;
-                    if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
-                        learnMoveForgetIndex = 0;
-                        learnMoveReturnUi = actionTextReturnUi;
-                        learnMoveReturnCursor = actionTextReturnCursor;
-                        startedLearnFlow = true;
-                    }
-
-                    if (battleState.result != BATTLE_RESULT_ONGOING) {
+                    const bool battleEnded = (battleState.result != BATTLE_RESULT_ONGOING);
+                    if (battleEnded) {
                         g_hasCompletedFirstBattle = true;
                         pokedex_mark_party_seen(&enemyParty);
                         autoSwapLeadIfFainted(&playerParty, partyBoxSprites);
@@ -4470,30 +4454,49 @@ int main(void)
                              }
                          }
 
-                         if (startedLearnFlow) {
-                             learnMoveReturnState = endState;
-                             currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                             previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                        } else {
-                            currentGameState = endState;
-                        }
-                    } else {
-                        if (startedLearnFlow) {
-                            learnMoveReturnState = actionTextReturnGameState;
-                            currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                            previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                        } else if (battleState.playerMustSwitch) {
+                         returnState = endState;
+                    }
+
+                    // If a move was learned automatically (empty slot), show that message before returning.
+                    pokemonInBattle *learnedP = NULL;
+                    const AttackData *learnedM = NULL;
+                    const AttackData *forgotM = NULL;
+                    if (popNextLearnedMoveMsg(&playerParty, &learnedP, &learnedM, &forgotM)) {
+                        learnMovePokemon = learnedP;
+                        learnMoveMove = learnedM;
+                        learnMoveForgottenMove = forgotM;
+                        learnMoveReturnUi = returnUi;
+                        learnMoveReturnCursor = returnCursor;
+                        learnMoveReturnState = returnState;
+                        currentGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                        previousGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
+                        break;
+                    }
+
+                    if (popNextPendingLearnMove(&playerParty, &learnMovePokemon, &learnMoveMove)) {
+                        learnMoveForgetIndex = 0;
+                        learnMoveReturnUi = returnUi;
+                        learnMoveReturnCursor = returnCursor;
+                        learnMoveReturnState = returnState;
+                        currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                        previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                        break;
+                    }
+
+                    if (battleEnded) {
+                        currentGameState = returnState;
+                        previousGameState = returnState;
+                    } else if (battleState.playerMustSwitch) {
                             forcedSwitchIndex = getFirstAlivePokemon(&playerParty);
                             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
                             currentGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
                             previousGameState = GAME_STATE_BATTLE_FORCE_SWITCH;
                             forcedSwitchShowPrompt = true;
-                        } else {
-                            battleUi = actionTextReturnUi;
-                            battleCursor = actionTextReturnCursor;
-                            currentGameState = actionTextReturnGameState;
-                            previousGameState = actionTextReturnGameState;
-                        }
+                    } else {
+                        battleUi = returnUi;
+                        battleCursor = returnCursor;
+                        currentGameState = returnState;
+                        previousGameState = returnState;
                     }
                 }
             }
