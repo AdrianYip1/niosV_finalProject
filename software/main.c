@@ -1632,6 +1632,7 @@ int main(void)
     (void)PC_HEAL_POKEBALL_BASE_X; (void)PC_HEAL_POKEBALL_BASE_Y; (void)PC_HEAL_ROW_H;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
+    GameState lastFrameGameState = currentGameState;
     WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
     int mapReturnX = 80;
     int mapReturnY = 112;
@@ -2037,7 +2038,7 @@ int main(void)
                 }
             }
 
-        const bool wasOverworld = isOverworldState(previousGameState);
+        const bool wasOverworld = isOverworldState(lastFrameGameState);
         const bool isOverworld = isOverworldState(currentGameState);
         if (wasOverworld != isOverworld) {
             if (isOverworld) {
@@ -2091,7 +2092,6 @@ int main(void)
                 transitionTimer = 0;
                 battleIntroTextReady = false;
             }
-            previousGameState = currentGameState;
         }
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = spaceDown && !prevSpaceDown;
@@ -2495,18 +2495,18 @@ int main(void)
                         const int toNext = (expReq > curExp) ? (expReq - curExp) : 0;
 
                         snprintf(buf, sizeof(buf), "EXP: %d", curExp);
-                        draw_string_f(150, 168, buf, BLACK, FONT_5X9);
+                        draw_string_f(130, 148, buf, BLACK, FONT_5X9);
                         snprintf(buf, sizeof(buf), "NEXT: %d", toNext);
-                        draw_string_f(150, 178, buf, BLACK, FONT_5X9);
+                        draw_string_f(130, 158, buf, BLACK, FONT_5X9);
 
                         // exp (208,186) to (271,188).
-                        const int barX = 208;
-                        const int barY = 186;
+                        const int barX = 209;
+                        const int barY = 187;
                         const int barW = 271 - 208;
                         const int barH = 188 - 186;
                         draw_rect(barX, barY, barW, barH, WHITE);
                         const int fillW = (expReq > 0) ? (barW * curExp) / expReq : 0;
-                        if (fillW > 0) draw_rect(barX, barY, fillW, barH, GREEN);
+                        if (fillW > 0) draw_rect(barX, barY, fillW, barH, TURQ);
                     }
 
                     snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
@@ -4605,7 +4605,7 @@ int main(void)
             // Stat screen panel.
             draw_sprite_any(mainMenuUiStatScreenSprite,
                             MAIN_MENU_UI_STAT_SCREEN_WIDTH, MAIN_MENU_UI_STAT_SCREEN_HEIGHT,
-                            204, 77,
+                            199, 77,
                             TRANSPARENT_COLOUR);
 
             // Cursor indicator bob (1px up/down).
@@ -4618,8 +4618,8 @@ int main(void)
             const int cursorBobY = bobPattern[battleLevelUpCursorBobFrame];
 
             // Values column.
-            const int statX = 286;
-            const int y0 = 95;
+            const int statX = 279;
+            const int y0 = 90;
             const int dy = 16;
             for (int i = 0; i < 6; i++) {
                 const int oldV = battleState.levelUpOldStats[i];
@@ -4636,7 +4636,7 @@ int main(void)
 
             draw_sprite_any(bagMenuCursorIndicatorSprite,
                             BAG_MENU_CURSOR_INDICATOR_WIDTH, BAG_MENU_CURSOR_INDICATOR_HEIGHT,
-                            316, 173 + cursorBobY,
+                            311, 173 + cursorBobY,
                             TRANSPARENT_COLOUR);
 
             if (spacePressed) {
@@ -4647,6 +4647,14 @@ int main(void)
                     // Done: resume the action-text message list.
                     battleState.levelUpStatsPending = false;
                     battleState.messageReadIndex = battleLevelUpResumeMsgIndex;
+                    // If the level-up message was the last message, resume index can point past the end,
+                    // which would briefly show an empty textbox. Force an immediate advance instead.
+                    if (battleState.messageCount > 0 && battleState.messageReadIndex >= battleState.messageCount) {
+                        battleState.messageReadIndex = battleState.messageCount - 1;
+                        if (battleState.messageReadIndex < 0) battleState.messageReadIndex = 0;
+                        actionTextAutoTimer = 9999;
+                        actionTextLastMsgIndex = -1;
+                    }
                     currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     actionTextAwaitSpaceRelease = true;
@@ -7557,6 +7565,7 @@ int main(void)
         }
 
         playTimeFrames++;
+        lastFrameGameState = currentGameState;
         wait_for_vsync();
     }
 
