@@ -15,6 +15,8 @@ static void battleClearMessages(BattleState *state) {
     if (state == NULL) return;
     state->messageCount = 0;
     state->messageReadIndex = 0;
+    state->levelUpStatsPending = false;
+    state->levelUpPokemonIndex = -1;
     for (int i = 0; i < BATTLE_MSG_MAX; i++) {
         state->messages[i][0] = '\0';
         state->messageFlags[i] = 0;
@@ -316,9 +318,30 @@ static void awardExpForDefeat(BattleState *state, pokemonInBattle *player, pokem
     battlePushFaintedMessage(state, defeated, defeatedWasOpposing);
     const int expGained = experienceGained(player->level, defeated->level);
     const int prevLevel = player->level;
+    const int oldStats[6] = {
+        player->maxHp,
+        player->scaledStatsWithLevel[1],
+        player->scaledStatsWithLevel[3],
+        player->scaledStatsWithLevel[2],
+        player->scaledStatsWithLevel[4],
+        player->scaledStatsWithLevel[5],
+    };
     gainExp(player, defeated);
     battlePushExpMessage(state, expGained);
     if (player->level > prevLevel) {
+        state->levelUpStatsPending = true;
+        state->levelUpPokemonIndex = (state->playerParty != NULL) ? (signed char)state->playerParty->activeIndex : (signed char)-1;
+        for (int i = 0; i < 6; i++) state->levelUpOldStats[i] = oldStats[i];
+        const int newStats[6] = {
+            player->maxHp,
+            player->scaledStatsWithLevel[1],
+            player->scaledStatsWithLevel[3],
+            player->scaledStatsWithLevel[2],
+            player->scaledStatsWithLevel[4],
+            player->scaledStatsWithLevel[5],
+        };
+        for (int i = 0; i < 6; i++) state->levelUpNewStats[i] = newStats[i];
+
         const char *name = (player->id.data != NULL && player->id.data->name != NULL) ? player->id.data->name : "???";
         char buf[96];
         snprintf(buf, sizeof(buf), "%s grew to level %d!", name, player->level);

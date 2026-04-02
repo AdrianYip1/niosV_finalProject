@@ -43,6 +43,12 @@ typedef struct {
     int fleeAttempts;
     bool playerMustSwitch;
 
+    // Level-up stats screen data (consumed by UI).
+    bool levelUpStatsPending;
+    signed char levelUpPokemonIndex; // index in playerParty->slots
+    int levelUpOldStats[6]; // {HPmax, Atk, Def, SpAtk, SpDef, Spd}
+    int levelUpNewStats[6]; // {HPmax, Atk, Def, SpAtk, SpDef, Spd}
+
 #ifndef BATTLE_MSG_MAX
 #define BATTLE_MSG_MAX 16
 #endif

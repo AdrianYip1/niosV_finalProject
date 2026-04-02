@@ -398,6 +398,51 @@ static void copy_ellipsis(char *out, size_t out_sz, const char *in, int max_char
     }
 }
 
+static void wrap_once_ellipsis(char *out, size_t out_sz, const char *in, int line1_max, int line2_max) {
+    if (out == NULL || out_sz == 0) return;
+    out[0] = '\0';
+    if (in == NULL) return;
+    if (line1_max < 0) line1_max = 0;
+    if (line2_max < 0) line2_max = 0;
+
+    // Skip leading whitespace.
+    while (*in == ' ') in++;
+
+    // Find break for line 1.
+    int i = 0;
+    int last_space = -1;
+    while (in[i] != '\0' && in[i] != '\n' && i < line1_max) {
+        if (in[i] == ' ') last_space = i;
+        i++;
+    }
+    int break_pos = i;
+    if (in[i] != '\0' && in[i] != '\n' && last_space >= 8) {
+        break_pos = last_space;
+    }
+
+    // Copy line 1.
+    int out_i = 0;
+    for (int k = 0; k < break_pos && out_i < (int)(out_sz - 1); k++) {
+        out[out_i++] = in[k];
+    }
+    out[out_i] = '\0';
+
+    // If the rest fits in line 1, we're done.
+    const char *rest = in + break_pos;
+    while (*rest == ' ') rest++;
+    if (*rest == '\0' || *rest == '\n') return;
+
+    // Add newline.
+    if (out_i + 1 >= (int)out_sz) return;
+    out[out_i++] = '\n';
+    out[out_i] = '\0';
+
+    // Copy line 2 and ellipsize if needed.
+    char line2[96];
+    copy_ellipsis(line2, sizeof(line2), rest, line2_max);
+    strncat(out, line2, out_sz - strlen(out) - 1);
+}
+
 
 // Game States
 typedef enum {
@@ -411,6 +456,7 @@ typedef enum {
     GAME_STATE_TRAINER_BATTLE_INTRO_TEXT,
 
     GAME_STATE_BATTLE_ACTION_TEXT,
+    GAME_STATE_BATTLE_LEVELUP_STATS,
     GAME_STATE_POKEBALL_THROW,
     GAME_STATE_POKEBALL_CATCH,
     GAME_STATE_BATTLE_WIN,
@@ -1626,6 +1672,12 @@ int main(void)
     int actionTextTargetExp = -1;
     bool actionTextExpAnimating = false;
 
+    // Level-up stats screen during battle.
+    bool battleLevelUpShowNewStats = false;
+    int battleLevelUpResumeMsgIndex = 0;
+    int battleLevelUpCursorBobTimer = 0;
+    int battleLevelUpCursorBobFrame = 0;
+
     // Battle logic (static to avoid stack overflow + crash) -> pc has too much data probablt
     static BattleState battleState;
     static Party playerParty;
@@ -2456,23 +2508,28 @@ int main(void)
                     snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
                     draw_string_f(55, 178, buf, WHITE, FONT_5X9);
 
+                    const int statLeftX = 129;
+                    const int statRightX = 210;
+                    const int statY0 = 103;
+                    const int statDy = 9;
+
                     snprintf(buf, sizeof(buf), "HP %d/%d", getHp(summaryMon), summaryMon->maxHp);
-                    draw_string_f(129, 103, buf, BLACK, FONT_5X9);
+                    draw_string_f(statLeftX, statY0, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "ATK %d", getAttack(summaryMon));
-                    draw_string_f(129, 103 + 9, buf, BLACK, FONT_5X9);
+                    draw_string_f(statLeftX, statY0 + statDy, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "DEF %d", getDef(summaryMon));
-                    draw_string_f(129, 103 + 18, buf, BLACK, FONT_5X9);
+                    draw_string_f(statLeftX, statY0 + statDy * 2, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPA %d", getSpAttack(summaryMon));
-                    draw_string_f(129, 103 + 27, buf, BLACK, FONT_5X9);
+                    draw_string_f(statRightX, statY0, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPD %d", getSpDef(summaryMon));
-                    draw_string_f(129, 103 + 36, buf, BLACK, FONT_5X9);
+                    draw_string_f(statRightX, statY0 + statDy, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPE %d", getSpd(summaryMon));
-                    draw_string_f(129, 103 + 46, buf, BLACK, FONT_5X9);
+                    draw_string_f(statRightX, statY0 + statDy * 2, buf, BLACK, FONT_5X9);
                 } else if (summaryPage == 2) {
                     // Count available moves 
                     int moveCount = 0;
@@ -2526,9 +2583,9 @@ int main(void)
                         if (descMove != NULL) {
                             const int boxTextX = 126 + 4 - 5;
                             const int boxTextY = 161 + 4;
-                            char descLine[64];
-                            copy_ellipsis(descLine, sizeof(descLine), descMove->desc, 24);
-                            draw_string_f(boxTextX, boxTextY, descLine, BLACK, FONT_5X9);
+                            char descWrap[128];
+                            wrap_once_ellipsis(descWrap, sizeof(descWrap), descMove->desc, 24, 24);
+                            draw_multiline_string_f(boxTextX, boxTextY, descWrap, BLACK, FONT_5X9, 10);
                         }
 
                         if (summaryShowAttackEffect) {
@@ -4376,9 +4433,21 @@ int main(void)
 
             if (shouldAdvance) {
                 actionTextAutoTimer = 0;
+                const bool msgWasLevelUp = (msg != NULL) && (strstr(msg, " grew to level ") != NULL);
                 battleState.messageReadIndex++;
                 // treat the new index as new by forcing the nextb frame so SFX/shake can trigger for the 2nd pokemon
                 actionTextLastMsgIndex = -1;
+
+                if (msgWasLevelUp && battleState.levelUpStatsPending) {
+                    battleLevelUpShowNewStats = false;
+                    battleLevelUpResumeMsgIndex = battleState.messageReadIndex;
+                    battleLevelUpCursorBobTimer = 0;
+                    battleLevelUpCursorBobFrame = 0;
+                    currentGameState = GAME_STATE_BATTLE_LEVELUP_STATS;
+                    previousGameState = GAME_STATE_BATTLE_LEVELUP_STATS;
+                    actionTextAwaitSpaceRelease = true;
+                    break;
+                }
 
                 //short pause before showing the next message
                 if (battleState.messageReadIndex >= 0 && battleState.messageReadIndex < battleState.messageCount) {
@@ -4503,6 +4572,74 @@ int main(void)
                 }
             }
 
+            break;
+        }
+
+        case GAME_STATE_BATTLE_LEVELUP_STATS: {
+            // Draw the normal battle scene under the stats window.
+            draw_map();
+            syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
+            if (playerBackSprite.pixels != NULL) drawStaticSprite(&playerBackSprite);
+            if (enemyFrontSprite.pixels != NULL) drawStaticSprite(&enemyFrontSprite);
+
+            draw_sprite_any(battleUIBackgroundSprite,
+                            BATTLE_UI_BACKGROUND_WIDTH,
+                            BATTLE_UI_BACKGROUND_HEIGHT,
+                            0,
+                            battleBackdropY,
+                            TRANSPARENT_COLOUR);
+
+            // Stat screen panel.
+            draw_sprite_any(mainMenuUiStatScreenSprite,
+                            MAIN_MENU_UI_STAT_SCREEN_WIDTH, MAIN_MENU_UI_STAT_SCREEN_HEIGHT,
+                            204, 77,
+                            TRANSPARENT_COLOUR);
+
+            // Cursor indicator bob (1px up/down).
+            battleLevelUpCursorBobTimer++;
+            if (battleLevelUpCursorBobTimer >= 6) {
+                battleLevelUpCursorBobTimer = 0;
+                battleLevelUpCursorBobFrame = (battleLevelUpCursorBobFrame + 1) % 4;
+            }
+            static const int bobPattern[4] = {0, 1, 0, -1};
+            const int cursorBobY = bobPattern[battleLevelUpCursorBobFrame];
+
+            // Values column.
+            const int statX = 286;
+            const int y0 = 95;
+            const int dy = 16;
+            for (int i = 0; i < 6; i++) {
+                const int oldV = battleState.levelUpOldStats[i];
+                const int newV = battleState.levelUpNewStats[i];
+                const int delta = newV - oldV;
+                char buf[32];
+                if (!battleLevelUpShowNewStats) {
+                    snprintf(buf, sizeof(buf), "%d(+%d)", oldV, delta);
+                } else {
+                    snprintf(buf, sizeof(buf), "%d", newV);
+                }
+                draw_string_f(statX, y0 + dy * i, buf, BLACK, FONT_5X9);
+            }
+
+            draw_sprite_any(bagMenuCursorIndicatorSprite,
+                            BAG_MENU_CURSOR_INDICATOR_WIDTH, BAG_MENU_CURSOR_INDICATOR_HEIGHT,
+                            316, 173 + cursorBobY,
+                            TRANSPARENT_COLOUR);
+
+            if (spacePressed) {
+                if (!battleLevelUpShowNewStats) {
+                    battleLevelUpShowNewStats = true;
+                    play_sfx(plink_audio, plink_audio_len);
+                } else {
+                    // Done: resume the action-text message list.
+                    battleState.levelUpStatsPending = false;
+                    battleState.messageReadIndex = battleLevelUpResumeMsgIndex;
+                    currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                    actionTextAwaitSpaceRelease = true;
+                    play_sfx(plink_audio, plink_audio_len);
+                }
+            }
             break;
         }
 
@@ -5690,6 +5827,14 @@ int main(void)
                                         const int prevLevel = playerActive->level;
                                         const int prevExp = playerActive->exp;
                                         const int expGained = experienceGained(playerActive->level, caughtPokemon->level);
+                                        const int oldStats[6] = {
+                                            playerActive->maxHp,
+                                            playerActive->scaledStatsWithLevel[1],
+                                            playerActive->scaledStatsWithLevel[3],
+                                            playerActive->scaledStatsWithLevel[2],
+                                            playerActive->scaledStatsWithLevel[4],
+                                            playerActive->scaledStatsWithLevel[5],
+                                        };
 
                                         if (expGained > 0) {
                                             actionTextExpStartLevel = prevLevel;
@@ -5702,6 +5847,19 @@ int main(void)
                                             battleUiAppendMessage(&battleState, expBuf);
 
                                             if (playerActive->level > prevLevel) {
+                                                battleState.levelUpStatsPending = true;
+                                                battleState.levelUpPokemonIndex = (battleState.playerParty != NULL) ? (signed char)battleState.playerParty->activeIndex : (signed char)-1;
+                                                for (int si = 0; si < 6; si++) battleState.levelUpOldStats[si] = oldStats[si];
+                                                const int newStats[6] = {
+                                                    playerActive->maxHp,
+                                                    playerActive->scaledStatsWithLevel[1],
+                                                    playerActive->scaledStatsWithLevel[3],
+                                                    playerActive->scaledStatsWithLevel[2],
+                                                    playerActive->scaledStatsWithLevel[4],
+                                                    playerActive->scaledStatsWithLevel[5],
+                                                };
+                                                for (int si = 0; si < 6; si++) battleState.levelUpNewStats[si] = newStats[si];
+
                                                 const char *name = (playerActive->id.data != NULL && playerActive->id.data->name != NULL) ? playerActive->id.data->name : "???";
                                                 char lvlBuf[96];
                                                 snprintf(lvlBuf, sizeof(lvlBuf), "%s grew to level %d!", name, playerActive->level);
@@ -6693,8 +6851,7 @@ int main(void)
         //get money from trainer battle, exp from wild battle if win
         //exp calculations, levelup, evolution, learn moves
             {
-                // Skip the post-battle "WIN" textbox; return to the map immediately.
-                // Keep evolution behavior by transitioning straight into EVOLUTION if needed.
+
                 const int idx = findNextPendingEvolutionIndex(&playerParty, -1);
                 if (idx >= 0) {
                     evolutionPokemonIndex = idx;
