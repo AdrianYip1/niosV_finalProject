@@ -1,22 +1,6 @@
 #include "pokemonSpriteInit.h"
 
-#include "charmanderSprite.h"
-#include "charmeleonSprite.h"
-#include "charizardSprite.h"
-#include "gibleSprite.h"
-#include "gabiteSprite.h"
-#include "garchompSprite.h"
-#include "feebasSprite.h"
-#include "miloticSprite.h"
-#include "rioluSprite.h"
-#include "lucarioSprite.h"
-#include "budewSprite.h"
-#include "roseradeSprite.h"
-#include "spiritombSprite.h"
-#include "togepiSprite.h"
-#include "togeticSprite.h"
-#include "togekissSprite.h"
-#include "rayquazaSprite.h"
+#include "pokemonSprites.h"
 
 static void initFromPixels(StaticSprite* out, const unsigned short* pixels, int w, int h, int x, int y) {
     if (!out) return;

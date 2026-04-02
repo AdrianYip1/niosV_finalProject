@@ -15,3 +15,4 @@
 #include "roseradeSprite.c"
 #include "spiritombSprite.c"
 #include "rayquazaSprite.c"
+#include "pokemonSpriteInit.c"

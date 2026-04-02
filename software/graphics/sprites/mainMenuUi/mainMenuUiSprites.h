@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define MAIN_MENU_UI_SPRITE_COUNT  11
+#define MAIN_MENU_UI_SPRITE_COUNT  12
 
 typedef enum {
     MAIN_MENU_UI_SPRITE_UI3DS_MENU = 0,
@@ -16,6 +16,7 @@ typedef enum {
     MAIN_MENU_UI_SPRITE_POKEMON_RIGHT = 8,
     MAIN_MENU_UI_SPRITE_SAVE_MENU = 9,
     MAIN_MENU_UI_SPRITE_TRAINER_CARD_MENU = 10,
+    MAIN_MENU_UI_SPRITE_STAT_SCREEN = 11,
 } MainMenuUiSpriteId;
 
 #define MAIN_MENU_UI_UI3DS_MENU_WIDTH  61
@@ -61,6 +62,10 @@ extern const unsigned short mainMenuUiSaveMenuSprite[MAIN_MENU_UI_SAVE_MENU_WIDT
 #define MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH  61
 #define MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT 54
 extern const unsigned short mainMenuUiTrainerCardMenuSprite[MAIN_MENU_UI_TRAINER_CARD_MENU_WIDTH * MAIN_MENU_UI_TRAINER_CARD_MENU_HEIGHT];
+
+#define MAIN_MENU_UI_STAT_SCREEN_WIDTH  124
+#define MAIN_MENU_UI_STAT_SCREEN_HEIGHT 108
+extern const unsigned short mainMenuUiStatScreenSprite[MAIN_MENU_UI_STAT_SCREEN_WIDTH * MAIN_MENU_UI_STAT_SCREEN_HEIGHT];
 
 extern const unsigned short* const mainMenuUiSprites[MAIN_MENU_UI_SPRITE_COUNT];
 extern const uint16_t mainMenuUiSpritesWidths[MAIN_MENU_UI_SPRITE_COUNT];

@@ -1,0 +1,20 @@
+#pragma once
+
+#include "budewSprite.h"
+#include "charizardSprite.h"
+#include "charmanderSprite.h"
+#include "charmeleonSprite.h"
+#include "feebasSprite.h"
+#include "gabiteSprite.h"
+#include "garchompSprite.h"
+#include "gibleSprite.h"
+#include "lucarioSprite.h"
+#include "miloticSprite.h"
+#include "rayquazaSprite.h"
+#include "rioluSprite.h"
+#include "roseradeSprite.h"
+#include "spiritombSprite.h"
+#include "togekissSprite.h"
+#include "togepiSprite.h"
+#include "togeticSprite.h"
+

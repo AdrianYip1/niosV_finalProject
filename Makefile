@@ -51,7 +51,6 @@ SRCS := software/main.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingWest_frames.c \
         software/graphics/sprites/staticSprite.c \
         software/graphics/sprites/pokemon/pokemonSprites.c \
-        software/graphics/sprites/pokemon/pokemonSpriteInit.c \
         software/graphics/sprites/boxSprites/charizardBoxSprite.c \
         software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
         software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
@@ -73,6 +72,7 @@ SRCS := software/main.c \
         software/graphics/sprites/itemStone/shinyStoneIcon.c \
         software/graphics/sprites/statEffects/statUp.c \
         software/graphics/sprites/statEffects/statDown.c \
+        software/graphics/sprites/pokemonSummary/pokemonSummarySprites.c \
         software/graphics/sprites/battleParty/battlePartySprite.c \
         software/graphics/sprites/playerSprites.c \
         software/graphics/sprites/spacebar/spacebar_frames.c \
@@ -106,7 +106,6 @@ SRCS := software/main.c \
         software/graphics/sprites/pokedexTypes/pokedexTypesSprites.c \
         software/graphics/sprites/bagMenu/bagMenuSprites.c \
         software/graphics/sprites/mainMenuUi/mainMenuUiSprites.c \
-        software/graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.c \
         software/graphics/sprites/cynthia192x192/cynthiaFrontSprite.c \
         software/graphics/sprites/pokeballSprites/smallPokeballSprite.c \
         software/graphics/sprites/trainerCard/trainerCardSprite.c \

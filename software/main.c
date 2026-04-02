@@ -2,8 +2,7 @@
 #include "graphics/predefined_graphics.h"
 #include "graphics/sprites/bagMenu/bagMenuSprites.h"
 #include "graphics/predefined_colours.h"
-#include "graphics/sprites/pokemon/charizardSprite.h"
-#include "graphics/sprites/pokemon/rayquazaSprite.h"
+#include "graphics/sprites/pokemon/pokemonSprites.h"
 #include "graphics/sprites/pokemon/pokemonSpriteInit.h"
 #include "graphics/sprites/staticSprite.h"
 #include "gameplayLogic/map_movement/mcMoving.h"
@@ -81,7 +80,6 @@
 #include "graphics/sprites/menu/cancelSprite.h"
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
   #include "graphics/sprites/mainMenuUi/mainMenuUiSprites.h"
-  #include "graphics/sprites/newPokemartIdea/newPokemartIdeaSprites.h"
 #include "graphics/sprites/trainerCard/trainerCardSprite.h"
 #include "graphics/sprites/trainerCard/trainerCardBackSprite.h"
 #include "graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h"
@@ -621,7 +619,6 @@ static int findNextPendingEvolutionIndex(const Party *party, int afterIndex) {
     for (int i = afterIndex + 1; i < party->count; i++) {
         pokemonInBattle *mon = party->slots[i];
         if (mon == NULL) continue;
-        if (!mon->alive) continue;
         if (mon->pendingEvolutionInto == NULL) {
             const PokemonData *into = (mon->id.data != NULL) ? checkEvolution(mon->id.data, mon->level) : NULL;
             mon->pendingEvolutionInto = into;
@@ -4061,7 +4058,8 @@ int main(void)
                         autoSwapLeadIfFainted(&playerParty, partyBoxSprites);
                         GameState endState = GAME_STATE_MAP;
                         if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
-                            endState = GAME_STATE_BATTLE_WIN;
+  
+                            endState = GAME_STATE_MAP;
                             if (battleState.type == BATTLE_TRAINER) {
                                 if (!trainerPayoutApplied) {
                                     trainerPayoutDelta = computeTrainerPayout(&enemyParty);
@@ -5411,7 +5409,7 @@ int main(void)
             }
 
             pokemonInBattle *mon = playerParty.slots[evolutionPokemonIndex];
-            if (mon == NULL || !mon->alive) {
+            if (mon == NULL) {
                 const int next = findNextPendingEvolutionIndex(&playerParty, evolutionPokemonIndex);
                 if (next >= 0) {
                     evolutionPokemonIndex = next;

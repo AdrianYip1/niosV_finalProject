@@ -7,6 +7,7 @@ from PIL import Image
 
 
 SRC_DIR = Path("ImageConvertHelpers/mainMenuUi")
+LEVEL_UP_STAT_SCREEN_PNG = Path("ImageConvertHelpers/levelUpStatScreen/statScreen.png")
 
 OUT_DIR = Path("software/graphics/sprites/mainMenuUi")
 OUT_C = OUT_DIR / "mainMenuUiSprites.c"
@@ -86,7 +87,11 @@ def main() -> None:
     if not SRC_DIR.exists():
         raise RuntimeError(f"Missing source dir: {SRC_DIR}")
 
+    if not LEVEL_UP_STAT_SCREEN_PNG.exists():
+        raise RuntimeError(f"Missing required PNG: {LEVEL_UP_STAT_SCREEN_PNG}")
+
     pngs = sorted(SRC_DIR.glob("*.png"), key=lambda p: p.name.lower())
+    pngs.append(LEVEL_UP_STAT_SCREEN_PNG)
     if not pngs:
         raise RuntimeError(f"No .png files found in {SRC_DIR}")
 

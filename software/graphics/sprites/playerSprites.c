@@ -1,5 +1,5 @@
 #include "staticSprite.h"
-#include "pokemon/charizardSprite.h"
+#include "pokemon/pokemonSprites.h"
 #include "../graphics.h"
 #include "../map.h"
 #include "../predefined_graphics.h"
