@@ -19,6 +19,9 @@ typedef enum {
     ITEM_PREMIER_BALL,
     ITEM_MASTER_BALL,
 
+    // Evolution items
+    ITEM_SHINY_STONE,
+
     ITEM_ID_COUNT
 } ItemId;
 

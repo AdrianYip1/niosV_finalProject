@@ -18,6 +18,9 @@ static const ItemData ITEM_DB[ITEM_ID_COUNT] = {
     [ITEM_ULTRA_BALL] = {ITEM_ULTRA_BALL, "Ultra Ball", "Catches wild Pokemon with 2x the rate of a Poke Ball"},
     [ITEM_PREMIER_BALL] = {ITEM_PREMIER_BALL, "Premier Ball", "Catches wild Pokemon; received after buying 10 Poke Balls."},
     [ITEM_MASTER_BALL] = {ITEM_MASTER_BALL, "Master Ball", "Catches any wild Pokemon without fail."},
+
+    // Evolution items
+    [ITEM_SHINY_STONE] = {ITEM_SHINY_STONE, "Shiny Stone", "A mysterious stone that can make certain Pokemon evolve."},
 };
 
 const ItemData *getItemData(ItemId id) {

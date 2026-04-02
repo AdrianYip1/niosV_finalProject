@@ -4,12 +4,19 @@
 #include "charmanderSprite.h"
 #include "charmeleonSprite.h"
 #include "garchompSprite.h"
+#include "gabiteSprite.h"
+#include "gibleSprite.h"
 #include "lucarioSprite.h"
+#include "rioluSprite.h"
 #include "miloticSprite.h"
+#include "feebasSprite.h"
 #include "rayquazaSprite.h"
 #include "roseradeSprite.h"
+#include "budewSprite.h"
 #include "spiritombSprite.h"
 #include "togekissSprite.h"
+#include "togepiSprite.h"
+#include "togeticSprite.h"
 
 static void initFromPixels(StaticSprite* out, const unsigned short* pixels, int w, int h, int x, int y) {
     if (!out) return;
@@ -52,17 +59,37 @@ static bool getPixelsById(int pokemon_id, bool want_front,
             if (want_front) { pixels = garchompFront;   w = GARCHOMP_FRONT_WIDTH;   h = GARCHOMP_FRONT_HEIGHT;   }
             else            { pixels = garchompBack;    w = GARCHOMP_BACK_WIDTH;    h = GARCHOMP_BACK_HEIGHT;    }
             break;
+        case POKEMON_ID_GIBLE:
+            if (want_front) { pixels = gibleFront;      w = GIBLE_FRONT_WIDTH;      h = GIBLE_FRONT_HEIGHT;      }
+            else            { pixels = gibleBack;       w = GIBLE_BACK_WIDTH;       h = GIBLE_BACK_HEIGHT;       }
+            break;
+        case POKEMON_ID_GABITE:
+            if (want_front) { pixels = gabiteFront;     w = GABITE_FRONT_WIDTH;     h = GABITE_FRONT_HEIGHT;     }
+            else            { pixels = gabiteBack;      w = GABITE_BACK_WIDTH;      h = GABITE_BACK_HEIGHT;      }
+            break;
         case POKEMON_ID_LUCARIO:
             if (want_front) { pixels = lucarioFront;    w = LUCARIO_FRONT_WIDTH;    h = LUCARIO_FRONT_HEIGHT;    }
             else            { pixels = lucarioBack;     w = LUCARIO_BACK_WIDTH;     h = LUCARIO_BACK_HEIGHT;     }
+            break;
+        case POKEMON_ID_RIOLU:
+            if (want_front) { pixels = rioluFront;      w = RIOLU_FRONT_WIDTH;      h = RIOLU_FRONT_HEIGHT;      }
+            else            { pixels = rioluBack;       w = RIOLU_BACK_WIDTH;       h = RIOLU_BACK_HEIGHT;       }
             break;
         case POKEMON_ID_MILOTIC:
             if (want_front) { pixels = miloticFront;    w = MILOTIC_FRONT_WIDTH;    h = MILOTIC_FRONT_HEIGHT;    }
             else            { pixels = miloticBack;     w = MILOTIC_BACK_WIDTH;     h = MILOTIC_BACK_HEIGHT;     }
             break;
+        case POKEMON_ID_FEEBAS:
+            if (want_front) { pixels = feebasFront;     w = FEEBAS_FRONT_WIDTH;     h = FEEBAS_FRONT_HEIGHT;     }
+            else            { pixels = feebasBack;      w = FEEBAS_BACK_WIDTH;      h = FEEBAS_BACK_HEIGHT;      }
+            break;
         case POKEMON_ID_ROSERADE:
             if (want_front) { pixels = roseradeFront;   w = ROSERADE_FRONT_WIDTH;   h = ROSERADE_FRONT_HEIGHT;   }
             else            { pixels = roseradeBack;    w = ROSERADE_BACK_WIDTH;    h = ROSERADE_BACK_HEIGHT;    }
+            break;
+        case POKEMON_ID_BUDEW:
+            if (want_front) { pixels = budewFront;      w = BUDEW_FRONT_WIDTH;      h = BUDEW_FRONT_HEIGHT;      }
+            else            { pixels = budewBack;       w = BUDEW_BACK_WIDTH;       h = BUDEW_BACK_HEIGHT;       }
             break;
         case POKEMON_ID_SPIRITOMB:
             if (want_front) { pixels = spiritombFront;  w = SPIRITOMB_FRONT_WIDTH;  h = SPIRITOMB_FRONT_HEIGHT;  }
@@ -71,6 +98,14 @@ static bool getPixelsById(int pokemon_id, bool want_front,
         case POKEMON_ID_TOGEKISS:
             if (want_front) { pixels = togekissFront;   w = TOGEKISS_FRONT_WIDTH;   h = TOGEKISS_FRONT_HEIGHT;   }
             else            { pixels = togekissBack;    w = TOGEKISS_BACK_WIDTH;    h = TOGEKISS_BACK_HEIGHT;    }
+            break;
+        case POKEMON_ID_TOGEPI:
+            if (want_front) { pixels = togepiFront;     w = TOGEPI_FRONT_WIDTH;     h = TOGEPI_FRONT_HEIGHT;     }
+            else            { pixels = togepiBack;      w = TOGEPI_BACK_WIDTH;      h = TOGEPI_BACK_HEIGHT;      }
+            break;
+        case POKEMON_ID_TOGETIC:
+            if (want_front) { pixels = togeticFront;    w = TOGETIC_FRONT_WIDTH;    h = TOGETIC_FRONT_HEIGHT;    }
+            else            { pixels = togeticBack;     w = TOGETIC_BACK_WIDTH;     h = TOGETIC_BACK_HEIGHT;     }
             break;
         default:
             return false;

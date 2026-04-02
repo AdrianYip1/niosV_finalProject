@@ -71,6 +71,55 @@ static const PokedexEntry POKEDEX_DB[] = {
         .width_kg = 38,
         .entry = "It will never appear where there is strife.\nIts sightings have become an emblem of\nhappiness and peace.",
     },
+    {
+        .pokemon_id = 11,
+        .category = "Bud Pokemon",
+        .height_cm = 20,
+        .width_kg = 1,
+        .entry = "Its sensitive bud is said to contain\na healing aroma.\nIt often hides among flowers.",
+    },
+    {
+        .pokemon_id = 12,
+        .category = "Fish Pokemon",
+        .height_cm = 60,
+        .width_kg = 7,
+        .entry = "It is famous for its shabby appearance.\nIt swims by weakly flopping its fins.",
+    },
+    {
+        .pokemon_id = 13,
+        .category = "Land Shark Pokemon",
+        .height_cm = 70,
+        .width_kg = 20,
+        .entry = "It nests in small caves.\nWhen it senses prey, it lunges with\na sudden burst of speed.",
+    },
+    {
+        .pokemon_id = 14,
+        .category = "Cave Pokemon",
+        .height_cm = 140,
+        .width_kg = 56,
+        .entry = "It loves shiny objects.\nIt can dig at high speed to chase prey\nthrough narrow tunnels.",
+    },
+    {
+        .pokemon_id = 15,
+        .category = "Emanation Pokemon",
+        .height_cm = 70,
+        .width_kg = 20,
+        .entry = "It uses its aura to sense danger.\nWhen it concentrates, it can unleash\npowerful strikes.",
+    },
+    {
+        .pokemon_id = 16,
+        .category = "Spike Ball Pokemon",
+        .height_cm = 30,
+        .width_kg = 2,
+        .entry = "It is said to bring good fortune.\nIt shares happiness with those who treat\nit kindly.",
+    },
+    {
+        .pokemon_id = 17,
+        .category = "Happiness Pokemon",
+        .height_cm = 60,
+        .width_kg = 3,
+        .entry = "It is a symbol of good luck.\nIt is said to appear only before\nkindhearted people.",
+    },
 };
 
 const PokedexEntry *getPokedexEntry(int pokemon_id) {

@@ -76,6 +76,7 @@
 #include "graphics/sprites/battleItemsUI/itemDescription.h"
 #include "graphics/sprites/battleItemsUI/pokeballIcons.h"
 #include "graphics/sprites/battleItemsUI/healingItemIcons.h"
+#include "graphics/sprites/itemStone/shinyStoneIcon.h"
 #include "graphics/sprites/menu/menuSprites.h"
 #include "graphics/sprites/menu/cancelSprite.h"
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
@@ -460,6 +461,7 @@ static inline int shopItemPrice(ItemId item) {
         case ITEM_POKEBALL: return 200;
         case ITEM_GREAT_BALL: return 600;
         case ITEM_ULTRA_BALL: return 1200;
+        case ITEM_SHINY_STONE: return 2100;
         default: return 9999;
     }
 }
@@ -483,6 +485,7 @@ static inline const unsigned short *itemIconFor(ItemId item, int *outW, int *out
     else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
     else if (item == ITEM_REVIVE) { icon = healingItemIcon_revive; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
     else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+    else if (item == ITEM_SHINY_STONE) { icon = shinyStoneIcon; w = SHINY_STONE_ICON_WIDTH; h = SHINY_STONE_ICON_HEIGHT; }
 
     if (icon == NULL) return NULL;
     if (outW) *outW = w;
@@ -501,6 +504,56 @@ static inline const unsigned short *bagSpinSpriteForIndex(int index) {
         case 6: return bagMenuSpin7Sprite;
         default: return bagMenuSpin1Sprite;
     }
+}
+
+static void draw_wrapped_string_fixed_width_f(int x, int y, const char *text, short colour, FontId font, int maxCharsPerLine, int maxLines) {
+    if (text == NULL || text[0] == '\0' || maxCharsPerLine <= 0 || maxLines <= 0) return;
+
+    // Build a small wrapped buffer with '\\n' inserted.
+    char buf[256];
+    int out = 0;
+
+    const char *p = text;
+    for (int line = 0; line < maxLines && *p; line++) {
+        // Skip leading spaces on each line.
+        while (*p == ' ') p++;
+        if (!*p) break;
+
+        int count = 0;
+        int lastSpaceOut = -1;
+        int lineStartOut = out;
+
+        while (*p && *p != '\n' && count < maxCharsPerLine && out < (int)sizeof(buf) - 2) {
+            buf[out] = *p;
+            if (*p == ' ') lastSpaceOut = out;
+            out++;
+            p++;
+            count++;
+        }
+
+        // If we hit max width in the middle of a word, wrap back to the last space.
+        if (count >= maxCharsPerLine && lastSpaceOut >= 0) {
+            // rewind input pointer to after that space
+            const int rewind = out - (lastSpaceOut + 1);
+            p -= rewind;
+            out = lastSpaceOut;
+        }
+
+        if (*p == '\n') p++;
+
+        // if nothing, force a break to avoid infinite loop.
+        if (out == lineStartOut) {
+            while (*p && *p != '\n') p++;
+            if (*p == '\n') p++;
+        }
+
+        if (line != maxLines - 1 && *p && out < (int)sizeof(buf) - 2) {
+            buf[out++] = '\n';
+        }
+    }
+
+    buf[out] = '\0';
+    draw_string_f(x, y, buf, colour, font);
 }
 
 
@@ -856,8 +909,8 @@ static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
 
 //pokedex state
 
-static bool g_pokedexSeen[POKEMON_ID_TOGEKISS + 1];
-static bool g_pokedexCaught[POKEMON_ID_TOGEKISS + 1];
+static bool g_pokedexSeen[POKEMON_ID_MAX + 1];
+static bool g_pokedexCaught[POKEMON_ID_MAX + 1];
 
 static void make_sprite_black(const unsigned short *sprite,
                               int width, int height,
@@ -938,22 +991,22 @@ static const unsigned short *pokedex_type_sprite_for(PokemonType t, int *outW, i
 }
 
 static inline void pokedex_mark_seen(int pokemon_id) {
-    if (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) g_pokedexSeen[pokemon_id] = true;
+    if (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_MAX) g_pokedexSeen[pokemon_id] = true;
 }
 
 static inline void pokedex_mark_caught(int pokemon_id) {
-    if (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) {
+    if (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_MAX) {
         g_pokedexSeen[pokemon_id] = true;
         g_pokedexCaught[pokemon_id] = true;
     }
 }
 
 static inline bool pokedex_is_seen(int pokemon_id) {
-    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) ? g_pokedexSeen[pokemon_id] : false;
+    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_MAX) ? g_pokedexSeen[pokemon_id] : false;
 }
 
 static inline bool pokedex_is_caught(int pokemon_id) {
-    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) ? g_pokedexCaught[pokemon_id] : false;
+    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_MAX) ? g_pokedexCaught[pokemon_id] : false;
 }
 
 //returns the address of the global pokemon structs for the pokemon
@@ -963,11 +1016,18 @@ static const PokemonData *speciesFromPokemonSpriteId(int pokemonId) {
         case POKEMON_ID_CHARMELEON: return &CHARMELEON;
         case POKEMON_ID_CHARIZARD:  return &CHARIZARD;
         case POKEMON_ID_RAYQUAZA:  return &RAYQUAZA;
+        case POKEMON_ID_GIBLE:     return &GIBLE;
+        case POKEMON_ID_GABITE:    return &GABITE;
         case POKEMON_ID_GARCHOMP:  return &GARCHOMP;
+        case POKEMON_ID_RIOLU:     return &RIOLU;
         case POKEMON_ID_LUCARIO:   return &LUCARIO;
+        case POKEMON_ID_FEEBAS:    return &FEEBAS;
         case POKEMON_ID_MILOTIC:   return &MILOTIC;
+        case POKEMON_ID_BUDEW:     return &BUDEW;
         case POKEMON_ID_ROSERADE:  return &ROSERADE;
         case POKEMON_ID_SPIRITOMB: return &SPIRITOMB;
+        case POKEMON_ID_TOGEPI:    return &TOGEPI;
+        case POKEMON_ID_TOGETIC:   return &TOGETIC;
         case POKEMON_ID_TOGEKISS:  return &TOGEKISS;
         default: return NULL;
     }
@@ -1438,6 +1498,7 @@ int main(void)
     bagAdd(&playerBag, ITEM_MASTER_BALL, 99);
     bagAdd(&playerBag, ITEM_REVIVE, 3);
     bagAdd(&playerBag, ITEM_MAX_REVIVE, 3);
+    bagAdd(&playerBag, ITEM_SHINY_STONE, 1);
 
 
     for (int i = 0; i < 6; i++) {
@@ -2294,12 +2355,12 @@ int main(void)
 
                 int seenCount = 0;
                 int caughtCount = 0;
-                for (int i = 0; i <= POKEMON_ID_TOGEKISS; i++) {
+                for (int i = 1; i <= POKEMON_ID_MAX; i++) {
                     if (g_pokedexSeen[i]) seenCount++;
                     if (g_pokedexCaught[i]) caughtCount++;
                 }
                 char dexBuf[32];
-                const int totalPokemon = POKEMON_ID_TOGEKISS + 1;
+                const int totalPokemon = POKEMON_ID_MAX;
                 snprintf(dexBuf, sizeof(dexBuf), "%d/%d", caughtCount, totalPokemon);
                 draw_string_f(120, 112 - 5, dexBuf, BLACK, FONT_5X9);
 
@@ -3154,6 +3215,7 @@ int main(void)
                     else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_REVIVE) { icon = healingItemIcon_revive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                    else if (item == ITEM_SHINY_STONE) { icon = shinyStoneIcon; iconW = SHINY_STONE_ICON_WIDTH; iconH = SHINY_STONE_ICON_HEIGHT; }
 
                     if (icon != NULL) {
                         draw_sprite_any(icon,
@@ -3226,15 +3288,16 @@ int main(void)
                                  else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
                                  else if (item == ITEM_REVIVE) icon = healingItemIcon_revive;
                                  else if (item == ITEM_MAX_REVIVE) icon = healingItemIcon_maxRevive;
-
-                                if (icon != NULL) {
-                                    draw_sprite_any(icon,
-                                                    HEALING_ITEM_ICON_WIDTH,
-                                                    HEALING_ITEM_ICON_HEIGHT,
+                                 else if (item == ITEM_SHINY_STONE) icon = shinyStoneIcon;
+ 
+                                 if (icon != NULL) {
+                                     draw_sprite_any(icon,
+                                                    (item == ITEM_SHINY_STONE) ? SHINY_STONE_ICON_WIDTH : HEALING_ITEM_ICON_WIDTH,
+                                                    (item == ITEM_SHINY_STONE) ? SHINY_STONE_ICON_HEIGHT : HEALING_ITEM_ICON_HEIGHT,
                                                     mxs[i] + RESTORE_ITEM_X,
                                                     mys[i] + RESTORE_ITEM_Y,
                                                     TRANSPARENT_COLOUR);
-                                }
+                                 }
                             }
                         }
                     }
@@ -3270,11 +3333,17 @@ int main(void)
                          else if (bagDescItem == ITEM_FULL_RESTORE) itemIcon = healingItemIcon_fullRestore;
                          else if (bagDescItem == ITEM_REVIVE) itemIcon = healingItemIcon_revive;
                          else if (bagDescItem == ITEM_MAX_REVIVE) itemIcon = healingItemIcon_maxRevive;
+                         else if (bagDescItem == ITEM_SHINY_STONE) itemIcon = shinyStoneIcon;
                          if (itemIcon != NULL) {
-                             itemIconW = HEALING_ITEM_ICON_WIDTH;
-                             itemIconH = HEALING_ITEM_ICON_HEIGHT;
+                             if (bagDescItem == ITEM_SHINY_STONE) {
+                                 itemIconW = SHINY_STONE_ICON_WIDTH;
+                                 itemIconH = SHINY_STONE_ICON_HEIGHT;
+                             } else {
+                                 itemIconW = HEALING_ITEM_ICON_WIDTH;
+                                 itemIconH = HEALING_ITEM_ICON_HEIGHT;
+                             }
                          }
-                    }
+                     }
 
                     if (itemIcon != NULL) {
                         draw_sprite_any(itemIcon,
@@ -5377,6 +5446,36 @@ int main(void)
                         currentGameState = bagMenuReturnState;
                         play_sfx(plink_audio, plink_audio_len);
                         break;
+                    } else if (bagMenuFocus == BAG_FOCUS_LIST && visibleCount > 0) {
+                        const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
+                        if (selected == ITEM_SHINY_STONE) {
+                            int targetIndex = -1;
+                            for (int pi = 0; pi < playerParty.count; pi++) {
+                                pokemonInBattle *mon = playerParty.slots[pi];
+                                if (mon != NULL && mon->id.data == &TOGETIC) {
+                                    targetIndex = pi;
+                                    break;
+                                }
+                            }
+                            if (targetIndex >= 0) {
+                                (void)bagRemove(&playerBag, ITEM_SHINY_STONE, 1);
+                                playerParty.slots[targetIndex]->pendingEvolutionInto = &TOGEKISS;
+
+                                evolutionPokemonIndex = targetIndex;
+                                evolutionReturnState = currentGameState;
+                                evolutionPhase = 0;
+                                evolutionPhaseTimer = 0;
+                                evolutionFromName[0] = '\0';
+                                evolutionIntoName[0] = '\0';
+
+                                currentGameState = GAME_STATE_EVOLUTION;
+                                previousGameState = GAME_STATE_EVOLUTION;
+                                play_sfx(plink_audio, plink_audio_len);
+                                break;
+                            } else {
+                                play_sfx(wallbump_audio, wallbump_audio_len);
+                            }
+                        }
                     }
                 }
 
@@ -5424,6 +5523,7 @@ int main(void)
                                 }
 
                                 const int descTextX = (icon != NULL) ? (descX + 22) : descX;
+                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                             }
                         }
                     }
@@ -5578,6 +5678,7 @@ int main(void)
                                 }
 
                                 const int descTextX = (icon != NULL) ? (descX + 22) : descX;
+                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
 
                             }
                         }
@@ -6135,12 +6236,12 @@ int main(void)
             {
                 // Handle scrolling before drawing 
                 if (upPressed) {
-                    if (pokedexScrollIndex <= POKEMON_ID_CHARMANDER) pokedexScrollIndex = POKEMON_ID_TOGEKISS;
+                    if (pokedexScrollIndex <= POKEMON_ID_CHARMANDER) pokedexScrollIndex = POKEMON_ID_MAX;
                     else pokedexScrollIndex--;
                     play_sfx(plink_audio, plink_audio_len);
                 }
                 if (downPressed) {
-                    if (pokedexScrollIndex >= POKEMON_ID_TOGEKISS) pokedexScrollIndex = POKEMON_ID_CHARMANDER;
+                    if (pokedexScrollIndex >= POKEMON_ID_MAX) pokedexScrollIndex = POKEMON_ID_CHARMANDER;
                     else pokedexScrollIndex++;
                     play_sfx(plink_audio, plink_audio_len);
                 }
@@ -6267,11 +6368,11 @@ int main(void)
                     } else {
                         if (pokedexInfoCursor == 0) {
                             // Up / previous entry
-                            if (pokedexSelectedId <= POKEMON_ID_CHARMANDER) pokedexSelectedId = POKEMON_ID_TOGEKISS;
+                            if (pokedexSelectedId <= POKEMON_ID_CHARMANDER) pokedexSelectedId = POKEMON_ID_MAX;
                             else pokedexSelectedId--;
                         } else {
                             // Down / next entry
-                            if (pokedexSelectedId >= POKEMON_ID_TOGEKISS) pokedexSelectedId = POKEMON_ID_CHARMANDER;
+                            if (pokedexSelectedId >= POKEMON_ID_MAX) pokedexSelectedId = POKEMON_ID_CHARMANDER;
                             else pokedexSelectedId++;
                         }
                         pokedexScrollIndex = pokedexSelectedId;
@@ -6545,9 +6646,10 @@ int main(void)
                 else if (selected == ITEM_POTION) { icon = healingItemIcon_potion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                 else if (selected == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                 else if (selected == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
-                else if (selected == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
-                else if (selected == ITEM_REVIVE) { icon = healingItemIcon_revive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
-                else if (selected == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                 else if (selected == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                 else if (selected == ITEM_REVIVE) { icon = healingItemIcon_revive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                 else if (selected == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
+                 else if (selected == ITEM_SHINY_STONE) { icon = shinyStoneIcon; iconW = SHINY_STONE_ICON_WIDTH; iconH = SHINY_STONE_ICON_HEIGHT; }
 
                 if (icon != NULL && iconW > 0 && iconH > 0) {
                     int drawY = selectedIconY;

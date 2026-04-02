@@ -48,6 +48,23 @@ const LearnsetEntry LEARNSET_RAYQUAZA[] = {
     LEARNSET_END
 };
 
+const LearnsetEntry LEARNSET_GIBLE[] = {
+    {1, &TACKLE},
+    {1, &DRAGON_RAGE},
+    {15, &BONE_RUSH},
+    {24, &DRAGON_CLAW},
+    LEARNSET_END
+};
+
+const LearnsetEntry LEARNSET_GABITE[] = {
+    {1, &TACKLE},
+    {1, &DRAGON_RAGE},
+    {15, &BONE_RUSH},
+    {24, &DRAGON_CLAW},
+    {35, &CRUNCH},
+    LEARNSET_END
+};
+
 const LearnsetEntry LEARNSET_GARCHOMP[] = {
     {1, &TACKLE},
     {1, &DRAGON_RAGE},
@@ -56,6 +73,14 @@ const LearnsetEntry LEARNSET_GARCHOMP[] = {
     {35, &CRUNCH},
     {48, &EARTHQUAKE},
     {55, &OUTRAGE},
+    LEARNSET_END
+};
+
+const LearnsetEntry LEARNSET_RIOLU[] = {
+    {1, &TACKLE},
+    {1, &METAL_CLAW},
+    {15, &AURA_SPHERE},
+    {20, &SLASH},
     LEARNSET_END
 };
 
@@ -70,6 +95,13 @@ const LearnsetEntry LEARNSET_LUCARIO[] = {
     LEARNSET_END
 };
 
+const LearnsetEntry LEARNSET_FEEBAS[] = {
+    {1, &TACKLE},
+    {10, &WATER_GUN},
+    {18, &ICE_BEAM},
+    LEARNSET_END
+};
+
 const LearnsetEntry LEARNSET_MILOTIC[] = {
     {1, &TACKLE},
     {1, &WATER_GUN},
@@ -77,6 +109,13 @@ const LearnsetEntry LEARNSET_MILOTIC[] = {
     {28, &SURF},
     {45, &HYDRO_PUMP},
     {52, &AQUA_TAIL},
+    LEARNSET_END
+};
+
+const LearnsetEntry LEARNSET_BUDEW[] = {
+    {1, &TACKLE},
+    {10, &GIGA_DRAIN},
+    {15, &SLUDGE_BOMB},
     LEARNSET_END
 };
 
@@ -95,6 +134,20 @@ const LearnsetEntry LEARNSET_SPIRITOMB[] = {
     {15, &CRUNCH},
     {30, &DARK_PULSE},
     {45, &SUCKER_PUNCH},
+    LEARNSET_END
+};
+
+const LearnsetEntry LEARNSET_TOGEPI[] = {
+    {1, &TACKLE},
+    {15, &DAZZLING_GLEAM},
+    LEARNSET_END
+};
+
+const LearnsetEntry LEARNSET_TOGETIC[] = {
+    {1, &TACKLE},
+    {15, &ANCIENT_POWER},
+    {20, &DAZZLING_GLEAM},
+    {25, &AIR_SLASH},
     LEARNSET_END
 };
 

@@ -130,11 +130,18 @@ extern const PokemonData CHARMANDER;
 extern const PokemonData CHARMELEON;
 extern const PokemonData CHARIZARD;
 extern const PokemonData RAYQUAZA;
+extern const PokemonData GIBLE;
+extern const PokemonData GABITE;
 extern const PokemonData GARCHOMP;
+extern const PokemonData RIOLU;
 extern const PokemonData LUCARIO;
+extern const PokemonData FEEBAS;
 extern const PokemonData MILOTIC;
+extern const PokemonData BUDEW;
 extern const PokemonData ROSERADE;
 extern const PokemonData SPIRITOMB;
+extern const PokemonData TOGEPI;
+extern const PokemonData TOGETIC;
 extern const PokemonData TOGEKISS;
 
 // type chart

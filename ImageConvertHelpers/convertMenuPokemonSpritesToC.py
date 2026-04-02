@@ -69,11 +69,18 @@ def main() -> None:
         ("menuCharmeleonSprite", SRC_DIR / "menuCharmeleon.png"),
         ("menuCharizardSprite", SRC_DIR / "menuCharizard.png"),
         ("menuRayquazaSprite", SRC_DIR / "menuRayquaza.png"),
+        ("menuGibleSprite", SRC_DIR / "gible.png"),
+        ("menuGabiteSprite", SRC_DIR / "gabite.png"),
         ("menuGarchompSprite", SRC_DIR / "menuGarchomp.png"),
+        ("menuRioluSprite", SRC_DIR / "riolu.png"),
         ("menuLucarioSprite", SRC_DIR / "menuLucario.png"),
+        ("menuFeebasSprite", SRC_DIR / "feebas.png"),
         ("menuMiloticSprite", SRC_DIR / "menuMilotic.png"),
+        ("menuBudewSprite", SRC_DIR / "budew.png"),
         ("menuRoseradeSprite", SRC_DIR / "menuRoserade.png"),
         ("menuSpiritombSprite", SRC_DIR / "menuSpiritomb.png"),
+        ("menuTogepiSprite", SRC_DIR / "togepi.png"),
+        ("menuTogeticSprite", SRC_DIR / "togetic.png"),
         ("menuTogekissSprite", SRC_DIR / "menuTogekiss.png"),
     ]
 
@@ -101,10 +108,10 @@ def main() -> None:
         [
             "",
             "// Indexed by POKEMON_ID_* (0 is NULL). Size is (max id + 1).",
-            "extern const unsigned short* const menuPokemonSpriteById[POKEMON_ID_TOGEKISS + 1];",
+            "extern const unsigned short* const menuPokemonSpriteById[POKEMON_ID_MAX + 1];",
             "",
             "static inline const unsigned short* menuPokemonSpriteForId(int pokemon_id) {",
-            "    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_TOGEKISS) ? menuPokemonSpriteById[pokemon_id] : 0;",
+            "    return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_MAX) ? menuPokemonSpriteById[pokemon_id] : 0;",
             "}",
             "",
         ]
@@ -123,16 +130,23 @@ def main() -> None:
         "POKEMON_ID_CHARMELEON": "menuCharmeleonSprite",
         "POKEMON_ID_CHARIZARD": "menuCharizardSprite",
         "POKEMON_ID_RAYQUAZA": "menuRayquazaSprite",
+        "POKEMON_ID_GIBLE": "menuGibleSprite",
+        "POKEMON_ID_GABITE": "menuGabiteSprite",
         "POKEMON_ID_GARCHOMP": "menuGarchompSprite",
+        "POKEMON_ID_RIOLU": "menuRioluSprite",
         "POKEMON_ID_LUCARIO": "menuLucarioSprite",
+        "POKEMON_ID_FEEBAS": "menuFeebasSprite",
         "POKEMON_ID_MILOTIC": "menuMiloticSprite",
+        "POKEMON_ID_BUDEW": "menuBudewSprite",
         "POKEMON_ID_ROSERADE": "menuRoseradeSprite",
         "POKEMON_ID_SPIRITOMB": "menuSpiritombSprite",
+        "POKEMON_ID_TOGEPI": "menuTogepiSprite",
+        "POKEMON_ID_TOGETIC": "menuTogeticSprite",
         "POKEMON_ID_TOGEKISS": "menuTogekissSprite",
     }
 
-    lines.append("const unsigned short* const menuPokemonSpriteById[POKEMON_ID_TOGEKISS + 1] = {")
-    lines.append("    0,")
+    lines.append("const unsigned short* const menuPokemonSpriteById[POKEMON_ID_MAX + 1] = {")
+    lines.append("    [0] = 0,")
     for k in [
         "POKEMON_ID_CHARMANDER",
         "POKEMON_ID_CHARMELEON",
@@ -144,8 +158,15 @@ def main() -> None:
         "POKEMON_ID_ROSERADE",
         "POKEMON_ID_SPIRITOMB",
         "POKEMON_ID_TOGEKISS",
+        "POKEMON_ID_BUDEW",
+        "POKEMON_ID_FEEBAS",
+        "POKEMON_ID_GIBLE",
+        "POKEMON_ID_GABITE",
+        "POKEMON_ID_RIOLU",
+        "POKEMON_ID_TOGEPI",
+        "POKEMON_ID_TOGETIC",
     ]:
-        lines.append(f"    {mapping[k]},")
+        lines.append(f"    [{k}] = {mapping[k]},")
     lines.append("};")
     lines.append("")
 

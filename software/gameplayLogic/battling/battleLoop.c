@@ -645,6 +645,25 @@ static void resolvePlayerTurn(BattleState *state, BattleAction action, int param
                     }
                     break;
                 }
+
+                if (item == ITEM_SHINY_STONE) {
+                    if (!target->alive) {
+                        battlePushMessage(state, "It won't have any effect!");
+                        break;
+                    }
+                    if (target->id.data == &TOGETIC) {
+                        (void)bagRemove(state->playerBag, item, 1);
+                        snprintf(buf, sizeof(buf), "Used %s!", name);
+                        battlePushMessage(state, buf);
+
+                        target->pendingEvolutionInto = &TOGEKISS;
+                        (void)applyPendingEvolution(target);
+                        battlePushMessage(state, "Evolved!");
+                    } else {
+                        battlePushMessage(state, "It won't have any effect!");
+                    }
+                    break;
+                }
             }
             break;
         case ACTION_RUN:

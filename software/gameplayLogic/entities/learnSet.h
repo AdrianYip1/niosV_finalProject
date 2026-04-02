@@ -13,11 +13,18 @@ extern const LearnsetEntry LEARNSET_CHARMANDER[];
 extern const LearnsetEntry LEARNSET_CHARMELEON[];
 extern const LearnsetEntry LEARNSET_CHARIZARD[];
 extern const LearnsetEntry LEARNSET_RAYQUAZA[];
+extern const LearnsetEntry LEARNSET_GIBLE[];
+extern const LearnsetEntry LEARNSET_GABITE[];
 extern const LearnsetEntry LEARNSET_GARCHOMP[];
+extern const LearnsetEntry LEARNSET_RIOLU[];
 extern const LearnsetEntry LEARNSET_LUCARIO[];
+extern const LearnsetEntry LEARNSET_FEEBAS[];
 extern const LearnsetEntry LEARNSET_MILOTIC[];
+extern const LearnsetEntry LEARNSET_BUDEW[];
 extern const LearnsetEntry LEARNSET_ROSERADE[];
 extern const LearnsetEntry LEARNSET_SPIRITOMB[];
+extern const LearnsetEntry LEARNSET_TOGEPI[];
+extern const LearnsetEntry LEARNSET_TOGETIC[];
 extern const LearnsetEntry LEARNSET_TOGEKISS[];
 
 
@@ -27,11 +34,18 @@ static inline const LearnsetEntry *getLearnset(int speciesId) {
         case 2: return LEARNSET_CHARMELEON;
         case 3: return LEARNSET_CHARIZARD;
         case 4: return LEARNSET_RAYQUAZA;
+        case 13: return LEARNSET_GIBLE;
+        case 14: return LEARNSET_GABITE;
         case 5: return LEARNSET_GARCHOMP;
+        case 15: return LEARNSET_RIOLU;
         case 6: return LEARNSET_LUCARIO;
+        case 12: return LEARNSET_FEEBAS;
         case 7: return LEARNSET_MILOTIC;
+        case 11: return LEARNSET_BUDEW;
         case 8: return LEARNSET_ROSERADE;
         case 9: return LEARNSET_SPIRITOMB;
+        case 16: return LEARNSET_TOGEPI;
+        case 17: return LEARNSET_TOGETIC;
         case 10: return LEARNSET_TOGEKISS;
         default: return NULL;
     }

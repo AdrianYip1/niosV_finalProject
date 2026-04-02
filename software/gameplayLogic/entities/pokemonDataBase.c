@@ -95,12 +95,36 @@ const PokemonData RAYQUAZA = {
     .evolution = {EVO_NONE, 0, NULL}
 };
 
+const PokemonData GIBLE = {
+    .id = 13, .name = "Gible",
+    .baseHp = 58, .baseAttack = 70, .baseSpAttack = 40,
+    .baseDefense = 45, .baseSpDefense = 45, .baseSpeed = 42,
+    .type1 = TYPE_DRAGON, .type2 = TYPE_GROUND,
+    .evolution = {EVO_LEVEL, 24, &GABITE}
+};
+
+const PokemonData GABITE = {
+    .id = 14, .name = "Gabite",
+    .baseHp = 68, .baseAttack = 90, .baseSpAttack = 50,
+    .baseDefense = 65, .baseSpDefense = 55, .baseSpeed = 82,
+    .type1 = TYPE_DRAGON, .type2 = TYPE_GROUND,
+    .evolution = {EVO_LEVEL, 48, &GARCHOMP}
+};
+
 const PokemonData GARCHOMP = {
     .id = 5, .name = "Garchomp",
     .baseHp = 108, .baseAttack = 130, .baseSpAttack = 80,
     .baseDefense = 95, .baseSpDefense = 85, .baseSpeed = 102,
     .type1 = TYPE_DRAGON, .type2 = TYPE_GROUND,
     .evolution = {EVO_NONE, 0, NULL}
+};
+
+const PokemonData RIOLU = {
+    .id = 15, .name = "Riolu",
+    .baseHp = 40, .baseAttack = 70, .baseSpAttack = 35,
+    .baseDefense = 40, .baseSpDefense = 40, .baseSpeed = 60,
+    .type1 = TYPE_FIGHTING, .type2 = TYPE_NONE,
+    .evolution = {EVO_LEVEL, 20, &LUCARIO}
 };
 
 const PokemonData LUCARIO = {
@@ -111,12 +135,28 @@ const PokemonData LUCARIO = {
     .evolution = {EVO_NONE, 0, NULL}
 };
 
+const PokemonData FEEBAS = {
+    .id = 12, .name = "Feebas",
+    .baseHp = 20, .baseAttack = 15, .baseSpAttack = 10,
+    .baseDefense = 20, .baseSpDefense = 55, .baseSpeed = 80,
+    .type1 = TYPE_WATER, .type2 = TYPE_NONE,
+    .evolution = {EVO_LEVEL, 20, &MILOTIC}
+};
+
 const PokemonData MILOTIC = {
     .id = 7, .name = "Milotic",
     .baseHp = 95, .baseAttack = 60, .baseSpAttack = 100,
     .baseDefense = 79, .baseSpDefense = 125, .baseSpeed = 81,
     .type1 = TYPE_WATER, .type2 = TYPE_NONE,
     .evolution = {EVO_NONE, 0, NULL}
+};
+
+const PokemonData BUDEW = {
+    .id = 11, .name = "Budew",
+    .baseHp = 40, .baseAttack = 30, .baseSpAttack = 40,
+    .baseDefense = 35, .baseSpDefense = 55, .baseSpeed = 55,
+    .type1 = TYPE_GRASS, .type2 = TYPE_POISON,
+    .evolution = {EVO_LEVEL, 20, &ROSERADE}
 };
 
 const PokemonData ROSERADE = {
@@ -133,6 +173,22 @@ const PokemonData SPIRITOMB = {
     .baseDefense = 108, .baseSpDefense = 108, .baseSpeed = 35,
     .type1 = TYPE_GHOST, .type2 = TYPE_DARK,
     .evolution = {EVO_NONE, 0, NULL}
+};
+
+const PokemonData TOGEPI = {
+    .id = 16, .name = "Togepi",
+    .baseHp = 35, .baseAttack = 20, .baseSpAttack = 40,
+    .baseDefense = 65, .baseSpDefense = 65, .baseSpeed = 20,
+    .type1 = TYPE_FAIRY, .type2 = TYPE_NONE,
+    .evolution = {EVO_LEVEL, 20, &TOGETIC}
+};
+
+const PokemonData TOGETIC = {
+    .id = 17, .name = "Togetic",
+    .baseHp = 55, .baseAttack = 40, .baseSpAttack = 80,
+    .baseDefense = 85, .baseSpDefense = 105, .baseSpeed = 40,
+    .type1 = TYPE_FAIRY, .type2 = TYPE_FLYING,
+    .evolution = {EVO_ITEM, 0, &TOGEKISS}
 };
 
 const PokemonData TOGEKISS = {

@@ -4,13 +4,20 @@
 #include "charizardBoxSprite.h"
 #include "charmanderBoxSprite.h"
 #include "charmeleonBoxSprite.h"
+#include "gabiteBoxSprite.h"
 #include "garchompBoxSprite.h"
+#include "gibleBoxSprite.h"
+#include "budewBoxSprite.h"
+#include "feebasBoxSprite.h"
 #include "lucarioBoxSprite.h"
 #include "miloticBoxSprite.h"
 #include "rayquazaBoxSprite.h"
 #include "roseradeBoxSprite.h"
+#include "rioluBoxSprite.h"
 #include "spiritombBoxSprite.h"
+#include "togepiBoxSprite.h"
 #include "togekissBoxSprite.h"
+#include "togeticBoxSprite.h"
 
 static void setEmpty(StaticSprite* out) {
     if (!out) return;
@@ -55,20 +62,45 @@ bool setPokemonBoxSpriteId(StaticSprite* sprite, int pokemon_id) {
             sprite->width = GARCHOMP_BOX_WIDTH;
             sprite->height = GARCHOMP_BOX_HEIGHT;
             return true;
+        case POKEMON_ID_GIBLE:
+            sprite->pixels = gibleBox;
+            sprite->width = GIBLE_BOX_WIDTH;
+            sprite->height = GIBLE_BOX_HEIGHT;
+            return true;
+        case POKEMON_ID_GABITE:
+            sprite->pixels = gabiteBox;
+            sprite->width = GABITE_BOX_WIDTH;
+            sprite->height = GABITE_BOX_HEIGHT;
+            return true;
         case POKEMON_ID_LUCARIO:
             sprite->pixels = lucarioBox;
             sprite->width = LUCARIO_BOX_WIDTH;
             sprite->height = LUCARIO_BOX_HEIGHT;
+            return true;
+        case POKEMON_ID_RIOLU:
+            sprite->pixels = rioluBox;
+            sprite->width = RIOLU_BOX_WIDTH;
+            sprite->height = RIOLU_BOX_HEIGHT;
             return true;
         case POKEMON_ID_MILOTIC:
             sprite->pixels = miloticBox;
             sprite->width = MILOTIC_BOX_WIDTH;
             sprite->height = MILOTIC_BOX_HEIGHT;
             return true;
+        case POKEMON_ID_FEEBAS:
+            sprite->pixels = feebasBox;
+            sprite->width = FEEBAS_BOX_WIDTH;
+            sprite->height = FEEBAS_BOX_HEIGHT;
+            return true;
         case POKEMON_ID_ROSERADE:
             sprite->pixels = roseradeBox;
             sprite->width = ROSERADE_BOX_WIDTH;
             sprite->height = ROSERADE_BOX_HEIGHT;
+            return true;
+        case POKEMON_ID_BUDEW:
+            sprite->pixels = budewBox;
+            sprite->width = BUDEW_BOX_WIDTH;
+            sprite->height = BUDEW_BOX_HEIGHT;
             return true;
         case POKEMON_ID_SPIRITOMB:
             sprite->pixels = spiritombBox;
@@ -79,6 +111,16 @@ bool setPokemonBoxSpriteId(StaticSprite* sprite, int pokemon_id) {
             sprite->pixels = togekissBox;
             sprite->width = TOGEKISS_BOX_WIDTH;
             sprite->height = TOGEKISS_BOX_HEIGHT;
+            return true;
+        case POKEMON_ID_TOGEPI:
+            sprite->pixels = togepiBox;
+            sprite->width = TOGEPI_BOX_WIDTH;
+            sprite->height = TOGEPI_BOX_HEIGHT;
+            return true;
+        case POKEMON_ID_TOGETIC:
+            sprite->pixels = togeticBox;
+            sprite->width = TOGETIC_BOX_WIDTH;
+            sprite->height = TOGETIC_BOX_HEIGHT;
             return true;
         default:
             setEmpty(sprite);

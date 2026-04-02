@@ -53,25 +53,40 @@ SRCS := software/main.c \
         software/graphics/sprites/pokemon/charizardSprite.c \
         software/graphics/sprites/pokemon/charmanderSprite.c \
         software/graphics/sprites/pokemon/charmeleonSprite.c \
+        software/graphics/sprites/pokemon/budewSprite.c \
+        software/graphics/sprites/pokemon/feebasSprite.c \
+        software/graphics/sprites/pokemon/gibleSprite.c \
+        software/graphics/sprites/pokemon/gabiteSprite.c \
         software/graphics/sprites/pokemon/garchompSprite.c \
+        software/graphics/sprites/pokemon/rioluSprite.c \
         software/graphics/sprites/pokemon/lucarioSprite.c \
         software/graphics/sprites/pokemon/miloticSprite.c \
         software/graphics/sprites/pokemon/rayquazaSprite.c \
         software/graphics/sprites/pokemon/roseradeSprite.c \
         software/graphics/sprites/pokemon/spiritombSprite.c \
+        software/graphics/sprites/pokemon/togepiSprite.c \
+        software/graphics/sprites/pokemon/togeticSprite.c \
         software/graphics/sprites/pokemon/togekissSprite.c \
         software/graphics/sprites/pokemon/pokemonSpriteInit.c \
         software/graphics/sprites/boxSprites/charizardBoxSprite.c \
         software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
         software/graphics/sprites/boxSprites/charmeleonBoxSprite.c \
+        software/graphics/sprites/boxSprites/budewBoxSprite.c \
+        software/graphics/sprites/boxSprites/feebasBoxSprite.c \
+        software/graphics/sprites/boxSprites/gibleBoxSprite.c \
+        software/graphics/sprites/boxSprites/gabiteBoxSprite.c \
         software/graphics/sprites/boxSprites/garchompBoxSprite.c \
+        software/graphics/sprites/boxSprites/rioluBoxSprite.c \
         software/graphics/sprites/boxSprites/lucarioBoxSprite.c \
         software/graphics/sprites/boxSprites/miloticBoxSprite.c \
         software/graphics/sprites/boxSprites/rayquazaBoxSprite.c \
         software/graphics/sprites/boxSprites/roseradeBoxSprite.c \
         software/graphics/sprites/boxSprites/spiritombBoxSprite.c \
+        software/graphics/sprites/boxSprites/togepiBoxSprite.c \
+        software/graphics/sprites/boxSprites/togeticBoxSprite.c \
         software/graphics/sprites/boxSprites/togekissBoxSprite.c \
         software/graphics/sprites/boxSprites/pokemonBoxSpriteInit.c \
+        software/graphics/sprites/itemStone/shinyStoneIcon.c \
         software/graphics/sprites/statEffects/statUp.c \
         software/graphics/sprites/statEffects/statDown.c \
         software/graphics/sprites/battleParty/battlePartySprite.c \
