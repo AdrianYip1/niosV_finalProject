@@ -387,7 +387,7 @@ static void copy_ellipsis(char *out, size_t out_sz, const char *in, int max_char
     }
     out[n] = '\0';
 
-    // Add "..." if truncated and we have room.
+//if there is room add elpises to truncate
     if (in[n] != '\0' && in[n] != '\n' && out_sz >= 4) {
         int end = n;
         if (end > (int)out_sz - 4) end = (int)out_sz - 4;
