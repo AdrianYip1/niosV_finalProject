@@ -894,17 +894,48 @@ static int navBattleAttack4(int index, NavDir dir) {
 }
 
 
+static unsigned int g_wildEncounterRng = 0x2432026u;
+
+static unsigned int wildEncounterNextU32(void) {
+    g_wildEncounterRng = g_wildEncounterRng * 1664525u + 1013904223u;
+    return g_wildEncounterRng;
+}
+
+static const PokemonData *randomWildEncounterSpecies(void) {
+    switch (wildEncounterNextU32() % 6u) {
+        case 0u: return &CHARMANDER;
+        case 1u: return &TOGEPI;
+        case 2u: return &FEEBAS;
+        case 3u: return &RIOLU;
+        case 4u: return &GIBLE;
+        case 5u: return &BUDEW;
+        default: return &CHARMANDER;
+    }
+}
+
+static int randomWildEncounterLevel(void) {
+    return 18 + (int)(wildEncounterNextU32() % 2u); // 18..19
+}
+
+static void setupWildEnemyParty(Party *enemyParty, pokemonInBattle *wildEnemy) {
+    if (enemyParty == NULL || wildEnemy == NULL) return;
+
+    initParty(enemyParty);
+    const PokemonData *species = randomWildEncounterSpecies();
+    const int level = randomWildEncounterLevel();
+    initPokemonInBattle(wildEnemy, species, level);
+    addPokemonToParty(enemyParty, wildEnemy);
+}
+
 static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
                                         bool leftPressed, bool rightPressed) {
-    static unsigned int grassEncounterRng = 0x2432026u;
     const bool movedInputPressed = upPressed || downPressed || leftPressed || rightPressed;
     const McBounds bounds = getMCBounds();
     if (!movedInputPressed || !map_is_mc_on_grass_patch(&bounds)) {
         return false;
     }
 
-    grassEncounterRng = grassEncounterRng * 1664525u + 1013904223u;
-    return (grassEncounterRng % 10u) == 0u;
+    return (wildEncounterNextU32() % 10u) == 0u;
 }
 
 //pokedex state
@@ -1518,8 +1549,7 @@ int main(void)
     }
 
     initParty(&enemyParty);
-    initPokemonInBattle(&wildEnemy, &CHARMANDER, 15);
-    addPokemonToParty(&enemyParty, &wildEnemy);
+    setupWildEnemyParty(&enemyParty, &wildEnemy);
     initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, BATTLE_WILD);
 
     initPokemonBackBattleSpriteDefault(&playerBackSprite, playerParty.slots[playerParty.activeIndex]->id.backFrame_ID);
@@ -1785,9 +1815,7 @@ int main(void)
  
                 // Player party is persistent for this program run
                 if (nextBattleType == BATTLE_WILD) {
-                    initParty(&enemyParty);
-                    initPokemonInBattle(&wildEnemy, &CHARMANDER, 15);
-                    addPokemonToParty(&enemyParty, &wildEnemy);
+                    setupWildEnemyParty(&enemyParty, &wildEnemy);
                 } else {
                     // battle type is BATTLE_TRAINER
                     if (currentMapId == WORLD_MAP_ROUTE_B) {
