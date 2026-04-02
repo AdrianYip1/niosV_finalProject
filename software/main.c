@@ -80,6 +80,7 @@
 #include "graphics/sprites/menu/cancelSprite.h"
 #include "graphics/sprites/menuPokemon/menuPokemonSprites.h"
   #include "graphics/sprites/mainMenuUi/mainMenuUiSprites.h"
+#include "graphics/sprites/pokemonSummary/pokemonSummarySprites.h"
 #include "graphics/sprites/trainerCard/trainerCardSprite.h"
 #include "graphics/sprites/trainerCard/trainerCardBackSprite.h"
 #include "graphics/sprites/itemShopUI/pokemartBuyScreenSprite.h"
@@ -328,6 +329,7 @@ typedef enum {
     GAME_STATE_BATTLE_WIN,
     GAME_STATE_BATTLE_LOSE,
     GAME_STATE_MENU,
+    GAME_STATE_SUMMARY,
 
     // Learn-move
     GAME_STATE_LEARN_MOVE_PROMPT,
@@ -381,6 +383,7 @@ static inline bool isBattleMenuState(GameState state) {
 static inline bool isOverworldState(GameState state) {
     return state == GAME_STATE_MAP ||
            state == GAME_STATE_MENU ||
+           state == GAME_STATE_SUMMARY ||
            state == GAME_STATE_PC_MENU ||
            state == GAME_STATE_POKEDEX_MENU ||
            state == GAME_STATE_POKEDEX_INFO ||
@@ -1741,6 +1744,14 @@ int main(void)
     GameState partyMenuReturnState = GAME_STATE_MAP;
     char battleEndMsg[96] = "WIN";
 
+    // Pokemon summary UI state (entered from party menu).
+    int summaryPokemonIndex = -1;
+    GameState summaryReturnState = GAME_STATE_MENU;
+    int summaryPage = 0; // 0=main, 1=stats, 2=attacks
+    int summaryAttackCursor = 0; // 0..3
+    bool summaryShowAttackEffect = false;
+    int summaryEffectAttackCursor = 0;
+
     int pcCursor = 0; // 6 + 2 + max storage in pc
     int pcSwapIndex = -1; //first picked index for swapping in pc
     pokemonInBattle *pcHeldMon = NULL;
@@ -1812,6 +1823,18 @@ int main(void)
                     mapReturnY = 112;
                     currentGameState = GAME_STATE_MAP;
                     nextBattleType = BATTLE_WILD;
+                } else if (ch == 's' && currentGameState == GAME_STATE_MENU) {
+                    if (menuCursor >= 0 && menuCursor < 6) {
+                        pokemonInBattle *selected = (menuCursor < playerParty.count) ? playerParty.slots[menuCursor] : NULL;
+                        if (selected != NULL) {
+                            summaryPokemonIndex = menuCursor;
+                            summaryReturnState = GAME_STATE_MENU;
+                            summaryPage = 0;
+                            summaryAttackCursor = 0;
+                            summaryShowAttackEffect = false;
+                            currentGameState = GAME_STATE_SUMMARY;
+                        }
+                    }
                 } else if (ch == '1' && currentGameState == GAME_STATE_MAP) {
                     nextBattleType = BATTLE_WILD;
                     currentGameState = GAME_STATE_WILD_BATTLE;
@@ -2201,7 +2224,7 @@ int main(void)
                         if (playerParty.activeIndex == a) playerParty.activeIndex = b;
                         else if (playerParty.activeIndex == b) playerParty.activeIndex = a;
 
-                        // Keep battle party box sprites consistent with the party order.
+             
                         for (int k = 0; k < 6; k++) {
                             const pokemonInBattle *slotPokemon = (k >= 0 && k < playerParty.count) ? playerParty.slots[k] : NULL;
                             const int spriteId = (slotPokemon != NULL) ? slotPokemon->id.frontFrame_ID : 0;
@@ -2212,6 +2235,157 @@ int main(void)
                         play_sfx(plink_audio, plink_audio_len);
                     }
                 }
+            }
+            break;
+        }
+        case GAME_STATE_SUMMARY: {
+            if (summaryPage < 0) summaryPage = 0;
+            if (summaryPage > 2) summaryPage = 2;
+
+            if (leftPressed) {
+                summaryPage = (summaryPage + 2) % 3;
+                summaryShowAttackEffect = false;
+                summaryAttackCursor = 0;
+                play_sfx(plink_audio, plink_audio_len);
+            } else if (rightPressed) {
+                summaryPage = (summaryPage + 1) % 3;
+                summaryShowAttackEffect = false;
+                summaryAttackCursor = 0;
+                play_sfx(plink_audio, plink_audio_len);
+            }
+
+            pokemonInBattle *summaryMon = NULL;
+            if (summaryPokemonIndex >= 0 && summaryPokemonIndex < playerParty.count) {
+                summaryMon = playerParty.slots[summaryPokemonIndex];
+            }
+
+            draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+            draw_sprite_any(pokemonSummarySummary1Sprite,
+                            POKEMON_SUMMARY_SUMMARY1_WIDTH, POKEMON_SUMMARY_SUMMARY1_HEIGHT,
+                            0, 0,
+                            TRANSPARENT_COLOUR);
+
+            // Page overlays 
+            const int panelX = 80;
+            const int panelY = 50;
+            if (summaryPage == 1) {
+                draw_sprite_any(pokemonSummarySummary2Sprite,
+                                POKEMON_SUMMARY_SUMMARY2_WIDTH, POKEMON_SUMMARY_SUMMARY2_HEIGHT,
+                                panelX, panelY,
+                                TRANSPARENT_COLOUR);
+            } else if (summaryPage == 2) {
+                draw_sprite_any(pokemonSummarySummary3Sprite,
+                                POKEMON_SUMMARY_SUMMARY3_WIDTH, POKEMON_SUMMARY_SUMMARY3_HEIGHT,
+                                panelX, panelY,
+                                TRANSPARENT_COLOUR);
+            }
+
+       
+            if (summaryMon != NULL) {
+                char buf[64];
+                snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
+                draw_string_f(12, 12, buf, BLACK, FONT_5X9);
+
+                if (summaryPage == 1) {
+                    snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
+                    draw_string_f(panelX + 10, panelY + 10, buf, BLACK, FONT_5X9);
+
+                    snprintf(buf, sizeof(buf), "HP %d/%d", getHp(summaryMon), summaryMon->maxHp);
+                    draw_string_f(panelX + 10, panelY + 25, buf, BLACK, FONT_5X9);
+
+                    snprintf(buf, sizeof(buf), "ATK %d", getAttack(summaryMon));
+                    draw_string_f(panelX + 10, panelY + 40, buf, BLACK, FONT_5X9);
+
+                    snprintf(buf, sizeof(buf), "DEF %d", getDef(summaryMon));
+                    draw_string_f(panelX + 10, panelY + 55, buf, BLACK, FONT_5X9);
+
+                    snprintf(buf, sizeof(buf), "SPA %d", getSpAttack(summaryMon));
+                    draw_string_f(panelX + 10, panelY + 70, buf, BLACK, FONT_5X9);
+
+                    snprintf(buf, sizeof(buf), "SPD %d", getSpDef(summaryMon));
+                    draw_string_f(panelX + 10, panelY + 85, buf, BLACK, FONT_5X9);
+
+                    snprintf(buf, sizeof(buf), "SPE %d", getSpd(summaryMon));
+                    draw_string_f(panelX + 10, panelY + 100, buf, BLACK, FONT_5X9);
+                } else if (summaryPage == 2) {
+                    // Count available moves (non-NULL pointers).
+                    int moveCount = 0;
+                    for (int i = 0; i < 4; i++) {
+                        if (summaryMon->attacks[i] != NULL) moveCount++;
+                    }
+                    if (moveCount <= 0) {
+                        draw_string_f(panelX + 10, panelY + 10, "No moves", BLACK, FONT_5X9);
+                        summaryShowAttackEffect = false;
+                    } else {
+                        if (summaryAttackCursor < 0) summaryAttackCursor = 0;
+                        if (summaryAttackCursor >= moveCount) summaryAttackCursor = moveCount - 1;
+
+                        if (upPressed) {
+                            summaryAttackCursor = (summaryAttackCursor + moveCount - 1) % moveCount;
+                            summaryShowAttackEffect = false;
+                            play_sfx(plink_audio, plink_audio_len);
+                        } else if (downPressed) {
+                            summaryAttackCursor = (summaryAttackCursor + 1) % moveCount;
+                            summaryShowAttackEffect = false;
+                            play_sfx(plink_audio, plink_audio_len);
+                        }
+
+                        if (spacePressed) {
+                            summaryShowAttackEffect = true;
+                            summaryEffectAttackCursor = summaryAttackCursor;
+                            play_sfx(plink_audio, plink_audio_len);
+                        }
+
+                        // Render up to 4 moves in order, skipping NULLs, and map the cursor into that list.
+                        const int listX = panelX + 10;
+                        const int listY = panelY + 10;
+                        const int rowH = 14;
+                        int visibleIndex = 0;
+                        for (int i = 0; i < 4; i++) {
+                            const AttackData *mv = summaryMon->attacks[i];
+                            if (mv == NULL) continue;
+
+                            const int y = listY + visibleIndex * rowH;
+                            if (visibleIndex == summaryAttackCursor) {
+                                draw_rect(listX - 2, y - 1, 120, rowH, WHITE);
+                            }
+                            draw_string_f(listX, y, mv->name ? mv->name : "Move", BLACK, FONT_5X9);
+                            visibleIndex++;
+                        }
+
+                        if (summaryShowAttackEffect) {
+                            // Popup: show effect sprite + basic info for selected move.
+                            const int popupX = 320 - POKEMON_SUMMARY_EFFECT_WIDTH - 6;
+                            const int popupY = 240 - POKEMON_SUMMARY_EFFECT_HEIGHT - 6;
+
+                            draw_sprite_any(pokemonSummaryEffectSprite,
+                                            POKEMON_SUMMARY_EFFECT_WIDTH, POKEMON_SUMMARY_EFFECT_HEIGHT,
+                                            popupX, popupY,
+                                            TRANSPARENT_COLOUR);
+
+                            // Find the selected move again (by visible index).
+                            const AttackData *selectedMove = NULL;
+                            int idx = 0;
+                            for (int i = 0; i < 4; i++) {
+                                const AttackData *mv = summaryMon->attacks[i];
+                                if (mv == NULL) continue;
+                                if (idx == summaryEffectAttackCursor) { selectedMove = mv; break; }
+                                idx++;
+                            }
+
+                            if (selectedMove != NULL) {
+                                snprintf(buf, sizeof(buf), "PWR %d", selectedMove->power);
+                                draw_string_f(popupX + 6, popupY + 6, buf, BLACK, FONT_5X9);
+                                snprintf(buf, sizeof(buf), "ACC %d", selectedMove->accuracy);
+                                draw_string_f(popupX + 6, popupY + 20, buf, BLACK, FONT_5X9);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (escPressed) {
+                currentGameState = summaryReturnState;
             }
             break;
         }
