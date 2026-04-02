@@ -503,56 +503,6 @@ static inline const unsigned short *bagSpinSpriteForIndex(int index) {
     }
 }
 
-static void draw_wrapped_string_fixed_width_f(int x, int y, const char *text, short colour, FontId font, int maxCharsPerLine, int maxLines) {
-    if (text == NULL || text[0] == '\0' || maxCharsPerLine <= 0 || maxLines <= 0) return;
-
-    // Build a small wrapped buffer with '\n' inserted.
-    char buf[256];
-    int out = 0;
-
-    const char *p = text;
-    for (int line = 0; line < maxLines && *p; line++) {
-        // Skip leading spaces on each line.
-        while (*p == ' ') p++;
-        if (!*p) break;
-
-        int count = 0;
-        int lastSpaceOut = -1;
-        int lineStartOut = out;
-
-        while (*p && *p != '\n' && count < maxCharsPerLine && out < (int)sizeof(buf) - 2) {
-            buf[out] = *p;
-            if (*p == ' ') lastSpaceOut = out;
-            out++;
-            p++;
-            count++;
-        }
-
-        // If we hit max width in the middle of a word, wrap back to the last space.
-        if (count >= maxCharsPerLine && lastSpaceOut >= 0) {
-            // rewind input pointer to after that space
-            const int rewind = out - (lastSpaceOut + 1);
-            p -= rewind;
-            out = lastSpaceOut; 
-        }
-
- 
-        if (*p == '\n') p++;
-
-        // if nothing, force a break to avoid infinite loop.
-        if (out == lineStartOut) {
-            while (*p && *p != '\n') p++;
-            if (*p == '\n') p++;
-        }
-
-        if (line != maxLines - 1 && *p && out < (int)sizeof(buf) - 2) {
-            buf[out++] = '\n';
-        }
-    }
-
-    buf[out] = '\0';
-    draw_string_f(x, y, buf, colour, font);
-}
 
 static int findNextPendingEvolutionIndex(const Party *party, int afterIndex) {
     if (party == NULL) return -1;
@@ -5474,7 +5424,6 @@ int main(void)
                                 }
 
                                 const int descTextX = (icon != NULL) ? (descX + 22) : descX;
-                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                             }
                         }
                     }
@@ -5629,7 +5578,7 @@ int main(void)
                                 }
 
                                 const int descTextX = (icon != NULL) ? (descX + 22) : descX;
-                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+
                             }
                         }
                     }
