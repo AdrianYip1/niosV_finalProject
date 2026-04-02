@@ -94,6 +94,8 @@
 #define TITLE_TEXT_X 10
 #define TITLE_TEXT_Y 10
 
+#define LIGHT_GREEN 0x9772
+
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 #define NUM_TILES_X (SCREEN_WIDTH / TILE_SIZE)
@@ -5960,7 +5962,7 @@ int main(void)
                 const int cursorMaxY = 166;
                 const int itemNameX = 45;
                 const int itemNameY = 152;
-                const int itemCountX = 135;
+                const int itemCountX = 130;
                 const int itemCountY = 152;
                 const int descX = 47;
                 const int descY = 169;
@@ -6144,7 +6146,7 @@ int main(void)
                 const int cursorMaxY = 166;
                 const int itemNameX = 45;
                 const int itemNameY = 152;
-                const int itemCountX = 135;
+                const int itemCountX = 130;
                 const int itemCountY = 152;
                 const int descX = 47;
                 const int descY = 169;
@@ -6814,7 +6816,6 @@ int main(void)
 
         case GAME_STATE_POKEDEX_MENU:
             {
-                // Handle scrolling before drawing 
                 if (upPressed) {
                     if (pokedexScrollIndex <= POKEMON_ID_CHARMANDER) pokedexScrollIndex = POKEMON_ID_MAX;
                     else pokedexScrollIndex--;
@@ -6833,7 +6834,31 @@ int main(void)
                 draw_sprite_any(pokedexListSprite, POKEDEX_MENU_LIST_WIDTH, POKEDEX_MENU_LIST_HEIGHT, 0, -1, TRANSPARENT_COLOUR);
                 draw_sprite_any(pokedexSelectSprite, POKEDEX_MENU_SELECT_WIDTH, POKEDEX_MENU_SELECT_HEIGHT, 3, 3, TRANSPARENT_COLOUR);
                 draw_sprite_any(pokedexBottomSprite, POKEDEX_MENU_BOTTOM_WIDTH, POKEDEX_MENU_BOTTOM_HEIGHT, 0, 0, TRANSPARENT_COLOUR);
-                draw_sprite_any(scrollMenuSprite, POKEDEX_MENU_SCROLL_MENU_WIDTH, POKEDEX_MENU_SCROLL_MENU_HEIGHT, 320 - POKEDEX_MENU_SCROLL_MENU_WIDTH, 3, TRANSPARENT_COLOUR);
+                const int scrollX = 320 - POKEDEX_MENU_SCROLL_MENU_WIDTH;
+                const int scrollY = 3;
+                draw_sprite_any(scrollMenuSprite,
+                                POKEDEX_MENU_SCROLL_MENU_WIDTH, POKEDEX_MENU_SCROLL_MENU_HEIGHT,
+                                scrollX, scrollY,
+                                TRANSPARENT_COLOUR);
+
+                // Scroll bar that goes down/up depending on what user does (light green).
+                const int totalCount = (POKEMON_ID_MAX - POKEMON_ID_CHARMANDER) + 1;
+                const int windowCount = 7;
+                int barH = (totalCount > 0) ? (POKEDEX_MENU_SCROLL_MENU_HEIGHT * windowCount) / totalCount : 12;
+                if (barH < 10) barH = 10;
+                if (barH > POKEDEX_MENU_SCROLL_MENU_HEIGHT) barH = POKEDEX_MENU_SCROLL_MENU_HEIGHT;
+
+                int topIndex = pokedexScrollIndex - POKEMON_ID_CHARMANDER;
+                if (topIndex < 0) topIndex = 0;
+                if (topIndex > totalCount - 1) topIndex = totalCount - 1;
+
+                const int maxStart = (totalCount > windowCount) ? (totalCount - windowCount) : 0;
+                if (topIndex > maxStart) topIndex = maxStart;
+
+                const int maxPos = POKEDEX_MENU_SCROLL_MENU_HEIGHT - barH;
+                const int pos = (maxStart > 0) ? (topIndex * maxPos) / maxStart : 0;
+
+                draw_rect(scrollX, scrollY + pos, POKEDEX_MENU_SCROLL_MENU_WIDTH, barH, LIGHT_GREEN);
 
                 // For non-selected, they go down by 30 pixels
                 // Draw text, pokemon, seen, etc
