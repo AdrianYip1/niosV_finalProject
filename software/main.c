@@ -1607,6 +1607,7 @@ int main(void)
 
     // Shop UI state.
     int shopCursor = 0;
+    int shopScroll = 0;
     bool shopCancelFocused = false;
     int shopMsgTimer = 0;
     char shopMsg[64];
@@ -6003,6 +6004,7 @@ int main(void)
                     currentGameState =  GAME_STATE_SHOP_UI;
                     clearShopOpen = false;
                     shopCursor = 0;
+                    shopScroll = 0;
                     shopCancelFocused = false;
                     shopMsgTimer = 0;
                     shopMsg[0] = '\0';
@@ -6345,19 +6347,19 @@ int main(void)
             const int cursorY0 = 32;
             const int cursorDy = 53 - 32;
             const int itemTextX0 = 130;
-            const int itemTextY0 = 50;
+            const int itemTextY0 = 50 - 5;
             const int itemSelectedDy = -4; // selected text moves up by 4
             const int cancelSelX = 130;
             const int cancelUnselX = 129;
             const int cancelY = 151;
-            const int selectedNameX = 34;
+            const int selectedNameX = 34 - 20;
             const int selectedNameY = 179;
             const int shopMsgX = 34;
             const int shopMsgY = 200;
             const int moneyLabelX = 5;
             const int moneyLabelY = 40;
             const int moneyValX = 68;
-            const int moneyValY = 60;
+            const int moneyValY = 60 - 5;
             const int selectedIconX = 16;
             const int selectedIconY = 182;
 
@@ -6375,11 +6377,26 @@ int main(void)
             const int shopItemCount = (int)(sizeof(shopItems) / sizeof(shopItems[0]));
             if (shopCursor < 0) shopCursor = 0;
             if (shopCursor >= shopItemCount) shopCursor = shopItemCount - 1;
+            if (shopScroll < 0) shopScroll = 0;
+            if (shopScroll > shopItemCount - 1) shopScroll = shopItemCount - 1;
 
+
+            // Max visible rows is 6 including the cancel button
+            const int shopVisibleItemRows = 5;
+            const int maxScroll = (shopItemCount > shopVisibleItemRows) ? (shopItemCount - shopVisibleItemRows) : 0;
+            if (shopScroll > maxScroll) shopScroll = maxScroll;
+
+            const int prevCursor = shopCursor;
+            const bool prevCancelFocused = shopCancelFocused;
 
             if (!shopCancelFocused) {
-                const int prev = shopCursor;
-                if (upPressed) shopCursor--;
+                if (upPressed) {
+                    if (shopCursor <= 0) {
+                        shopCursor = shopItemCount - 1; // wrap
+                    } else {
+                        shopCursor--;
+                    }
+                }
                 if (downPressed) {
                     if (shopCursor >= shopItemCount - 1) {
                         shopCancelFocused = true;
@@ -6387,14 +6404,26 @@ int main(void)
                         shopCursor++;
                     }
                 }
+
                 shopCursor = clamp_int(shopCursor, 0, shopItemCount - 1);
-                if (shopCursor != prev) play_sfx(plink_audio, plink_audio_len);
+
+                if (shopCursor < shopScroll) shopScroll = shopCursor;
+                if (shopCursor >= shopScroll + shopVisibleItemRows) shopScroll = shopCursor - (shopVisibleItemRows - 1);
+                if (shopScroll < 0) shopScroll = 0;
+                if (shopScroll > maxScroll) shopScroll = maxScroll;
             } else {
                 if (upPressed) {
                     shopCancelFocused = false;
-                    shopCursor = shopItemCount - 1;
-                    play_sfx(plink_audio, plink_audio_len);
+                } else if (downPressed) {
+                    // cycle back to top
+                    shopCancelFocused = false;
+                    shopCursor = 0;
+                    shopScroll = 0;
                 }
+            }
+
+            if (shopCancelFocused != prevCancelFocused || shopCursor != prevCursor) {
+                play_sfx(plink_audio, plink_audio_len);
             }
 
             if (escPressed) {
@@ -6410,16 +6439,19 @@ int main(void)
 
             // Cursor highlight
             if (!shopCancelFocused) {
+                const int cursorRow = shopCursor - shopScroll;
                 draw_sprite_any(pokemartSelectCursorSprite,
                                 POKEMART_SELECT_CURSOR_SPRITE_WIDTH, POKEMART_SELECT_CURSOR_SPRITE_HEIGHT,
-                                cursorX0, cursorY0 + shopCursor * cursorDy,
+                                cursorX0, cursorY0 + cursorRow * cursorDy,
                                 TRANSPARENT_COLOUR);
             }
 
             // Item list names
-            for (int i = 0; i < shopItemCount; i++) {
+            const int rows = (shopItemCount < shopVisibleItemRows) ? shopItemCount : shopVisibleItemRows;
+            for (int row = 0; row < rows; row++) {
+                const int i = shopScroll + row;
                 const ItemId it = shopItems[i];
-                int y = itemTextY0 + i * cursorDy;
+                int y = itemTextY0 + row * cursorDy;
                 if (!shopCancelFocused && i == shopCursor) y += itemSelectedDy;
                 draw_string_f(itemTextX0, y, itemName(it), BLACK, FONT_5X9);
             }
