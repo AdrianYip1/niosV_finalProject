@@ -2482,6 +2482,10 @@ int main(void)
                         draw_string_f(124 + 4, 88 + 2, buf, BLACK, FONT_5X9);
                     }
                 } else if (summaryPage == 1) {
+                    // Pokemon name on page 2 (stats page).
+                    snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
+                    draw_string_f(130, 85, buf, BLACK, FONT_5X9);
+
                     // EXP belongs on page 2 (stats page).
                     {
                         const int expReq = expRequiredAtLevel(summaryMon->level);
@@ -2571,7 +2575,16 @@ int main(void)
 
                             const int y = listY + visibleIndex * rowH;
                             if (visibleIndex == summaryAttackCursor) {
-                                draw_rect(listX - 2, y - 1, 120, rowH, WHITE);
+                                // White fill with red outline.
+                                const int rx = listX - 2;
+                                const int ry = y - 1;
+                                const int rw = 120;
+                                const int rh = rowH;
+                                draw_rect(rx, ry, rw, rh, WHITE);
+                                draw_rect(rx, ry, rw, 1, RED);
+                                draw_rect(rx, ry + rh - 1, rw, 1, RED);
+                                draw_rect(rx, ry, 1, rh, RED);
+                                draw_rect(rx + rw - 1, ry, 1, rh, RED);
                                 descMove = mv;
                                 descMoveSlot = i;
                             }
