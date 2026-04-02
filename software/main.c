@@ -1547,6 +1547,10 @@ int main(void)
     static Bag playerBag;
     static pokemonInBattle wildEnemy;
 
+    bool trainerPayoutApplied = false;
+    bool trainerPayoutMsgShown = false;
+    int trainerPayoutDelta = 0;
+
     static pokemonInBattle cynthiaTeam[6];
     static pokemonInBattle trainerATeam[6];
     BattleType nextBattleType = BATTLE_WILD;
@@ -1739,9 +1743,6 @@ int main(void)
     int menuSwapIndex = -1; // first picked index for swapping in the party menu
     GameState partyMenuReturnState = GAME_STATE_MAP;
     char battleEndMsg[96] = "WIN";
-    bool trainerPayoutApplied = false;
-    bool trainerPayoutMsgShown = false;
-    int trainerPayoutDelta = 0;
 
     int pcCursor = 0; // 6 + 2 + max storage in pc
     int pcSwapIndex = -1; //first picked index for swapping in pc
