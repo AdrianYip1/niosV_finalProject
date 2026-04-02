@@ -4569,7 +4569,9 @@ int main(void)
 
                     if (battleEnded) {
                         currentGameState = returnState;
-                        previousGameState = returnState;
+                        // Keep previousGameState as a non-overworld state so the overworld transition
+                        // triggers load_world_map() when returnState is GAME_STATE_MAP.
+                        previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
                     } else if (battleState.playerMustSwitch) {
                             forcedSwitchIndex = getFirstAlivePokemon(&playerParty);
                             if (forcedSwitchIndex < 0) forcedSwitchIndex = 0;
@@ -4593,7 +4595,6 @@ int main(void)
             draw_map();
             syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
             if (playerBackSprite.pixels != NULL) drawStaticSprite(&playerBackSprite);
-            if (enemyFrontSprite.pixels != NULL) drawStaticSprite(&enemyFrontSprite);
 
             draw_sprite_any(battleUIBackgroundSprite,
                             BATTLE_UI_BACKGROUND_WIDTH,
@@ -4752,7 +4753,7 @@ int main(void)
                     battleUi = learnMoveReturnUi;
                     battleCursor = learnMoveReturnCursor;
                     currentGameState = learnMoveReturnState;
-                    previousGameState = learnMoveReturnState;
+                    previousGameState = GAME_STATE_LEARN_MOVE_YESNO;
                 }
             }
             break;
@@ -4946,7 +4947,7 @@ int main(void)
                     battleUi = learnMoveReturnUi;
                     battleCursor = learnMoveReturnCursor;
                     currentGameState = learnMoveReturnState;
-                    previousGameState = learnMoveReturnState;
+                    previousGameState = GAME_STATE_LEARN_MOVE_MESSAGE;
                 }
             }
             break;
