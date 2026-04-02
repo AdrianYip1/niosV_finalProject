@@ -5551,7 +5551,6 @@ int main(void)
                                 }
 
                                 const int descTextX = (icon != NULL) ? (descX + 22) : descX;
-                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
                             }
                         }
                     }
@@ -5706,7 +5705,6 @@ int main(void)
                                 }
 
                                 const int descTextX = (icon != NULL) ? (descX + 22) : descX;
-                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
 
                             }
                         }
@@ -6531,10 +6529,10 @@ int main(void)
             const int cancelSelX = 130;
             const int cancelUnselX = 129;
             const int cancelY = 151;
-            const int selectedNameX = 34 - 20;
+            const int selectedNameX = 1;
             const int selectedNameY = 179;
             const int selectedPriceX = 250;
-            const int shopMsgX = 34;
+            const int shopMsgX = 134;
             const int shopMsgY = 200;
             const int moneyLabelX = 5;
             const int moneyLabelY = 40;
