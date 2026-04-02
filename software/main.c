@@ -3539,7 +3539,10 @@ int main(void)
                                     bobFrame);
             }
 
-            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+            const bool showOppUi = (battleState.result != BATTLE_RESULT_CAUGHT);
+            if (showOppUi) {
+                draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+            }
             //todo: make the top and bottom lines of hp a darker shade to look better
 
             //hp bars with code that scales
@@ -3561,25 +3564,27 @@ int main(void)
             snprintf(myHpCurBuf, sizeof(myHpCurBuf), "%d", playerHp);
             snprintf(myHpMaxBuf, sizeof(myHpMaxBuf), "%d", playerMaxHp);
 
-            //opponent hp bar
-            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
-            draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
-            if (enemyActive != NULL) {
-                int sw = 0, sh = 0;
-                const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
-                if (sicon != NULL) {
-                    draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
-                }
-                if (g_hasCompletedFirstBattle) {
-                    const int enemyId = enemyActive->id.frontFrame_ID;
-                    if (pokedex_is_caught(enemyId)) {
-                        draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-                    } else if (pokedex_is_seen(enemyId)) {
-                        draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+            if (showOppUi) {
+                //opponent hp bar
+                draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
+                draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
+                if (enemyActive != NULL) {
+                    int sw = 0, sh = 0;
+                    const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
+                    if (sicon != NULL) {
+                        draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                    }
+                    if (g_hasCompletedFirstBattle) {
+                        const int enemyId = enemyActive->id.frontFrame_ID;
+                        if (pokedex_is_caught(enemyId)) {
+                            draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                        } else if (pokedex_is_seen(enemyId)) {
+                            draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                        }
                     }
                 }
+                draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
             }
-            draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
             //got the bobbing dy pattern array to move hp bar, name, level, etc from myHP bar 
             static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
@@ -4223,7 +4228,11 @@ int main(void)
                                             TRANSPARENT_COLOUR,
                                             bobFrame);
                     }
-                    draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+
+                    const bool showOppUi = (battleState.result != BATTLE_RESULT_CAUGHT);
+                    if (showOppUi) {
+                        draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+                    }
 
                     const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
                     const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
@@ -4243,27 +4252,29 @@ int main(void)
                     snprintf(myHpCurBuf, sizeof(myHpCurBuf), "%d", playerHp);
                     snprintf(myHpMaxBuf, sizeof(myHpMaxBuf), "%d", playerMaxHp);
 
-                    draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20,
-                              (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth),
-                              HP_HEIGHT,
-                              enemyHpBarColour);
-                    draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
-                    if (enemyActive != NULL) {
-                        int sw = 0, sh = 0;
-                        const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
-                        if (sicon != NULL) {
-                            draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
-                        }
-                        if (g_hasCompletedFirstBattle) {
-                            const int enemyId = enemyActive->id.frontFrame_ID;
-                            if (pokedex_is_caught(enemyId)) {
-                                draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-                            } else if (pokedex_is_seen(enemyId)) {
-                                draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                    if (showOppUi) {
+                        draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20,
+                                  (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth),
+                                  HP_HEIGHT,
+                                  enemyHpBarColour);
+                        draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
+                        if (enemyActive != NULL) {
+                            int sw = 0, sh = 0;
+                            const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
+                            if (sicon != NULL) {
+                                draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                            }
+                            if (g_hasCompletedFirstBattle) {
+                                const int enemyId = enemyActive->id.frontFrame_ID;
+                                if (pokedex_is_caught(enemyId)) {
+                                    draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                                } else if (pokedex_is_seen(enemyId)) {
+                                    draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                                }
                             }
                         }
+                        draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
                     }
-                    draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
                     static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
                     0, -1, -1, 0, 0, 1, 1, 0,
@@ -4371,7 +4382,10 @@ int main(void)
                                     TRANSPARENT_COLOUR,
                                     bobFrame);
             }
-            draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+            const bool showOppUi = (battleState.result != BATTLE_RESULT_CAUGHT);
+            if (showOppUi) {
+                draw_sprite_any(oppHpEmpty, OPP_HP_EMPTY_WIDTH, OPP_HP_EMPTY_HEIGHT, OPP_HP_EMPTY_X, OPP_HP_EMPTY_Y, TRANSPARENT_COLOUR);
+            }
 
             const int enemyHpBarWidth = (enemyMaxHp > 0) ? (HP_WIDTH * enemyHp) / enemyMaxHp : 0;
             const int playerHpBarWidth = (playerMaxHp > 0) ? (HP_WIDTH * playerHp) / playerMaxHp : 0;
@@ -4391,24 +4405,26 @@ int main(void)
             snprintf(myHpCurBuf, sizeof(myHpCurBuf), "%d", playerHp);
             snprintf(myHpMaxBuf, sizeof(myHpMaxBuf), "%d", playerMaxHp);
 
-            draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
-            draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
-            if (enemyActive != NULL) {
-                int sw = 0, sh = 0;
-                const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
-                if (sicon != NULL) {
-                    draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
-                }
-                if (g_hasCompletedFirstBattle) {
-                    const int enemyId = enemyActive->id.frontFrame_ID;
-                    if (pokedex_is_caught(enemyId)) {
-                        draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-                    } else if (pokedex_is_seen(enemyId)) {
-                        draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+            if (showOppUi) {
+                draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
+                draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
+                if (enemyActive != NULL) {
+                    int sw = 0, sh = 0;
+                    const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
+                    if (sicon != NULL) {
+                        draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                    }
+                    if (g_hasCompletedFirstBattle) {
+                        const int enemyId = enemyActive->id.frontFrame_ID;
+                        if (pokedex_is_caught(enemyId)) {
+                            draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                        } else if (pokedex_is_seen(enemyId)) {
+                            draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                        }
                     }
                 }
+                draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
             }
-            draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
             static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
             0, -1, -1, 0, 0, 1, 1, 0,
