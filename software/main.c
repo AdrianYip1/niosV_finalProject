@@ -1001,6 +1001,7 @@ static bool should_trigger_grass_battle(bool upPressed, bool downPressed,
 
 static bool g_pokedexSeen[POKEMON_ID_MAX + 1];
 static bool g_pokedexCaught[POKEMON_ID_MAX + 1];
+static bool g_hasCompletedFirstBattle = false;
 
 static void make_sprite_black(const unsigned short *sprite,
                               int width, int height,
@@ -1097,6 +1098,14 @@ static inline bool pokedex_is_seen(int pokemon_id) {
 
 static inline bool pokedex_is_caught(int pokemon_id) {
     return (pokemon_id >= 0 && pokemon_id <= POKEMON_ID_MAX) ? g_pokedexCaught[pokemon_id] : false;
+}
+
+static inline void pokedex_mark_party_seen(const Party *party) {
+    if (party == NULL) return;
+    for (int i = 0; i < party->count; i++) {
+        const pokemonInBattle *mon = party->slots[i];
+        if (mon != NULL) pokedex_mark_seen(mon->id.frontFrame_ID);
+    }
 }
 
 //returns the address of the global pokemon structs for the pokemon
@@ -1610,6 +1619,9 @@ int main(void)
     initParty(&enemyParty);
     setupWildEnemyParty(&enemyParty, &wildEnemy);
     initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, BATTLE_WILD);
+    trainerPayoutApplied = false;
+    trainerPayoutMsgShown = false;
+    trainerPayoutDelta = 0;
 
     initPokemonBackBattleSpriteDefault(&playerBackSprite, playerParty.slots[playerParty.activeIndex]->id.backFrame_ID);
     initPokemonFrontBattleSpriteDefault(&enemyFrontSprite, enemyParty.slots[enemyParty.activeIndex]->id.frontFrame_ID);
@@ -1727,6 +1739,9 @@ int main(void)
     int menuSwapIndex = -1; // first picked index for swapping in the party menu
     GameState partyMenuReturnState = GAME_STATE_MAP;
     char battleEndMsg[96] = "WIN";
+    bool trainerPayoutApplied = false;
+    bool trainerPayoutMsgShown = false;
+    int trainerPayoutDelta = 0;
 
     int pcCursor = 0; // 6 + 2 + max storage in pc
     int pcSwapIndex = -1; //first picked index for swapping in pc
@@ -1891,12 +1906,9 @@ int main(void)
                     if (firstAlive >= 0) playerParty.activeIndex = firstAlive;
                 }
                 initBattleState(&battleState, &playerParty, &enemyParty, &playerBag, nextBattleType);
-
-                // Mark encountered Pokemon as "seen" in the pokedex.
-                for (int i = 0; i < enemyParty.count; i++) {
-                    const pokemonInBattle *mon = enemyParty.slots[i];
-                    if (mon != NULL) pokedex_mark_seen(mon->id.frontFrame_ID);
-                }
+                trainerPayoutApplied = false;
+                trainerPayoutMsgShown = false;
+                trainerPayoutDelta = 0;
 
                 syncBattleSprites(&battleState, &playerBackSprite, &enemyFrontSprite);
 
@@ -3127,11 +3139,13 @@ int main(void)
                 if (sicon != NULL) {
                     draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
                 }
-                const int enemyId = enemyActive->id.frontFrame_ID;
-                if (pokedex_is_caught(enemyId)) {
-                    draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-                } else if (pokedex_is_seen(enemyId)) {
-                    draw_string_f(CAUGHT_X, CAUGHT_Y, "S", BLACK, 1);
+                if (g_hasCompletedFirstBattle) {
+                    const int enemyId = enemyActive->id.frontFrame_ID;
+                    if (pokedex_is_caught(enemyId)) {
+                        draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                    } else if (pokedex_is_seen(enemyId)) {
+                        draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                    }
                 }
             }
             draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
@@ -3809,11 +3823,13 @@ int main(void)
                         if (sicon != NULL) {
                             draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
                         }
-                        const int enemyId = enemyActive->id.frontFrame_ID;
-                        if (pokedex_is_caught(enemyId)) {
-                            draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-                        } else if (pokedex_is_seen(enemyId)) {
-                            draw_string_f(CAUGHT_X, CAUGHT_Y, "S", BLACK, 1);
+                        if (g_hasCompletedFirstBattle) {
+                            const int enemyId = enemyActive->id.frontFrame_ID;
+                            if (pokedex_is_caught(enemyId)) {
+                                draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                            } else if (pokedex_is_seen(enemyId)) {
+                                draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                            }
                         }
                     }
                     draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
@@ -3952,11 +3968,13 @@ int main(void)
                 if (sicon != NULL) {
                     draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
                 }
-                const int enemyId = enemyActive->id.frontFrame_ID;
-                if (pokedex_is_caught(enemyId)) {
-                    draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
-                } else if (pokedex_is_seen(enemyId)) {
-                    draw_string_f(CAUGHT_X, CAUGHT_Y, "S", BLACK, 1);
+                if (g_hasCompletedFirstBattle) {
+                    const int enemyId = enemyActive->id.frontFrame_ID;
+                    if (pokedex_is_caught(enemyId)) {
+                        draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                    } else if (pokedex_is_seen(enemyId)) {
+                        draw_sprite_any_greyscale(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                    }
                 }
             }
             draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
@@ -4037,20 +4055,32 @@ int main(void)
                     }
 
                     if (battleState.result != BATTLE_RESULT_ONGOING) {
+                        g_hasCompletedFirstBattle = true;
+                        pokedex_mark_party_seen(&enemyParty);
                         autoSwapLeadIfFainted(&playerParty, partyBoxSprites);
                         GameState endState = GAME_STATE_MAP;
                         if (battleState.result == BATTLE_RESULT_PLAYER_WIN) {
                             endState = GAME_STATE_BATTLE_WIN;
-                            int delta = 0;
                             if (battleState.type == BATTLE_TRAINER) {
-                                delta = computeTrainerPayout(&enemyParty);
-                                playerMoney += delta;
-                                if (currentMapId == WORLD_MAP_ROUTE_B) {
-                                    map_set_route_b_trainer_defeated(true);
+                                if (!trainerPayoutApplied) {
+                                    trainerPayoutDelta = computeTrainerPayout(&enemyParty);
+                                    playerMoney += trainerPayoutDelta;
+                                    trainerPayoutApplied = true;
+                                    if (currentMapId == WORLD_MAP_ROUTE_B) {
+                                        map_set_route_b_trainer_defeated(true);
+                                    }
+                                }
+                                if (!trainerPayoutMsgShown && trainerPayoutDelta > 0) {
+                                    char payoutBuf[96];
+                                    snprintf(payoutBuf, sizeof(payoutBuf), "Earned $%d!", trainerPayoutDelta);
+                                    battleUiSetSingleMessage(&battleState, payoutBuf);
+                                    actionTextAwaitSpaceRelease = true;
+                                    trainerPayoutMsgShown = true;
+                                    break;
                                 }
                             }
-                            if (delta > 0) {
-                                snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN! +$%d", delta);
+                            if (trainerPayoutDelta > 0) {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN! +$%d", trainerPayoutDelta);
                             } else {
                                 snprintf(battleEndMsg, sizeof(battleEndMsg), "WIN");
                             }
@@ -5561,7 +5591,7 @@ int main(void)
                 const int cursorMaxY = 166;
                 const int itemNameX = 45;
                 const int itemNameY = 152;
-                const int itemCountX = 145;
+                const int itemCountX = 135;
                 const int itemCountY = 152;
                 const int descX = 47;
                 const int descY = 169;
@@ -5570,7 +5600,7 @@ int main(void)
 
                 const int listTextX = cursorX0 + 10;
                 const int listTextY0 = cursorY0 - 1;
-                const int listCountX = SCREEN_WIDTH - 32;
+                const int listCountX = SCREEN_WIDTH - 42;
 
                 const int visibleCount = bagMenuVisibleCountForState(currentGameState, &playerBag);
 
@@ -5745,7 +5775,7 @@ int main(void)
                 const int cursorMaxY = 166;
                 const int itemNameX = 45;
                 const int itemNameY = 152;
-                const int itemCountX = 145;
+                const int itemCountX = 135;
                 const int itemCountY = 152;
                 const int descX = 47;
                 const int descY = 169;
@@ -5754,7 +5784,7 @@ int main(void)
 
                 const int listTextX = cursorX0 + 10;
                 const int listTextY0 = cursorY0 - 1;
-                const int listCountX = SCREEN_WIDTH - 32;
+                const int listCountX = SCREEN_WIDTH - 42;
 
                 const int visibleCount = bagMenuVisibleCountForState(currentGameState, &playerBag);
 

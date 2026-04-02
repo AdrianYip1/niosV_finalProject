@@ -493,8 +493,10 @@ static void resolveFlee(BattleState *state) {
 
     state->fleeAttempts++;
     if (attemptFlee(player, enemy)) {
-        
+        battlePushMessage(state, "Got away safely!");
         state->result = BATTLE_RESULT_FLED;
+    } else {
+        battlePushMessage(state, "Couldn't escape!");
     }
 }
 
