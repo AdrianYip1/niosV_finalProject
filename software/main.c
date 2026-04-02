@@ -464,6 +464,45 @@ static inline int shopItemPrice(ItemId item) {
     }
 }
 
+static inline const unsigned short *itemIconFor(ItemId item, int *outW, int *outH) {
+    if (outW) *outW = 0;
+    if (outH) *outH = 0;
+
+    const unsigned short *icon = NULL;
+    int w = 0;
+    int h = 0;
+
+    if (item == ITEM_POKEBALL) { icon = pokeballIcon_poke; w = POKEBALL_ICON_WIDTH; h = POKEBALL_ICON_HEIGHT; }
+    else if (item == ITEM_GREAT_BALL) { icon = pokeballIcon_great; w = POKEBALL_ICON_WIDTH; h = POKEBALL_ICON_HEIGHT; }
+    else if (item == ITEM_ULTRA_BALL) { icon = pokeballIcon_ultra; w = POKEBALL_ICON_WIDTH; h = POKEBALL_ICON_HEIGHT; }
+    else if (item == ITEM_PREMIER_BALL) { icon = pokeballIcon_premier; w = POKEBALL_ICON_WIDTH; h = POKEBALL_ICON_HEIGHT; }
+    else if (item == ITEM_MASTER_BALL) { icon = pokeballIcon_master; w = POKEBALL_ICON_WIDTH; h = POKEBALL_ICON_HEIGHT; }
+    else if (item == ITEM_POTION) { icon = healingItemIcon_potion; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+    else if (item == ITEM_SUPER_POTION) { icon = healingItemIcon_superPotion; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+    else if (item == ITEM_HYPER_POTION) { icon = healingItemIcon_hyperPotion; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+    else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+    else if (item == ITEM_REVIVE) { icon = healingItemIcon_revive; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+    else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; w = HEALING_ITEM_ICON_WIDTH; h = HEALING_ITEM_ICON_HEIGHT; }
+
+    if (icon == NULL) return NULL;
+    if (outW) *outW = w;
+    if (outH) *outH = h;
+    return icon;
+}
+
+static inline const unsigned short *bagSpinSpriteForIndex(int index) {
+    switch (index % 7) {
+        case 0: return bagMenuSpin1Sprite;
+        case 1: return bagMenuSpin2Sprite;
+        case 2: return bagMenuSpin3Sprite;
+        case 3: return bagMenuSpin4Sprite;
+        case 4: return bagMenuSpin5Sprite;
+        case 5: return bagMenuSpin6Sprite;
+        case 6: return bagMenuSpin7Sprite;
+        default: return bagMenuSpin1Sprite;
+    }
+}
+
 static void draw_wrapped_string_fixed_width_f(int x, int y, const char *text, short colour, FontId font, int maxCharsPerLine, int maxLines) {
     if (text == NULL || text[0] == '\0' || maxCharsPerLine <= 0 || maxLines <= 0) return;
 
@@ -1604,6 +1643,7 @@ int main(void)
     GameState bagMenuReturnState = GAME_STATE_MAP;
     int bagMenuCursor = 0;
     BagMenuFocus bagMenuFocus = BAG_FOCUS_LIST;
+    int bagSpinIndex = 0; // 0..6 (spin1..spin7)
 
     // Shop UI state.
     int shopCursor = 0;
@@ -5298,7 +5338,7 @@ int main(void)
             }
             draw_sprite_any(bagMenuItemsSprite, BAG_MENU_ITEMS_WIDTH,BAG_MENU_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag1Sprite, BAG_MENU_BAG1_WIDTH,BAG_MENU_BAG1_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagSpinSpriteForIndex(bagSpinIndex), BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
                 draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
             } else {
@@ -5319,11 +5359,16 @@ int main(void)
                 const int cursorMaxY = 166;
                 const int itemNameX = 45;
                 const int itemNameY = 152;
+                const int itemCountX = 145;
+                const int itemCountY = 152;
                 const int descX = 47;
                 const int descY = 169;
+                const int itemIconX = 52;
+                const int itemIconY = 167;
 
                 const int listTextX = cursorX0 + 10;
                 const int listTextY0 = cursorY0 - 1;
+                const int listCountX = SCREEN_WIDTH - 32;
 
                 const int visibleCount = bagMenuVisibleCountForState(currentGameState, &playerBag);
 
@@ -5369,10 +5414,12 @@ int main(void)
 
                 if (spacePressed) {
                     if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                        bagSpinIndex = (bagSpinIndex + 1) % 7;
                         currentGameState = bagMenuNextPageState(currentGameState);
                         play_sfx(plink_audio, plink_audio_len);
                         break;
                     } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                        bagSpinIndex = (bagSpinIndex + 6) % 7;
                         currentGameState = bagMenuPrevPageState(currentGameState);
                         play_sfx(plink_audio, plink_audio_len);
                         break;
@@ -5401,14 +5448,34 @@ int main(void)
                     for (int i = 0; i < rows; i++) {
                         const ItemId it = bagMenuVisibleAtForState(currentGameState, &playerBag, i);
                         if (it == ITEM_NONE) continue;
+                        const int count = bagCount(&playerBag, it);
+                        if (count <= 0) continue;
                         draw_string_f(listTextX, listTextY0 + i * cursorDy, itemName(it), BLACK, FONT_5X9);
+                        char countBuf[8];
+                        snprintf(countBuf, sizeof(countBuf), "x%d", count);
+                        draw_string_f(listCountX, listTextY0 + i * cursorDy, countBuf, BLACK, FONT_5X9);
                     }
 
                     if (visibleCount > 0) {
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
-                            draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+                            const int selectedCount = bagCount(&playerBag, selected);
+                            if (selectedCount > 0) {
+                                draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                                char selectedCountBuf[8];
+                                snprintf(selectedCountBuf, sizeof(selectedCountBuf), "x%d", selectedCount);
+                                draw_string_f(itemCountX, itemCountY, selectedCountBuf, BLACK, FONT_5X9);
+
+                                int iconW = 0;
+                                int iconH = 0;
+                                const unsigned short *icon = itemIconFor(selected, &iconW, &iconH);
+                                if (icon != NULL && iconW > 0 && iconH > 0) {
+                                    draw_sprite_any(icon, iconW, iconH, itemIconX, itemIconY, TRANSPARENT_COLOUR);
+                                }
+
+                                const int descTextX = (icon != NULL) ? (descX + 22) : descX;
+                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+                            }
                         }
                     }
             }
@@ -5426,7 +5493,7 @@ int main(void)
             }
             draw_sprite_any(bagMenuPokeballsSprite, BAG_MENU_POKEBALLS_WIDTH,BAG_MENU_POKEBALLS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag2Sprite, BAG_MENU_BAG2_WIDTH,BAG_MENU_BAG2_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagSpinSpriteForIndex(bagSpinIndex), BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
                 draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
             } else {
@@ -5447,11 +5514,16 @@ int main(void)
                 const int cursorMaxY = 166;
                 const int itemNameX = 45;
                 const int itemNameY = 152;
+                const int itemCountX = 145;
+                const int itemCountY = 152;
                 const int descX = 47;
                 const int descY = 169;
+                const int itemIconX = 52;
+                const int itemIconY = 167;
 
                 const int listTextX = cursorX0 + 10;
                 const int listTextY0 = cursorY0 - 1;
+                const int listCountX = SCREEN_WIDTH - 32;
 
                 const int visibleCount = bagMenuVisibleCountForState(currentGameState, &playerBag);
 
@@ -5497,10 +5569,12 @@ int main(void)
 
                 if (spacePressed) {
                     if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                        bagSpinIndex = (bagSpinIndex + 1) % 7;
                         currentGameState = bagMenuNextPageState(currentGameState);
                         play_sfx(plink_audio, plink_audio_len);
                         break;
                     } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                        bagSpinIndex = (bagSpinIndex + 6) % 7;
                         currentGameState = bagMenuPrevPageState(currentGameState);
                         play_sfx(plink_audio, plink_audio_len);
                         break;
@@ -5529,14 +5603,34 @@ int main(void)
                     for (int i = 0; i < rows; i++) {
                         const ItemId it = bagMenuVisibleAtForState(currentGameState, &playerBag, i);
                         if (it == ITEM_NONE) continue;
+                        const int count = bagCount(&playerBag, it);
+                        if (count <= 0) continue;
                         draw_string_f(listTextX, listTextY0 + i * cursorDy, itemName(it), BLACK, FONT_5X9);
+                        char countBuf[8];
+                        snprintf(countBuf, sizeof(countBuf), "x%d", count);
+                        draw_string_f(listCountX, listTextY0 + i * cursorDy, countBuf, BLACK, FONT_5X9);
                     }
 
                     if (visibleCount > 0) {
                         const ItemId selected = bagMenuVisibleAtForState(currentGameState, &playerBag, bagMenuCursor);
                         if (selected != ITEM_NONE) {
-                            draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
-                            draw_wrapped_string_fixed_width_f(descX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+                            const int selectedCount = bagCount(&playerBag, selected);
+                            if (selectedCount > 0) {
+                                draw_string_f(itemNameX, itemNameY, itemName(selected), BLACK, FONT_5X9);
+                                char selectedCountBuf[8];
+                                snprintf(selectedCountBuf, sizeof(selectedCountBuf), "x%d", selectedCount);
+                                draw_string_f(itemCountX, itemCountY, selectedCountBuf, BLACK, FONT_5X9);
+
+                                int iconW = 0;
+                                int iconH = 0;
+                                const unsigned short *icon = itemIconFor(selected, &iconW, &iconH);
+                                if (icon != NULL && iconW > 0 && iconH > 0) {
+                                    draw_sprite_any(icon, iconW, iconH, itemIconX, itemIconY, TRANSPARENT_COLOUR);
+                                }
+
+                                const int descTextX = (icon != NULL) ? (descX + 22) : descX;
+                                draw_wrapped_string_fixed_width_f(descTextX, descY, getItemDescription(selected), BLACK, FONT_5X9, 42, 2);
+                            }
                         }
                     }
             }
@@ -5554,7 +5648,7 @@ int main(void)
             }
             draw_sprite_any(bagMenuTmsSprite, BAG_MENU_TMS_WIDTH,BAG_MENU_TMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag3Sprite, BAG_MENU_BAG3_WIDTH,BAG_MENU_BAG3_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagSpinSpriteForIndex(bagSpinIndex), BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
                 draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
             } else {
@@ -5600,10 +5694,12 @@ int main(void)
 
             if (spacePressed) {
                 if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    bagSpinIndex = (bagSpinIndex + 1) % 7;
                     currentGameState = bagMenuNextPageState(currentGameState);
                     play_sfx(plink_audio, plink_audio_len);
                     break;
                 } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    bagSpinIndex = (bagSpinIndex + 6) % 7;
                     currentGameState = bagMenuPrevPageState(currentGameState);
                     play_sfx(plink_audio, plink_audio_len);
                     break;
@@ -5627,7 +5723,7 @@ int main(void)
             }
             draw_sprite_any(bagMenuBerriesSprite, BAG_MENU_BERRIES_WIDTH,BAG_MENU_BERRIES_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag4Sprite, BAG_MENU_BAG4_WIDTH,BAG_MENU_BAG4_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagSpinSpriteForIndex(bagSpinIndex), BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
                 draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
             } else {
@@ -5673,10 +5769,12 @@ int main(void)
 
             if (spacePressed) {
                 if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    bagSpinIndex = (bagSpinIndex + 1) % 7;
                     currentGameState = bagMenuNextPageState(currentGameState);
                     play_sfx(plink_audio, plink_audio_len);
                     break;
                 } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    bagSpinIndex = (bagSpinIndex + 6) % 7;
                     currentGameState = bagMenuPrevPageState(currentGameState);
                     play_sfx(plink_audio, plink_audio_len);
                     break;
@@ -5700,7 +5798,7 @@ int main(void)
             }
             draw_sprite_any(bagMenuKeyItemsSprite, BAG_MENU_KEY_ITEMS_WIDTH,BAG_MENU_KEY_ITEMS_HEIGHT, 64, 48, TRANSPARENT_COLOUR );
             draw_sprite_any(bagMenuBag5Sprite, BAG_MENU_BAG5_WIDTH,BAG_MENU_BAG5_HEIGHT, 83, 67, TRANSPARENT_COLOUR );
-            draw_sprite_any(bagMenuSpin1Sprite,BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
+            draw_sprite_any(bagSpinSpriteForIndex(bagSpinIndex), BAG_MENU_SPIN1_WIDTH, BAG_MENU_SPIN1_HEIGHT, 48, 48, TRANSPARENT_COLOUR );
             if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
                 draw_sprite_any_shade_pulse(bagMenuLeftArrowSprite,BAG_MENU_LEFT_ARROW_WIDTH,BAG_MENU_LEFT_ARROW_HEIGHT, 64, 49, TRANSPARENT_COLOUR, shadePulseFrame);
             } else {
@@ -5746,10 +5844,12 @@ int main(void)
 
             if (spacePressed) {
                 if (bagMenuFocus == BAG_FOCUS_RIGHT_ARROW) {
+                    bagSpinIndex = (bagSpinIndex + 1) % 7;
                     currentGameState = bagMenuNextPageState(currentGameState);
                     play_sfx(plink_audio, plink_audio_len);
                     break;
                 } else if (bagMenuFocus == BAG_FOCUS_LEFT_ARROW) {
+                    bagSpinIndex = (bagSpinIndex + 6) % 7;
                     currentGameState = bagMenuPrevPageState(currentGameState);
                     play_sfx(plink_audio, plink_audio_len);
                     break;
@@ -6349,11 +6449,13 @@ int main(void)
             const int itemTextX0 = 130;
             const int itemTextY0 = 50 - 5;
             const int itemSelectedDy = -4; // selected text moves up by 4
+            const int itemPriceX0 = 250;
             const int cancelSelX = 130;
             const int cancelUnselX = 129;
             const int cancelY = 151;
             const int selectedNameX = 34 - 20;
             const int selectedNameY = 179;
+            const int selectedPriceX = 250;
             const int shopMsgX = 34;
             const int shopMsgY = 200;
             const int moneyLabelX = 5;
@@ -6454,6 +6556,11 @@ int main(void)
                 int y = itemTextY0 + row * cursorDy;
                 if (!shopCancelFocused && i == shopCursor) y += itemSelectedDy;
                 draw_string_f(itemTextX0, y, itemName(it), BLACK, FONT_5X9);
+                {
+                    char priceBuf[16];
+                    snprintf(priceBuf, sizeof(priceBuf), "$%d", shopItemPrice(it));
+                    draw_string_f(itemPriceX0, y, priceBuf, BLACK, FONT_5X9);
+                }
             }
 
             // Cancel button label
@@ -6472,6 +6579,11 @@ int main(void)
                 const ItemId selected = shopItems[shopCursor];
 
                 draw_string_f(selectedNameX, selectedNameY, itemName(selected), BLACK, FONT_5X9);
+                {
+                    char priceBuf[20];
+                    snprintf(priceBuf, sizeof(priceBuf), "$%d", shopItemPrice(selected));
+                    draw_string_f(selectedPriceX, selectedNameY, priceBuf, BLACK, FONT_5X9);
+                }
 
                 const unsigned short *icon = NULL;
                 int iconW = 0;
@@ -6489,7 +6601,10 @@ int main(void)
                 else if (selected == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
 
                 if (icon != NULL && iconW > 0 && iconH > 0) {
-                    draw_sprite_any(icon, iconW, iconH, selectedIconX, selectedIconY, TRANSPARENT_COLOUR);
+                    int drawY = selectedIconY;
+                    if (itemIsBall(selected)) drawY += 8;
+                    else if (itemIsHealing(selected)) drawY += 1;
+                    draw_sprite_any(icon, iconW, iconH, selectedIconX, drawY, TRANSPARENT_COLOUR);
                 }
             }
 
