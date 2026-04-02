@@ -1,6 +1,7 @@
 #pragma once
 #include "pokemonDataBase.h"
 #include "pokemonObject.h"
+#include "../../graphics/sprites/pokemon/pokemonSpriteInit.h"
 
 typedef struct {
     int level;
@@ -30,23 +31,23 @@ extern const LearnsetEntry LEARNSET_TOGEKISS[];
 
 static inline const LearnsetEntry *getLearnset(int speciesId) {
     switch (speciesId) {
-        case 1: return LEARNSET_CHARMANDER;
-        case 2: return LEARNSET_CHARMELEON;
-        case 3: return LEARNSET_CHARIZARD;
-        case 4: return LEARNSET_RAYQUAZA;
-        case 13: return LEARNSET_GIBLE;
-        case 14: return LEARNSET_GABITE;
-        case 5: return LEARNSET_GARCHOMP;
-        case 15: return LEARNSET_RIOLU;
-        case 6: return LEARNSET_LUCARIO;
-        case 12: return LEARNSET_FEEBAS;
-        case 7: return LEARNSET_MILOTIC;
-        case 11: return LEARNSET_BUDEW;
-        case 8: return LEARNSET_ROSERADE;
-        case 9: return LEARNSET_SPIRITOMB;
-        case 16: return LEARNSET_TOGEPI;
-        case 17: return LEARNSET_TOGETIC;
-        case 10: return LEARNSET_TOGEKISS;
+        case POKEMON_ID_CHARMANDER: return LEARNSET_CHARMANDER;
+        case POKEMON_ID_CHARMELEON: return LEARNSET_CHARMELEON;
+        case POKEMON_ID_CHARIZARD:  return LEARNSET_CHARIZARD;
+        case POKEMON_ID_GIBLE:      return LEARNSET_GIBLE;
+        case POKEMON_ID_GABITE:     return LEARNSET_GABITE;
+        case POKEMON_ID_GARCHOMP:   return LEARNSET_GARCHOMP;
+        case POKEMON_ID_FEEBAS:     return LEARNSET_FEEBAS;
+        case POKEMON_ID_MILOTIC:    return LEARNSET_MILOTIC;
+        case POKEMON_ID_RIOLU:      return LEARNSET_RIOLU;
+        case POKEMON_ID_LUCARIO:    return LEARNSET_LUCARIO;
+        case POKEMON_ID_BUDEW:      return LEARNSET_BUDEW;
+        case POKEMON_ID_ROSERADE:   return LEARNSET_ROSERADE;
+        case POKEMON_ID_TOGEPI:     return LEARNSET_TOGEPI;
+        case POKEMON_ID_TOGETIC:    return LEARNSET_TOGETIC;
+        case POKEMON_ID_TOGEKISS:   return LEARNSET_TOGEKISS;
+        case POKEMON_ID_SPIRITOMB:  return LEARNSET_SPIRITOMB;
+        case POKEMON_ID_RAYQUAZA:   return LEARNSET_RAYQUAZA;
         default: return NULL;
     }
 }

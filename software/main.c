@@ -293,8 +293,8 @@
 #define CANCEL_X (continue_x - 1)
 #define CANCEL_Y (continue_y - 1)
 
-#define NON_SELECTED_POKEMON_STATUS_X 32
-#define NON_SELECTED_POKEMON_STATUS_Y 23
+#define NON_SELECTED_POKEMON_STATUS_X 28
+#define NON_SELECTED_POKEMON_STATUS_Y 24
 
 // Selected slot art is drawn slightly up compared to unselected art.
 #define SELECTED_POKEMON_DIFFERENCE_Y (-3)
@@ -520,6 +520,36 @@ static inline const unsigned short *itemIconFor(ItemId item, int *outW, int *out
     if (outW) *outW = w;
     if (outH) *outH = h;
     return icon;
+}
+
+static inline const unsigned short *statusIconFor(StatusCondition status, int *outW, int *outH) {
+    if (outW) *outW = 0;
+    if (outH) *outH = 0;
+    switch (status) {
+        case STATUS_BURN:
+            if (outW) *outW = BURNED_WIDTH;
+            if (outH) *outH = BURNED_HEIGHT;
+            return burned;
+        case STATUS_POISON:
+            if (outW) *outW = POISON_WIDTH;
+            if (outH) *outH = POISON_HEIGHT;
+            return poison;
+        case STATUS_PARALYSIS:
+            if (outW) *outW = PARA_WIDTH;
+            if (outH) *outH = PARA_HEIGHT;
+            return para;
+        case STATUS_SLEEP:
+            if (outW) *outW = SLEEP_WIDTH;
+            if (outH) *outH = SLEEP_HEIGHT;
+            return sleep;
+        case STATUS_FREEZE:
+            if (outW) *outW = FROZEN_WIDTH;
+            if (outH) *outH = FROZEN_HEIGHT;
+            return frozen;
+        case STATUS_NONE:
+        default:
+            return NULL;
+    }
 }
 
 static inline const unsigned short *bagSpinSpriteForIndex(int index) {
@@ -3091,8 +3121,19 @@ int main(void)
             //opponent hp bar
             draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
             draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
-            //draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
-            //draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+            if (enemyActive != NULL) {
+                int sw = 0, sh = 0;
+                const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
+                if (sicon != NULL) {
+                    draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                }
+                const int enemyId = enemyActive->id.frontFrame_ID;
+                if (pokedex_is_caught(enemyId)) {
+                    draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                } else if (pokedex_is_seen(enemyId)) {
+                    draw_string_f(CAUGHT_X, CAUGHT_Y, "S", BLACK, 1);
+                }
+            }
             draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
             //got the bobbing dy pattern array to move hp bar, name, level, etc from myHP bar 
@@ -3108,6 +3149,13 @@ int main(void)
 
             draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
+            if (playerActive != NULL) {
+                int sw = 0, sh = 0;
+                const unsigned short *sicon = statusIconFor(playerActive->status, &sw, &sh);
+                if (sicon != NULL) {
+                    draw_sprite_any(sicon, sw, sh, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+                }
+            }
 
             // Battle UI States
             if (battleUi == BATTLE_UI_MENU) {
@@ -3755,6 +3803,19 @@ int main(void)
                               HP_HEIGHT,
                               enemyHpBarColour);
                     draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
+                    if (enemyActive != NULL) {
+                        int sw = 0, sh = 0;
+                        const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
+                        if (sicon != NULL) {
+                            draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                        }
+                        const int enemyId = enemyActive->id.frontFrame_ID;
+                        if (pokedex_is_caught(enemyId)) {
+                            draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                        } else if (pokedex_is_seen(enemyId)) {
+                            draw_string_f(CAUGHT_X, CAUGHT_Y, "S", BLACK, 1);
+                        }
+                    }
                     draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
                     static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
@@ -3770,7 +3831,13 @@ int main(void)
                     draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
                     draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
                     draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
-                    //draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+                    if (playerActive != NULL) {
+                        int sw = 0, sh = 0;
+                        const unsigned short *sicon = statusIconFor(playerActive->status, &sw, &sh);
+                        if (sicon != NULL) {
+                            draw_sprite_any(sicon, sw, sh, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+                        }
+                    }
                 }
                 break;
             }
@@ -3879,8 +3946,19 @@ int main(void)
 
             draw_rect(OPP_HP_EMPTY_X + 50, OPP_HP_EMPTY_Y + 20, (enemyHpBarWidth < 0) ? 0 : ((enemyHpBarWidth > HP_WIDTH) ? HP_WIDTH : enemyHpBarWidth), HP_HEIGHT, enemyHpBarColour);
             draw_string_f(oppLVL_X, oppLVL_Y, oppLvlBuf, BLACK, 1);
-            //draw_sprite_any(burned, BURNED_WIDTH, BURNED_HEIGHT, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
-            //draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+            if (enemyActive != NULL) {
+                int sw = 0, sh = 0;
+                const unsigned short *sicon = statusIconFor(enemyActive->status, &sw, &sh);
+                if (sicon != NULL) {
+                    draw_sprite_any(sicon, sw, sh, STATUS_X, STATUS_Y, TRANSPARENT_COLOUR);
+                }
+                const int enemyId = enemyActive->id.frontFrame_ID;
+                if (pokedex_is_caught(enemyId)) {
+                    draw_sprite_any(caught, CAUGHT_WIDTH, CAUGHT_HEIGHT, CAUGHT_X, CAUGHT_Y, TRANSPARENT_COLOUR);
+                } else if (pokedex_is_seen(enemyId)) {
+                    draw_string_f(CAUGHT_X, CAUGHT_Y, "S", BLACK, 1);
+                }
+            }
             draw_string_f(OPPNAME_X, OPPNAME_Y, (enemyActive != NULL && enemyActive->id.data != NULL) ? enemyActive->id.data->name : "???", BLACK, 1);
 
             static const signed char dy_pattern[BOB_SPRITE_FRAME_COUNT] = {
@@ -3893,7 +3971,13 @@ int main(void)
             draw_string_f(MYNAME_X, MYNAME_Y + offsetY, (playerActive != NULL && playerActive->id.data != NULL) ? playerActive->id.data->name : "???", BLACK, 1);
             draw_string_f(TOTAL_HPNUM_X, HPNUM_Y + offsetY, myHpCurBuf, BLACK, 1);
             draw_string_f(REMAINING_HP_X, HPNUM_Y + offsetY, myHpMaxBuf, BLACK, 1);
-            //draw_sprite_any(poison, POISON_WIDTH, POISON_HEIGHT, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+            if (playerActive != NULL) {
+                int sw = 0, sh = 0;
+                const unsigned short *sicon = statusIconFor(playerActive->status, &sw, &sh);
+                if (sicon != NULL) {
+                    draw_sprite_any(sicon, sw, sh, MYSTATUS_X, MYSTATUS_Y + offsetY, TRANSPARENT_COLOUR);
+                }
+            }
 
             // Textbox message.
             draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, msg, BLACK);
