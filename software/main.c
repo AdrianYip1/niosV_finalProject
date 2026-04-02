@@ -1632,7 +1632,6 @@ int main(void)
     (void)PC_HEAL_POKEBALL_BASE_X; (void)PC_HEAL_POKEBALL_BASE_Y; (void)PC_HEAL_ROW_H;
     BattleUiState battleUi = BATTLE_UI_MENU;
     GameState previousGameState = currentGameState;
-    GameState lastFrameGameState = currentGameState;
     WorldMapId currentMapId = WORLD_MAP_ROUTE_A;
     int mapReturnX = 80;
     int mapReturnY = 112;
@@ -1885,20 +1884,19 @@ int main(void)
 
     textboxDone = 0;
     prevSpaceDown = false;
-    int menuCursor = 0; // 0..5 (2 columns x 3 rows)
+    int menuCursor = 0; 
     int menuSwapIndex = -1; // first picked index for swapping in the party menu
     GameState partyMenuReturnState = GAME_STATE_MAP;
     char battleEndMsg[96] = "WIN";
 
-    // Pokemon summary UI state (entered from party menu).
+    // Pokemon summary UI state 
     int summaryPokemonIndex = -1;
     GameState summaryReturnState = GAME_STATE_MENU;
-    int summaryPage = 0; // 0=main, 1=stats, 2=attacks
-    int summaryAttackCursor = 0; // 0..3
+    int summaryPage = 0;
+    int summaryAttackCursor = 0; 
     bool summaryShowAttackEffect = false;
     int summaryEffectAttackCursor = 0;
 
-    // Main menu UI return state (TAB toggles it from party menu/summary).
     GameState mainMenuUiReturnState = GAME_STATE_MAP;
 
     int pcCursor = 0; // 6 + 2 + max storage in pc
@@ -1909,14 +1907,14 @@ int main(void)
     // Pokedex UI state
     int pokedexSelectedId = POKEMON_ID_CHARMANDER;
     int pokedexScrollIndex = POKEMON_ID_CHARMANDER;
-    int pokedexInfoCursor = 1; // 0=up arrow, 1=down arrow, 2=X
+    int pokedexInfoCursor = 1; 
     GameState pokedexMenuReturnState = GAME_STATE_MAP;
 
     // Bag menu return state (Esc to close).
     GameState bagMenuReturnState = GAME_STATE_MAP;
     int bagMenuCursor = 0;
     BagMenuFocus bagMenuFocus = BAG_FOCUS_LIST;
-    int bagSpinIndex = 0; // 0..6 (spin1..spin7)
+    int bagSpinIndex = 0; 
 
     // Shop UI state.
     int shopCursor = 0;
@@ -1953,7 +1951,7 @@ int main(void)
     int forcedSwitchIndex = 0;
     bool forcedSwitchShowPrompt = true;
 
-    // Item target select (Revive/Max Revive) state.
+    // Item target select 
     ItemId itemTargetItem = ITEM_NONE;
     int itemTargetIndex = 0;
     BattleUiState itemTargetReturnUi = BATTLE_UI_MENU;
@@ -2016,7 +2014,7 @@ int main(void)
                         } else if (currentGameState == GAME_STATE_MAIN_MENU_UI) {
                             currentGameState = mainMenuUiReturnState;
                         } else if (currentGameState == GAME_STATE_MENU) {
-                            // Party menu: Tab opens summary for selected Pokemon.
+                            //Tab opens summary for selected Pokemon.
                             if (menuCursor >= 0 && menuCursor < 6) {
                                 pokemonInBattle *selected = (menuCursor < playerParty.count) ? playerParty.slots[menuCursor] : NULL;
                                 if (selected != NULL) {
@@ -2029,7 +2027,7 @@ int main(void)
                                 }
                             }
                         } else if (currentGameState == GAME_STATE_SUMMARY) {
-                            // Summary: Tab returns to party menu.
+                            // Tab returns back to party menu.
                             currentGameState = summaryReturnState;
                         }
                     } else if (ch == '\n') {
@@ -2038,7 +2036,7 @@ int main(void)
                 }
             }
 
-        const bool wasOverworld = isOverworldState(lastFrameGameState);
+        const bool wasOverworld = isOverworldState(previousGameState);
         const bool isOverworld = isOverworldState(currentGameState);
         if (wasOverworld != isOverworld) {
             if (isOverworld) {
@@ -2092,6 +2090,7 @@ int main(void)
                 transitionTimer = 0;
                 battleIntroTextReady = false;
             }
+            previousGameState = currentGameState;
         }
         const bool spaceDown = is_key_space_pressed();
         const bool spacePressed = spaceDown && !prevSpaceDown;
@@ -2155,7 +2154,7 @@ int main(void)
             if (menuCursor < 0) menuCursor = 0;
             if (menuCursor > 6) menuCursor = 6;
 
-            // Navigation: slots 0..5 plus Cancel (6). Cancel is reached from the bottom-right slot (5).
+
             const int prevCursor = menuCursor;
             if (menuCursor == 6) {
                 if (leftPressed || upPressed) menuCursor = 5;
@@ -2480,13 +2479,14 @@ int main(void)
                             snprintf(buf, sizeof(buf), "Type: %s/%s", t1, t2);
                         }
                         draw_string_f(124 + 4, 88 + 2, buf, BLACK, FONT_5X9);
+                        snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
+                        draw_string_f(55, 178 - 10, buf, WHITE, FONT_5X9);
                     }
                 } else if (summaryPage == 1) {
                     // Pokemon name on page 2 (stats page).
                     snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
-                    draw_string_f(130, 85, buf, BLACK, FONT_5X9);
+                    draw_string_f(130, 75, buf, BLACK, FONT_5X9);
 
-                    // EXP belongs on page 2 (stats page).
                     {
                         const int expReq = expRequiredAtLevel(summaryMon->level);
                         int curExp = summaryMon->exp;
@@ -2510,7 +2510,7 @@ int main(void)
                     }
 
                     snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
-                    draw_string_f(55, 178, buf, WHITE, FONT_5X9);
+                    draw_string_f(55, 178 - 10, buf, WHITE, FONT_5X9);
 
                     const int statLeftX = 129;
                     const int statRightX = 210;
@@ -7565,7 +7565,6 @@ int main(void)
         }
 
         playTimeFrames++;
-        lastFrameGameState = currentGameState;
         wait_for_vsync();
     }
 
