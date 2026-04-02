@@ -50,23 +50,7 @@ SRCS := software/main.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingSouthWest_frames.c \
         software/graphics/sprites/mainCharacter/walking/mcWalkingWest_frames.c \
         software/graphics/sprites/staticSprite.c \
-        software/graphics/sprites/pokemon/charizardSprite.c \
-        software/graphics/sprites/pokemon/charmanderSprite.c \
-        software/graphics/sprites/pokemon/charmeleonSprite.c \
-        software/graphics/sprites/pokemon/budewSprite.c \
-        software/graphics/sprites/pokemon/feebasSprite.c \
-        software/graphics/sprites/pokemon/gibleSprite.c \
-        software/graphics/sprites/pokemon/gabiteSprite.c \
-        software/graphics/sprites/pokemon/garchompSprite.c \
-        software/graphics/sprites/pokemon/rioluSprite.c \
-        software/graphics/sprites/pokemon/lucarioSprite.c \
-        software/graphics/sprites/pokemon/miloticSprite.c \
-        software/graphics/sprites/pokemon/rayquazaSprite.c \
-        software/graphics/sprites/pokemon/roseradeSprite.c \
-        software/graphics/sprites/pokemon/spiritombSprite.c \
-        software/graphics/sprites/pokemon/togepiSprite.c \
-        software/graphics/sprites/pokemon/togeticSprite.c \
-        software/graphics/sprites/pokemon/togekissSprite.c \
+        software/graphics/sprites/pokemon/pokemonSprites.c \
         software/graphics/sprites/pokemon/pokemonSpriteInit.c \
         software/graphics/sprites/boxSprites/charizardBoxSprite.c \
         software/graphics/sprites/boxSprites/charmanderBoxSprite.c \
