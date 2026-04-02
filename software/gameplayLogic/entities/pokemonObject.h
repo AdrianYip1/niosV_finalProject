@@ -41,12 +41,15 @@ typedef struct {
     pokemonID id;
     int level;
     int exp;
+    // Trainer memo (-1 is unknown)
+    int metMapId;
+    int metLevel;
     bool alive;
     PokeballType caughtIn;
     int maxHp;
     int scaledStatsWithLevel[6]; // {hp, attack, sp attack, def, sp def, speed}
 
-    // Battle stat stages (-6..+6)
+// battle state stages
     int statStageAttack;
     int statStageDefense;
     int statStageSpAttack;

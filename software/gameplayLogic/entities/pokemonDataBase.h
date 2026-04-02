@@ -35,6 +35,7 @@ typedef enum {
 typedef struct {
     int id;
     const char *name;
+    const char *desc;
     int power;
     int accuracy;
     int maxPP;

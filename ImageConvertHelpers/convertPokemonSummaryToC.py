@@ -14,6 +14,9 @@ OUT_H = OUT_DIR / "pokemonSummarySprites.h"
 
 TRANSPARENT_PINK_RGB = (255, 0, 255)  # #FF00FF
 TRANSPARENT_565 = 0xF81F
+# When a sprite legitimately uses the transparency key colour as an actual colour,
+# remap it slightly so draw routines (which colorkey on 0xF81F) don't drop it.
+AVOID_TRANSPARENT_KEY_565 = 0xF81E
 
 
 def normalize_stem(stem: str) -> str:
@@ -45,7 +48,7 @@ def camel_to_screaming_snake(name: str) -> str:
     return s1.upper()
 
 
-def load_vals(path: Path) -> tuple[list[str], int, int]:
+def load_vals(path: Path, *, treat_pink_as_transparent: bool) -> tuple[list[str], int, int]:
     im = Image.open(path).convert("RGBA")
     w, h = im.size
     px = im.load()
@@ -54,10 +57,14 @@ def load_vals(path: Path) -> tuple[list[str], int, int]:
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
-            if a == 0 or (r, g, b) == TRANSPARENT_PINK_RGB or is_magentaish(r, g, b):
+            if a == 0:
+                v = TRANSPARENT_565
+            elif treat_pink_as_transparent and ((r, g, b) == TRANSPARENT_PINK_RGB or is_magentaish(r, g, b)):
                 v = TRANSPARENT_565
             else:
                 v = rgb_to_565(r, g, b)
+                if not treat_pink_as_transparent and v == TRANSPARENT_565:
+                    v = AVOID_TRANSPARENT_KEY_565
             vals.append(f"0x{v:04X}")
     return vals, w, h
 
@@ -102,7 +109,9 @@ def main() -> None:
 
     dims: list[tuple[str, int, int, str, str]] = []
     for symbol, path in sprites:
-        _, w, h = load_vals(path)
+        stem = normalize_stem(path.stem).lower()
+        treat_pink = not (stem in {"summary3", "effect"})
+        _, w, h = load_vals(path, treat_pink_as_transparent=treat_pink)
         macro_base = camel_to_screaming_snake(symbol[: -len("Sprite")] if symbol.endswith("Sprite") else symbol)
         w_macro = f"{macro_base}_WIDTH"
         h_macro = f"{macro_base}_HEIGHT"
@@ -121,7 +130,9 @@ def main() -> None:
     # Source
     c_lines: list[str] = [f'#include "{OUT_H.name}"', ""]
     for symbol, path in sprites:
-        vals, w, h = load_vals(path)
+        stem = normalize_stem(path.stem).lower()
+        treat_pink = not (stem in {"summary3", "effect"})
+        vals, w, h = load_vals(path, treat_pink_as_transparent=treat_pink)
         macro_base = camel_to_screaming_snake(symbol[: -len("Sprite")] if symbol.endswith("Sprite") else symbol)
         w_macro = f"{macro_base}_WIDTH"
         h_macro = f"{macro_base}_HEIGHT"
@@ -136,4 +147,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

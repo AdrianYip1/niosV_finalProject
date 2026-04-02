@@ -44,6 +44,8 @@ void initPokemonInBattle(pokemonInBattle *pokemon, const PokemonData *template, 
     pokemon->id.backFrame_ID = template->id;
     pokemon->level = level;
     pokemon->exp = 0;
+    pokemon->metMapId = -1;
+    pokemon->metLevel = level;
     pokemon->alive = true;
     pokemon->caughtIn = POKEBALL_NONE;
     pokemon->inBattle = false;

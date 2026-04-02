@@ -311,6 +311,91 @@ static const char FOUND_POKEBALL_TEXT[] = "You found a Poke Ball!";
 static void play_world_map_bgm(WorldMapId map_id);
 static const char *world_map_display_name(WorldMapId map_id);
 
+static const char *attack_category_label(AttackCategory c) {
+    switch (c) {
+        case ATTACK_PHYSICAL: return "Physical";
+        case ATTACK_SPECIAL: return "Special";
+        case ATTACK_STATUS: return "Status";
+        default: return "Move";
+    }
+}
+
+static const char *pokemon_type_label(PokemonType t) {
+    switch (t) {
+        case TYPE_NORMAL: return "Normal";
+        case TYPE_FIRE: return "Fire";
+        case TYPE_WATER: return "Water";
+        case TYPE_ELECTRIC: return "Electric";
+        case TYPE_GRASS: return "Grass";
+        case TYPE_ICE: return "Ice";
+        case TYPE_FIGHTING: return "Fighting";
+        case TYPE_POISON: return "Poison";
+        case TYPE_GROUND: return "Ground";
+        case TYPE_FLYING: return "Flying";
+        case TYPE_PSYCHIC: return "Psychic";
+        case TYPE_BUG: return "Bug";
+        case TYPE_ROCK: return "Rock";
+        case TYPE_GHOST: return "Ghost";
+        case TYPE_DRAGON: return "Dragon";
+        case TYPE_DARK: return "Dark";
+        case TYPE_STEEL: return "Steel";
+        case TYPE_FAIRY: return "Fairy";
+        case TYPE_NONE: return "None";
+        default: return "None";
+    }
+}
+
+static void build_move_short_desc(char *out, size_t out_sz, const AttackData *mv) {
+    if (out == NULL || out_sz == 0) return;
+    if (mv == NULL) {
+        out[0] = '\0';
+        return;
+    }
+
+    const char *desc = (mv->desc != NULL) ? mv->desc : "";
+    if (mv->category == ATTACK_STATUS) {
+        snprintf(out, out_sz, "%.40s", desc);
+    } else {
+        snprintf(out, out_sz, "%.40s", desc);
+    }
+}
+
+static void build_move_box_desc(char *out, size_t out_sz, const AttackData *mv, int ppCur) {
+    if (out == NULL || out_sz == 0) return;
+    if (mv == NULL) { out[0] = '\0'; return; }
+
+    if (ppCur < 0) ppCur = 0;
+
+    const char *desc = (mv->desc != NULL && mv->desc[0] != '\0') ? mv->desc : "A move.";
+    if (mv->category == ATTACK_STATUS) {
+        snprintf(out, out_sz, "%s\nACC %d  PP %d/%d", desc, mv->accuracy, ppCur, mv->maxPP);
+    } else {
+        snprintf(out, out_sz, "%s\nPWR %d  ACC %d  PP %d/%d", desc, mv->power, mv->accuracy, ppCur, mv->maxPP);
+    }
+}
+
+static void copy_ellipsis(char *out, size_t out_sz, const char *in, int max_chars) {
+    if (out == NULL || out_sz == 0) return;
+    out[0] = '\0';
+    if (in == NULL) return;
+    if (max_chars < 0) max_chars = 0;
+
+    int n = 0;
+    while (in[n] != '\0' && in[n] != '\n' && n < max_chars && n < (int)(out_sz - 1)) {
+        out[n] = in[n];
+        n++;
+    }
+    out[n] = '\0';
+
+    // Add "..." if truncated and we have room.
+    if (in[n] != '\0' && in[n] != '\n' && out_sz >= 4) {
+        int end = n;
+        if (end > (int)out_sz - 4) end = (int)out_sz - 4;
+        out[end] = '\0';
+        strcat(out, "...");
+    }
+}
+
 
 // Game States
 typedef enum {
@@ -1737,6 +1822,12 @@ int main(void)
     play_world_map_bgm(currentMapId);
     wait_for_vsync();
 
+    // Backfill trainer memo fields for any preloaded Pokemon.
+    for (int i = 0; i < playerPc.count; i++) {
+        if (playerPc.mons[i].metMapId < 0) playerPc.mons[i].metMapId = (int)currentMapId;
+        if (playerPc.mons[i].metLevel <= 0) playerPc.mons[i].metLevel = playerPc.mons[i].level;
+    }
+
     textboxDone = 0;
     prevSpaceDown = false;
     int menuCursor = 0; // 0..5 (2 columns x 3 rows)
@@ -1751,6 +1842,9 @@ int main(void)
     int summaryAttackCursor = 0; // 0..3
     bool summaryShowAttackEffect = false;
     int summaryEffectAttackCursor = 0;
+
+    // Main menu UI return state (TAB toggles it from party menu/summary).
+    GameState mainMenuUiReturnState = GAME_STATE_MAP;
 
     int pcCursor = 0; // 6 + 2 + max storage in pc
     int pcSwapIndex = -1; //first picked index for swapping in pc
@@ -1873,11 +1967,11 @@ int main(void)
                             currentGameState = GAME_STATE_MAP;
                         }
                     } else if (ch == '\t') {
-
-                        if (currentGameState == GAME_STATE_MAP) {
+                        if (currentGameState == GAME_STATE_MENU || currentGameState == GAME_STATE_SUMMARY) {
+                            mainMenuUiReturnState = currentGameState;
                             currentGameState = GAME_STATE_MAIN_MENU_UI;
                         } else if (currentGameState == GAME_STATE_MAIN_MENU_UI) {
-                            currentGameState = GAME_STATE_MAP;
+                            currentGameState = mainMenuUiReturnState;
                         }
                     } else if (ch == '\n') {
                         enterPressed = true;
@@ -2265,7 +2359,7 @@ int main(void)
                             0, 0,
                             TRANSPARENT_COLOUR);
 
-            // Page overlays 
+            // Page overlays
             if (summaryPage == 1) {
                 draw_sprite_any(pokemonSummarySummary2Sprite,
                                 POKEMON_SUMMARY_SUMMARY2_WIDTH, POKEMON_SUMMARY_SUMMARY2_HEIGHT,
@@ -2278,22 +2372,78 @@ int main(void)
                                 TRANSPARENT_COLOUR);
             }
 
+            if (summaryPage == 1) {
+                draw_sprite_any(pokemonSummarySummaryscroll2Sprite,
+                                POKEMON_SUMMARY_SUMMARYSCROLL2_WIDTH, POKEMON_SUMMARY_SUMMARYSCROLL2_HEIGHT,
+                                128, 40,
+                                TRANSPARENT_COLOUR);
+            } else if (summaryPage == 2) {
+                draw_sprite_any(pokemonSummarySummaryscroll3Sprite,
+                                POKEMON_SUMMARY_SUMMARYSCROLL3_WIDTH, POKEMON_SUMMARY_SUMMARYSCROLL3_HEIGHT,
+                                128, 40,
+                                TRANSPARENT_COLOUR);
+            }
+
        
             if (summaryMon != NULL) {
                 char buf[64];
                 snprintf(buf, sizeof(buf), "%s", summaryMon->id.data ? summaryMon->id.data->name : "Pokemon");
                 draw_string_f(12, 12, buf, BLACK, FONT_5X9);
 
-                if (summaryPage == 1) {
+                if (summaryPage == 0) {
+                    const int expReq = expRequiredAtLevel(summaryMon->level);
+                    int curExp = summaryMon->exp;
+                    if (curExp < 0) curExp = 0;
+                    if (curExp > expReq) curExp = expReq;
+                    const int toNext = (expReq > curExp) ? (expReq - curExp) : 0;
+
+                    snprintf(buf, sizeof(buf), "EXP: %d", curExp);
+                    draw_string_f(150, 168, buf, BLACK, FONT_5X9);
+                    snprintf(buf, sizeof(buf), "NEXT: %d", toNext);
+                    draw_string_f(150, 178, buf, BLACK, FONT_5X9);
+
+                    // exp (208,186) to (271,188).
+                    const int barX = 208;
+                    const int barY = 186;
+                    const int barW = 271 - 208;
+                    const int barH = 188 - 186;
+                    draw_rect(barX, barY, barW, barH, WHITE);
+                    const int fillW = (expReq > 0) ? (barW * curExp) / expReq : 0;
+                    if (fillW > 0) draw_rect(barX, barY, fillW, barH, GREEN);
+
+                    //  (125,153) to (276,198).
+                    const int memoX = 125;
+                    const int memoY = 153;
+                    const int metMap = (summaryMon->metMapId >= 0) ? summaryMon->metMapId : (int)currentMapId;
+                    const char *metLoc = world_map_display_name((WorldMapId)metMap);
+                    if (metLoc == NULL) metLoc = "Unknown";
+                    int metLv = summaryMon->metLevel;
+                    if (metLv <= 0) metLv = summaryMon->level;
+
+                    char memoBuf[96];
+                    snprintf(memoBuf, sizeof(memoBuf), "Met at %s\nat Lv %d", metLoc, metLv);
+                    draw_multiline_string_f(memoX + 4, memoY + 4, memoBuf, BLACK, FONT_5X9, 10);
+
+                    // (124,88) to (276,102).
+                    {
+                        const char *t1 = pokemon_type_label(summaryMon->type1);
+                        const char *t2 = pokemon_type_label(summaryMon->type2);
+                        if (summaryMon->type2 == TYPE_NONE || summaryMon->type2 == summaryMon->type1) {
+                            snprintf(buf, sizeof(buf), "Type: %s", t1);
+                        } else {
+                            snprintf(buf, sizeof(buf), "Type: %s/%s", t1, t2);
+                        }
+                        draw_string_f(124 + 4, 88 + 2, buf, BLACK, FONT_5X9);
+                    }
+                } else if (summaryPage == 1) {
                     snprintf(buf, sizeof(buf), "Lv %d", summaryMon->level);
                     draw_string_f(55, 178, buf, WHITE, FONT_5X9);
 
-                } else if (summaryPage == 2) {
                     snprintf(buf, sizeof(buf), "HP %d/%d", getHp(summaryMon), summaryMon->maxHp);
                     draw_string_f(129, 103, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "ATK %d", getAttack(summaryMon));
-                    draw_string_f(129,103 + 9, buf, BLACK, FONT_5X9);
+                    draw_string_f(129, 103 + 9, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "DEF %d", getDef(summaryMon));
                     draw_string_f(129, 103 + 18, buf, BLACK, FONT_5X9);
@@ -2302,11 +2452,12 @@ int main(void)
                     draw_string_f(129, 103 + 27, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPD %d", getSpDef(summaryMon));
-                    draw_string_f(129,103 + 36, buf, BLACK, FONT_5X9);
+                    draw_string_f(129, 103 + 36, buf, BLACK, FONT_5X9);
 
                     snprintf(buf, sizeof(buf), "SPE %d", getSpd(summaryMon));
                     draw_string_f(129, 103 + 46, buf, BLACK, FONT_5X9);
-                    // Count available moves (non-NULL pointers).
+                } else if (summaryPage == 2) {
+                    // Count available moves 
                     int moveCount = 0;
                     for (int i = 0; i < 4; i++) {
                         if (summaryMon->attacks[i] != NULL) moveCount++;
@@ -2338,6 +2489,8 @@ int main(void)
                         const int listY = 84;
                         const int rowH = 14;
                         int visibleIndex = 0;
+                        const AttackData *descMove = NULL;
+                        int descMoveSlot = -1;
                         for (int i = 0; i < 4; i++) {
                             const AttackData *mv = summaryMon->attacks[i];
                             if (mv == NULL) continue;
@@ -2345,9 +2498,31 @@ int main(void)
                             const int y = listY + visibleIndex * rowH;
                             if (visibleIndex == summaryAttackCursor) {
                                 draw_rect(listX - 2, y - 1, 120, rowH, WHITE);
+                                descMove = mv;
+                                descMoveSlot = i;
                             }
                             draw_string_f(listX, y, mv->name ? mv->name : "Move", BLACK, FONT_5X9);
                             visibleIndex++;
+                        }
+
+                        // Attack description box (126,161) to (276,190).
+                        if (descMove != NULL) {
+                            int ppCur = 0;
+                            if (descMoveSlot >= 0 && descMoveSlot < 4) ppCur = summaryMon->currentPP[descMoveSlot];
+
+                            const int boxTextX = 126 + 4;
+                            const int boxTextY = 161 + 4;
+                            char descLine[64];
+                            copy_ellipsis(descLine, sizeof(descLine), descMove->desc, 24);
+                            draw_string_f(boxTextX, boxTextY, descLine, BLACK, FONT_5X9);
+
+                            char statsLine[64];
+                            if (descMove->category == ATTACK_STATUS) {
+                                snprintf(statsLine, sizeof(statsLine), "ACC %d  PP %d/%d", descMove->accuracy, ppCur, descMove->maxPP);
+                            } else {
+                                snprintf(statsLine, sizeof(statsLine), "PWR %d  ACC %d  PP %d/%d", descMove->power, descMove->accuracy, ppCur, descMove->maxPP);
+                            }
+                            draw_string_f(boxTextX, boxTextY + 10, statsLine, BLACK, FONT_5X9);
                         }
 
                         if (summaryShowAttackEffect) {
@@ -2371,9 +2546,27 @@ int main(void)
                                 draw_string_f(40 + 6, 149 + 6 + 10, buf, BLACK, FONT_5X9);
                                 snprintf(buf, sizeof(buf), "ACC %d", selectedMove->accuracy);
                                 draw_string_f(40 + 6, 149 + 20 + 10, buf, BLACK, FONT_5X9);
+
+                                char descBuf[64];
+                                copy_ellipsis(descBuf, sizeof(descBuf), selectedMove->desc, 18);
+                                draw_string_f(40 + 6, 149 + 34 + 10, descBuf, BLACK, FONT_5X9);
                             }
                         }
                     }
+                }
+            }
+
+            // Draw the Pokemon's front sprite on top
+            if (summaryMon != NULL) {
+                StaticSprite summaryFront = {0};
+                (void)initPokemonFrontBattleSprite(&summaryFront, summaryMon->id.frontFrame_ID, 32, 54);
+                if (summaryFront.pixels != NULL) {
+                    draw_sprite_any(summaryFront.pixels,
+                                    summaryFront.width,
+                                    summaryFront.height,
+                                    summaryFront.x,
+                                    summaryFront.y,
+                                    TRANSPARENT_COLOUR);
                 }
             }
 
@@ -2541,7 +2734,7 @@ int main(void)
             }
 
             if (escPressed) {
-                currentGameState = GAME_STATE_MAP;
+                currentGameState = mainMenuUiReturnState;
             } else if (spacePressed) {
                 const MenuPulseDir selectionDir = (heldDir != MENU_DIR_NONE)
                     ? heldDir
@@ -5473,6 +5666,13 @@ int main(void)
                                     if (caughtPokemon != NULL && caughtPokemon->id.data != NULL) {
                                         int pcIndex = -1;
                                         (void)pcAdd(&playerPc, caughtPokemon->id.data, caughtPokemon->level, &pcIndex);
+                                        if (pcIndex >= 0) {
+                                            pokemonInBattle *stored = pcGet(&playerPc, pcIndex);
+                                            if (stored != NULL) {
+                                                stored->metMapId = (int)currentMapId;
+                                                stored->metLevel = caughtPokemon->level;
+                                            }
+                                        }
                                         pokedex_mark_caught(caughtPokemon->id.frontFrame_ID);
                                     }
                                 }
