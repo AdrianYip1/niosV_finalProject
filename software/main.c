@@ -429,6 +429,35 @@ static inline ItemId bagMenuVisibleAtForState(GameState state, const Bag *bag, i
     return ITEM_NONE;
 }
 
+// Battle UI should not show evolution items like Shiny Stone.
+static inline int battleBagHpVisibleCount(const Bag *bag) {
+    if (bag == NULL) return 0;
+    const int n = bagHpItemCount();
+    int c = 0;
+    for (int i = 0; i < n; i++) {
+        const ItemId item = bagHpItemAt(i);
+        if (item == ITEM_SHINY_STONE) continue;
+        if (item != ITEM_NONE && bagCount(bag, item) > 0) c++;
+    }
+    return c;
+}
+
+static inline ItemId battleBagHpVisibleAt(const Bag *bag, int visibleIndex) {
+    if (bag == NULL) return ITEM_NONE;
+    if (visibleIndex < 0) return ITEM_NONE;
+    const int n = bagHpItemCount();
+    int seen = 0;
+    for (int i = 0; i < n; i++) {
+        const ItemId item = bagHpItemAt(i);
+        if (item == ITEM_SHINY_STONE) continue;
+        if (item != ITEM_NONE && bagCount(bag, item) > 0) {
+            if (seen == visibleIndex) return item;
+            seen++;
+        }
+    }
+    return ITEM_NONE;
+}
+
 static inline GameState bagMenuNextPageState(GameState state) {
     switch (state) {
         case GAME_STATE_BAG_MENU_ITEMS: return GAME_STATE_BAG_MENU_POKEBALLS;
@@ -2478,7 +2507,7 @@ int main(void)
                     } else if (arrowCtx == ARROW_CTX_BATTLE_BAG_LIST) {
                         const int oldIndex = battleCursor;
                         int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
-                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
+                        const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? battleBagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
                         int pageCount = (itemCount + 3) / 4;
                         if (pageCount < 1) pageCount = 1;
                         if (*pagePtr < 0) *pagePtr = 0;
@@ -2676,7 +2705,7 @@ int main(void)
                 } else if (battleUi == BATTLE_UI_BAG_MENU) {
                     play_sfx(plink_audio, plink_audio_len);
                     if (battleCursor == 0) {
-                        if (bagHpVisibleCount(&playerBag) <= 0) {
+                        if (battleBagHpVisibleCount(&playerBag) <= 0) {
                             battleUiSetSingleMessage(&battleState, "No HP items!");
                             actionTextReturnUi = battleUi;
                             actionTextReturnCursor = battleCursor;
@@ -2704,6 +2733,16 @@ int main(void)
                     } else {
                         if (playerBag.lastUsedItem != ITEM_NONE) {
                             const ItemId last = playerBag.lastUsedItem;
+                            if (last == ITEM_SHINY_STONE) {
+                                battleUiSetSingleMessage(&battleState, "Can't use that in battle!");
+                                actionTextReturnUi = battleUi;
+                                actionTextReturnCursor = battleCursor;
+                                actionTextReturnGameState = activeBattleMenuState;
+                                currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                                actionTextAwaitSpaceRelease = true;
+                                break;
+                            }
                             if (itemIsBall(last)) {
                                 if (battleState.type != BATTLE_WILD) {
                                     battleUiSetSingleMessage(&battleState, "You can't catch a trainer's Pokemon!");
@@ -2784,7 +2823,7 @@ int main(void)
                     }
                 } else if (battleUi == BATTLE_UI_BAG_HP_LIST || battleUi == BATTLE_UI_BAG_BALL_LIST) {
                     const int *pagePtr = (battleUi == BATTLE_UI_BAG_HP_LIST) ? &bagHpPage : &bagBallPage;
-                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
+                    const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? battleBagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
                     const int itemIndex = (*pagePtr) * 4 + battleCursor;
 
                     play_sfx(plink_audio, plink_audio_len);
@@ -2800,7 +2839,7 @@ int main(void)
                         bagDescReturnUi = battleUi;
                         bagDescReturnCursor = battleCursor;
                         bagDescReturnPage = *pagePtr;
-                        bagDescItem = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleAt(&playerBag, itemIndex) : bagBallVisibleAt(&playerBag, itemIndex);
+                        bagDescItem = (battleUi == BATTLE_UI_BAG_HP_LIST) ? battleBagHpVisibleAt(&playerBag, itemIndex) : bagBallVisibleAt(&playerBag, itemIndex);
                         battleUi = BATTLE_UI_BAG_ITEM_DESC;
                         battleCursor = 0;
                     }
@@ -2809,6 +2848,15 @@ int main(void)
 
                     if (bagDescItem != ITEM_NONE) {
                         const ItemId item = bagDescItem;
+                        if (item == ITEM_SHINY_STONE) {
+                            battleUiSetSingleMessage(&battleState, "Can't use that in battle!");
+                            actionTextReturnUi = bagDescReturnUi;
+                            actionTextReturnCursor = bagDescReturnCursor;
+                            actionTextReturnGameState = activeBattleMenuState;
+                            currentGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            previousGameState = GAME_STATE_BATTLE_ACTION_TEXT;
+                            actionTextAwaitSpaceRelease = true;
+                        } else
                         if (itemIsBall(item)) {
                             if (battleState.type != BATTLE_WILD) {
                                 battleUiSetSingleMessage(&battleState, "You can't catch a trainer's Pokemon!");
@@ -3232,6 +3280,9 @@ int main(void)
                     int iconW = 0;
                     int iconH = 0;
 
+                    // Shiny Stone is not usable in battle, so don't show it in the battle bag UI.
+                    if (item == ITEM_SHINY_STONE) break;
+
                     if (item == ITEM_POKEBALL) { icon = pokeballIcon_poke; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
                     else if (item == ITEM_GREAT_BALL) { icon = pokeballIcon_great; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
                     else if (item == ITEM_ULTRA_BALL) { icon = pokeballIcon_ultra; iconW = POKEBALL_ICON_WIDTH; iconH = POKEBALL_ICON_HEIGHT; }
@@ -3243,7 +3294,6 @@ int main(void)
                     else if (item == ITEM_FULL_RESTORE) { icon = healingItemIcon_fullRestore; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_REVIVE) { icon = healingItemIcon_revive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
                     else if (item == ITEM_MAX_REVIVE) { icon = healingItemIcon_maxRevive; iconW = HEALING_ITEM_ICON_WIDTH; iconH = HEALING_ITEM_ICON_HEIGHT; }
-                    else if (item == ITEM_SHINY_STONE) { icon = shinyStoneIcon; iconW = SHINY_STONE_ICON_WIDTH; iconH = SHINY_STONE_ICON_HEIGHT; }
 
                     if (icon != NULL) {
                         draw_sprite_any(icon,
@@ -3264,7 +3314,7 @@ int main(void)
                 const int mxs[4] = { mxLeft, mxRight, mxLeft, mxRight };
                 const int mys[4] = { myTop,  myTop,   myBottom, myBottom };
 
-                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
+                const int itemCount = (battleUi == BATTLE_UI_BAG_HP_LIST) ? battleBagHpVisibleCount(&playerBag) : bagBallVisibleCount(&playerBag);
                 const int page = (battleUi == BATTLE_UI_BAG_HP_LIST) ? bagHpPage : bagBallPage;
                 int pageCount = (itemCount + 3) / 4;
                 if (pageCount < 1) pageCount = 1;
@@ -3282,7 +3332,7 @@ int main(void)
                     const int visibleIndex = page * 4 + i;
                     if (visibleIndex >= 0 && visibleIndex < itemCount) {
                         const ItemId item = (battleUi == BATTLE_UI_BAG_HP_LIST)
-                                                ? bagHpVisibleAt(&playerBag, visibleIndex)
+                                                ? battleBagHpVisibleAt(&playerBag, visibleIndex)
                                                 : bagBallVisibleAt(&playerBag, visibleIndex);
                         if (item != ITEM_NONE) {
                             draw_string_f(mxs[i] + ITEM_NAME_X, mys[i] + ITEM_NAME_Y, itemName(item), WHITE, FONT_5X9);
@@ -3308,25 +3358,24 @@ int main(void)
                                                     mys[i] + ITEM_Y,
                                                     TRANSPARENT_COLOUR);
                                 }
-                            } else if (battleUi == BATTLE_UI_BAG_HP_LIST) {
-                                const unsigned short *icon = NULL;
-                                 if (item == ITEM_POTION) icon = healingItemIcon_potion;
-                                 else if (item == ITEM_SUPER_POTION) icon = healingItemIcon_superPotion;
-                                 else if (item == ITEM_HYPER_POTION) icon = healingItemIcon_hyperPotion;
-                                 else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
-                                 else if (item == ITEM_REVIVE) icon = healingItemIcon_revive;
-                                 else if (item == ITEM_MAX_REVIVE) icon = healingItemIcon_maxRevive;
-                                 else if (item == ITEM_SHINY_STONE) icon = shinyStoneIcon;
- 
-                                 if (icon != NULL) {
-                                     draw_sprite_any(icon,
-                                                    (item == ITEM_SHINY_STONE) ? SHINY_STONE_ICON_WIDTH : HEALING_ITEM_ICON_WIDTH,
-                                                    (item == ITEM_SHINY_STONE) ? SHINY_STONE_ICON_HEIGHT : HEALING_ITEM_ICON_HEIGHT,
-                                                    mxs[i] + RESTORE_ITEM_X,
-                                                    mys[i] + RESTORE_ITEM_Y,
-                                                    TRANSPARENT_COLOUR);
-                                 }
-                            }
+                             } else if (battleUi == BATTLE_UI_BAG_HP_LIST) {
+                                 const unsigned short *icon = NULL;
+                                  if (item == ITEM_POTION) icon = healingItemIcon_potion;
+                                  else if (item == ITEM_SUPER_POTION) icon = healingItemIcon_superPotion;
+                                  else if (item == ITEM_HYPER_POTION) icon = healingItemIcon_hyperPotion;
+                                  else if (item == ITEM_FULL_RESTORE) icon = healingItemIcon_fullRestore;
+                                  else if (item == ITEM_REVIVE) icon = healingItemIcon_revive;
+                                  else if (item == ITEM_MAX_REVIVE) icon = healingItemIcon_maxRevive;
+  
+                                  if (icon != NULL) {
+                                      draw_sprite_any(icon,
+                                                     HEALING_ITEM_ICON_WIDTH,
+                                                     HEALING_ITEM_ICON_HEIGHT,
+                                                     mxs[i] + RESTORE_ITEM_X,
+                                                     mys[i] + RESTORE_ITEM_Y,
+                                                     TRANSPARENT_COLOUR);
+                                  }
+                             }
                         }
                     }
                 }
@@ -3633,17 +3682,19 @@ int main(void)
                                         bobFrame);
                 }
 
-                if (enemyHitShakeFrame >= 0) {
-                    draw_sprite_any_shake(enemyFrontSprite.pixels,
-                                          enemyFrontSprite.width, enemyFrontSprite.height,
-                                          enemyFrontSprite.x, enemyFrontSprite.y,
-                                          TRANSPARENT_COLOUR,
-                                          enemyHitShakeFrame);
-                } else {
-                    draw_sprite_any(enemyFrontSprite.pixels,
-                                    enemyFrontSprite.width, enemyFrontSprite.height,
-                                    enemyFrontSprite.x, enemyFrontSprite.y,
-                                    TRANSPARENT_COLOUR);
+                if (battleState.result != BATTLE_RESULT_CAUGHT) {
+                    if (enemyHitShakeFrame >= 0) {
+                        draw_sprite_any_shake(enemyFrontSprite.pixels,
+                                              enemyFrontSprite.width, enemyFrontSprite.height,
+                                              enemyFrontSprite.x, enemyFrontSprite.y,
+                                              TRANSPARENT_COLOUR,
+                                              enemyHitShakeFrame);
+                    } else {
+                        draw_sprite_any(enemyFrontSprite.pixels,
+                                        enemyFrontSprite.width, enemyFrontSprite.height,
+                                        enemyFrontSprite.x, enemyFrontSprite.y,
+                                        TRANSPARENT_COLOUR);
+                    }
                 }
 
                 draw_sprite_any(battleUIBackgroundSprite,
@@ -3751,27 +3802,24 @@ int main(void)
                                     bobFrame);
             }
 
-            if (enemyHitShakeFrame >= 0) {
-                draw_sprite_any(pokemonAreaFront,
-                                POKEMON_AREA_FRONT_WIDTH,
-                                POKEMON_AREA_FRONT_HEIGHT,
-                                AREA_FRONT_X, AREA_FRONT_Y,
-                                TRANSPARENT_COLOUR);
-                draw_sprite_any_shake(enemyFrontSprite.pixels,
-                                      enemyFrontSprite.width, enemyFrontSprite.height,
-                                      enemyFrontSprite.x, enemyFrontSprite.y,
-                                      TRANSPARENT_COLOUR,
-                                      enemyHitShakeFrame);
-            } else {
-                draw_sprite_any(pokemonAreaFront,
-                                POKEMON_AREA_FRONT_WIDTH,
-                                POKEMON_AREA_FRONT_HEIGHT,
-                                AREA_FRONT_X, AREA_FRONT_Y,
-                                TRANSPARENT_COLOUR);
-                draw_sprite_any(enemyFrontSprite.pixels,
-                                enemyFrontSprite.width, enemyFrontSprite.height,
-                                enemyFrontSprite.x, enemyFrontSprite.y,
-                                TRANSPARENT_COLOUR);
+            draw_sprite_any(pokemonAreaFront,
+                            POKEMON_AREA_FRONT_WIDTH,
+                            POKEMON_AREA_FRONT_HEIGHT,
+                            AREA_FRONT_X, AREA_FRONT_Y,
+                            TRANSPARENT_COLOUR);
+            if (battleState.result != BATTLE_RESULT_CAUGHT) {
+                if (enemyHitShakeFrame >= 0) {
+                    draw_sprite_any_shake(enemyFrontSprite.pixels,
+                                          enemyFrontSprite.width, enemyFrontSprite.height,
+                                          enemyFrontSprite.x, enemyFrontSprite.y,
+                                          TRANSPARENT_COLOUR,
+                                          enemyHitShakeFrame);
+                } else {
+                    draw_sprite_any(enemyFrontSprite.pixels,
+                                    enemyFrontSprite.width, enemyFrontSprite.height,
+                                    enemyFrontSprite.x, enemyFrontSprite.y,
+                                    TRANSPARENT_COLOUR);
+                }
             }
             draw_sprite_any(battleUIBackgroundSprite, BATTLE_UI_BACKGROUND_WIDTH, BATTLE_UI_BACKGROUND_HEIGHT, 0, battleBackdropY, TRANSPARENT_COLOUR);
 
@@ -3931,15 +3979,28 @@ int main(void)
                             } else {
                                 snprintf(battleEndMsg, sizeof(battleEndMsg), "You blacked out!");
                             }
-                        } else {
-                            // Fled / caught results return to map.
-                            endState = GAME_STATE_MAP;
-                        }
+                         } else {
+                             // Fled / caught results return to map.
+                             endState = GAME_STATE_MAP;
+                         }
 
-                        if (startedLearnFlow) {
-                            learnMoveReturnState = endState;
-                            currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
-                            previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                         if (endState == GAME_STATE_MAP) {
+                             const int idx = findNextPendingEvolutionIndex(&playerParty, -1);
+                             if (idx >= 0) {
+                                 evolutionPokemonIndex = idx;
+                                 evolutionReturnState = GAME_STATE_MAP;
+                                 evolutionFrame = 0;
+                                 evolutionTimer = 0;
+                                 evolutionPhase = 0;
+                                 evolutionPhaseTimer = 0;
+                                 endState = GAME_STATE_EVOLUTION;
+                             }
+                         }
+
+                         if (startedLearnFlow) {
+                             learnMoveReturnState = endState;
+                             currentGameState = GAME_STATE_LEARN_MOVE_PROMPT;
+                             previousGameState = GAME_STATE_LEARN_MOVE_PROMPT;
                         } else {
                             currentGameState = endState;
                         }
@@ -5016,10 +5077,16 @@ int main(void)
                                 POKEMON_AREA_FRONT_HEIGHT, 
                                 AREA_FRONT_X, AREA_FRONT_Y, 
                                 TRANSPARENT_COLOUR);
-                draw_sprite_any(enemyFrontSprite.pixels,
-                                enemyFrontSprite.width, enemyFrontSprite.height,
-                                enemyFrontSprite.x, enemyFrontSprite.y,
-                                TRANSPARENT_COLOUR);
+
+                // Once the ball lands and starts the catch/shake sequence, hide the enemy sprite.
+                // If the Pokemon breaks free, show it again during the escape frames.
+                const bool hideEnemySprite = pokeballCatchLanding && !pokeballCatchEscape;
+                if (!hideEnemySprite) {
+                    draw_sprite_any(enemyFrontSprite.pixels,
+                                    enemyFrontSprite.width, enemyFrontSprite.height,
+                                    enemyFrontSprite.x, enemyFrontSprite.y,
+                                    TRANSPARENT_COLOUR);
+                }
             }
 
             // Animate the ball.

@@ -1,4 +1,5 @@
 #include "pokemonDataBase.h"
+#include "../../graphics/sprites/pokemon/pokemonSpriteInit.h"
 
 const float typeChart[NUM_TYPES][NUM_TYPES] = {
     {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // normal
@@ -88,7 +89,7 @@ const PokemonData CHARIZARD = {
     .evolution = {EVO_NONE, 0, NULL}
 };
 const PokemonData RAYQUAZA = {
-    .id = 4, .name = "Rayquaza",
+    .id = POKEMON_ID_RAYQUAZA, .name = "Rayquaza",
     .baseHp = 105, .baseAttack = 150, .baseSpAttack = 150,
     .baseDefense = 90, .baseSpDefense = 90, .baseSpeed = 95,
     .type1 = TYPE_DRAGON, .type2 = TYPE_FLYING,
@@ -96,7 +97,7 @@ const PokemonData RAYQUAZA = {
 };
 
 const PokemonData GIBLE = {
-    .id = 13, .name = "Gible",
+    .id = POKEMON_ID_GIBLE, .name = "Gible",
     .baseHp = 58, .baseAttack = 70, .baseSpAttack = 40,
     .baseDefense = 45, .baseSpDefense = 45, .baseSpeed = 42,
     .type1 = TYPE_DRAGON, .type2 = TYPE_GROUND,
@@ -104,7 +105,7 @@ const PokemonData GIBLE = {
 };
 
 const PokemonData GABITE = {
-    .id = 14, .name = "Gabite",
+    .id = POKEMON_ID_GABITE, .name = "Gabite",
     .baseHp = 68, .baseAttack = 90, .baseSpAttack = 50,
     .baseDefense = 65, .baseSpDefense = 55, .baseSpeed = 82,
     .type1 = TYPE_DRAGON, .type2 = TYPE_GROUND,
@@ -112,7 +113,7 @@ const PokemonData GABITE = {
 };
 
 const PokemonData GARCHOMP = {
-    .id = 5, .name = "Garchomp",
+    .id = POKEMON_ID_GARCHOMP, .name = "Garchomp",
     .baseHp = 108, .baseAttack = 130, .baseSpAttack = 80,
     .baseDefense = 95, .baseSpDefense = 85, .baseSpeed = 102,
     .type1 = TYPE_DRAGON, .type2 = TYPE_GROUND,
@@ -120,7 +121,7 @@ const PokemonData GARCHOMP = {
 };
 
 const PokemonData RIOLU = {
-    .id = 15, .name = "Riolu",
+    .id = POKEMON_ID_RIOLU, .name = "Riolu",
     .baseHp = 40, .baseAttack = 70, .baseSpAttack = 35,
     .baseDefense = 40, .baseSpDefense = 40, .baseSpeed = 60,
     .type1 = TYPE_FIGHTING, .type2 = TYPE_NONE,
@@ -128,7 +129,7 @@ const PokemonData RIOLU = {
 };
 
 const PokemonData LUCARIO = {
-    .id = 6, .name = "Lucario",
+    .id = POKEMON_ID_LUCARIO, .name = "Lucario",
     .baseHp = 70, .baseAttack = 110, .baseSpAttack = 115,
     .baseDefense = 70, .baseSpDefense = 70, .baseSpeed = 90,
     .type1 = TYPE_FIGHTING, .type2 = TYPE_STEEL,
@@ -136,7 +137,7 @@ const PokemonData LUCARIO = {
 };
 
 const PokemonData FEEBAS = {
-    .id = 12, .name = "Feebas",
+    .id = POKEMON_ID_FEEBAS, .name = "Feebas",
     .baseHp = 20, .baseAttack = 15, .baseSpAttack = 10,
     .baseDefense = 20, .baseSpDefense = 55, .baseSpeed = 80,
     .type1 = TYPE_WATER, .type2 = TYPE_NONE,
@@ -144,7 +145,7 @@ const PokemonData FEEBAS = {
 };
 
 const PokemonData MILOTIC = {
-    .id = 7, .name = "Milotic",
+    .id = POKEMON_ID_MILOTIC, .name = "Milotic",
     .baseHp = 95, .baseAttack = 60, .baseSpAttack = 100,
     .baseDefense = 79, .baseSpDefense = 125, .baseSpeed = 81,
     .type1 = TYPE_WATER, .type2 = TYPE_NONE,
@@ -152,7 +153,7 @@ const PokemonData MILOTIC = {
 };
 
 const PokemonData BUDEW = {
-    .id = 11, .name = "Budew",
+    .id = POKEMON_ID_BUDEW, .name = "Budew",
     .baseHp = 40, .baseAttack = 30, .baseSpAttack = 40,
     .baseDefense = 35, .baseSpDefense = 55, .baseSpeed = 55,
     .type1 = TYPE_GRASS, .type2 = TYPE_POISON,
@@ -160,7 +161,7 @@ const PokemonData BUDEW = {
 };
 
 const PokemonData ROSERADE = {
-    .id = 8, .name = "Roserade",
+    .id = POKEMON_ID_ROSERADE, .name = "Roserade",
     .baseHp = 60, .baseAttack = 70, .baseSpAttack = 125,
     .baseDefense = 65, .baseSpDefense = 105, .baseSpeed = 90,
     .type1 = TYPE_GRASS, .type2 = TYPE_POISON,
@@ -168,7 +169,7 @@ const PokemonData ROSERADE = {
 };
 
 const PokemonData SPIRITOMB = {
-    .id = 9, .name = "Spiritomb",
+    .id = POKEMON_ID_SPIRITOMB, .name = "Spiritomb",
     .baseHp = 50, .baseAttack = 92, .baseSpAttack = 92,
     .baseDefense = 108, .baseSpDefense = 108, .baseSpeed = 35,
     .type1 = TYPE_GHOST, .type2 = TYPE_DARK,
@@ -176,7 +177,7 @@ const PokemonData SPIRITOMB = {
 };
 
 const PokemonData TOGEPI = {
-    .id = 16, .name = "Togepi",
+    .id = POKEMON_ID_TOGEPI, .name = "Togepi",
     .baseHp = 35, .baseAttack = 20, .baseSpAttack = 40,
     .baseDefense = 65, .baseSpDefense = 65, .baseSpeed = 20,
     .type1 = TYPE_FAIRY, .type2 = TYPE_NONE,
@@ -184,7 +185,7 @@ const PokemonData TOGEPI = {
 };
 
 const PokemonData TOGETIC = {
-    .id = 17, .name = "Togetic",
+    .id = POKEMON_ID_TOGETIC, .name = "Togetic",
     .baseHp = 55, .baseAttack = 40, .baseSpAttack = 80,
     .baseDefense = 85, .baseSpDefense = 105, .baseSpeed = 40,
     .type1 = TYPE_FAIRY, .type2 = TYPE_FLYING,
@@ -192,7 +193,7 @@ const PokemonData TOGETIC = {
 };
 
 const PokemonData TOGEKISS = {
-    .id = 10, .name = "Togekiss",
+    .id = POKEMON_ID_TOGEKISS, .name = "Togekiss",
     .baseHp = 85, .baseAttack = 50, .baseSpAttack = 120,
     .baseDefense = 95, .baseSpDefense = 115, .baseSpeed = 80,
     .type1 = TYPE_FAIRY, .type2 = TYPE_FLYING,
