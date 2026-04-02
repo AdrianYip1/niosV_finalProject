@@ -3926,7 +3926,11 @@ int main(void)
                             endState = GAME_STATE_BATTLE_LOSE;
                             const int penalty = computeLossPenalty(playerMoney);
                             playerMoney -= penalty;
-                            snprintf(battleEndMsg, sizeof(battleEndMsg), "You blacked out!");
+                            if (penalty > 0) {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "You blacked out! -$%d", penalty);
+                            } else {
+                                snprintf(battleEndMsg, sizeof(battleEndMsg), "You blacked out!");
+                            }
                         } else {
                             // Fled / caught results return to map.
                             endState = GAME_STATE_MAP;
@@ -6136,9 +6140,9 @@ int main(void)
         //check win/lose
         //get money from trainer battle, exp from wild battle if win
         //exp calculations, levelup, evolution, learn moves
-            draw_map();
-            draw_textbox_instant_text(textBoxSprite, TEXTBOX_X, TEXTBOX_Y, battleEndMsg, BLACK);
-            if (spacePressed) {
+            {
+                // Skip the post-battle "WIN" textbox; return to the map immediately.
+                // Keep evolution behavior by transitioning straight into EVOLUTION if needed.
                 const int idx = findNextPendingEvolutionIndex(&playerParty, -1);
                 if (idx >= 0) {
                     evolutionPokemonIndex = idx;
