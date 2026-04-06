@@ -290,7 +290,7 @@
 //location from partyMenu
 #define continue_x 201
 #define continue_y 165
-// Cancel button (replaces ESC-to-exit in the menu)
+// Cancel button (replaces ESC toexit in the menu)
 #define CANCEL_X (continue_x - 1)
 #define CANCEL_Y (continue_y - 1)
 
@@ -312,15 +312,6 @@ static const char FOUND_POKEBALL_TEXT[] = "You found a Poke Ball!";
 
 static void play_world_map_bgm(WorldMapId map_id);
 static const char *world_map_display_name(WorldMapId map_id);
-
-static const char *attack_category_label(AttackCategory c) {
-    switch (c) {
-        case ATTACK_PHYSICAL: return "Physical";
-        case ATTACK_SPECIAL: return "Special";
-        case ATTACK_STATUS: return "Status";
-        default: return "Move";
-    }
-}
 
 static const char *pokemon_type_label(PokemonType t) {
     switch (t) {
@@ -344,35 +335,6 @@ static const char *pokemon_type_label(PokemonType t) {
         case TYPE_FAIRY: return "Fairy";
         case TYPE_NONE: return "None";
         default: return "None";
-    }
-}
-
-static void build_move_short_desc(char *out, size_t out_sz, const AttackData *mv) {
-    if (out == NULL || out_sz == 0) return;
-    if (mv == NULL) {
-        out[0] = '\0';
-        return;
-    }
-
-    const char *desc = (mv->desc != NULL) ? mv->desc : "";
-    if (mv->category == ATTACK_STATUS) {
-        snprintf(out, out_sz, "%.40s", desc);
-    } else {
-        snprintf(out, out_sz, "%.40s", desc);
-    }
-}
-
-static void build_move_box_desc(char *out, size_t out_sz, const AttackData *mv, int ppCur) {
-    if (out == NULL || out_sz == 0) return;
-    if (mv == NULL) { out[0] = '\0'; return; }
-
-    if (ppCur < 0) ppCur = 0;
-
-    const char *desc = (mv->desc != NULL && mv->desc[0] != '\0') ? mv->desc : "A move.";
-    if (mv->category == ATTACK_STATUS) {
-        snprintf(out, out_sz, "%s\nACC %d  PP %d/%d", desc, mv->accuracy, ppCur, mv->maxPP);
-    } else {
-        snprintf(out, out_sz, "%s\nPWR %d  ACC %d  PP %d/%d", desc, mv->power, mv->accuracy, ppCur, mv->maxPP);
     }
 }
 
@@ -698,57 +660,6 @@ static inline const unsigned short *bagSpinSpriteForIndex(int index) {
         default: return bagMenuSpin1Sprite;
     }
 }
-
-static void draw_wrapped_string_fixed_width_f(int x, int y, const char *text, short colour, FontId font, int maxCharsPerLine, int maxLines) {
-    if (text == NULL || text[0] == '\0' || maxCharsPerLine <= 0 || maxLines <= 0) return;
-
-    // Build a small wrapped buffer with '\\n' inserted.
-    char buf[256];
-    int out = 0;
-
-    const char *p = text;
-    for (int line = 0; line < maxLines && *p; line++) {
-        // Skip leading spaces on each line.
-        while (*p == ' ') p++;
-        if (!*p) break;
-
-        int count = 0;
-        int lastSpaceOut = -1;
-        int lineStartOut = out;
-
-        while (*p && *p != '\n' && count < maxCharsPerLine && out < (int)sizeof(buf) - 2) {
-            buf[out] = *p;
-            if (*p == ' ') lastSpaceOut = out;
-            out++;
-            p++;
-            count++;
-        }
-
-        // If we hit max width in the middle of a word, wrap back to the last space.
-        if (count >= maxCharsPerLine && lastSpaceOut >= 0) {
-            // rewind input pointer to after that space
-            const int rewind = out - (lastSpaceOut + 1);
-            p -= rewind;
-            out = lastSpaceOut;
-        }
-
-        if (*p == '\n') p++;
-
-        // if nothing, force a break to avoid infinite loop.
-        if (out == lineStartOut) {
-            while (*p && *p != '\n') p++;
-            if (*p == '\n') p++;
-        }
-
-        if (line != maxLines - 1 && *p && out < (int)sizeof(buf) - 2) {
-            buf[out++] = '\n';
-        }
-    }
-
-    buf[out] = '\0';
-    draw_string_f(x, y, buf, colour, font);
-}
-
 
 static int findNextPendingEvolutionIndex(const Party *party, int afterIndex) {
     if (party == NULL) return -1;

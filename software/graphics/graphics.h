@@ -55,20 +55,6 @@ void draw_sprite_any_shake(const unsigned short *sprite,
                            short transparent,
                            int shake_frame);
 
-#define SHAKE_LESS_SPRITE_FRAME_COUNT 12
-void draw_sprite_any_shake_less(const unsigned short *sprite,
-                           int width, int height,
-                           int x, int y,
-                           short transparent,
-                           int shake_frame);
-
-#define FLASH_SPRITE_FRAME_COUNT 16
-void draw_sprite_any_flash(const unsigned short *sprite,
-                           int width, int height,
-                           int x, int y,
-                           short transparent,
-                           int flash_frame);
-
 #define SHADE_PULSE_FRAME_COUNT 16
 void draw_sprite_any_shade_pulse(const unsigned short *sprite,
                                  int width, int height,
@@ -101,33 +87,6 @@ void draw_sprite_any_bob_party_greyscale(const unsigned short *sprite,
                                          int x, int y,
                                          short transparent,
                                          int bob_frame);
-
-#define SILHOUETTE_SPRITE_FRAME_COUNT 16
-void draw_sprite_any_silhouette(const unsigned short *sprite,
-                                int width, int height,
-                                int x, int y,
-                                short transparent,
-                                short silhouette_colour,
-                                int silhouette_frame);
-
-void draw_sprite_any_region(const unsigned short *sprite,
-                            int sprite_width, int sprite_height,
-                            int source_x, int source_y,
-                            int region_width, int region_height,
-                            int dst_x, int dst_y,
-                            short transparent);
-
-void draw_sprite_any_region_silhouette(const unsigned short *sprite,
-                                       int sprite_width, int sprite_height,
-                                       int source_x, int source_y,
-                                       int region_width, int region_height,
-                                       int dst_x, int dst_y,
-                                       short transparent,
-                                       short silhouette_colour);
-
-void draw_circle(int cx, int cy, int radius, short int colour);
-void draw_circle_filled(int cx, int cy, int radius, short int colour);
-void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, short int colour);
 
 void draw_textbox_instant_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);
 int  draw_textbox_animated_text(const unsigned short *textBoxSprite, int x, int y, const char *string, short colour);

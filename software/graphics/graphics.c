@@ -217,55 +217,6 @@ void draw_sprite_any_shake(const unsigned short *sprite,
     draw_sprite_any(sprite, width, height, x + dx, y, transparent);
 }
 
-//shaking less for party
-void draw_sprite_any_shake_less(const unsigned short *sprite,
-                           int width, int height,
-                           int x, int y,
-                           short transparent,
-                           int shake_frame)
-{
-
-    static const signed char dx_pattern[SHAKE_LESS_SPRITE_FRAME_COUNT] = {0, -2, 2, -2, 2, -1, 1, -1, 1, -0, 0, 0};
-
-    int dx = 0;
-    if (shake_frame >= 0 && shake_frame < SHAKE_LESS_SPRITE_FRAME_COUNT) {
-        dx = (int)dx_pattern[shake_frame];
-    }
-
-    draw_sprite_any(sprite, width, height, x + dx, y, transparent);
-}
-
-static unsigned short shade_565(unsigned short colour, int delta);
-
-void draw_sprite_any_flash(const unsigned short *sprite,
-                           int width, int height,
-                           int x, int y,
-                           short transparent,
-                           int flash_frame)
-{
-
-    if (flash_frame < 0 || flash_frame >= FLASH_SPRITE_FRAME_COUNT) {
-        draw_sprite_any(sprite, width, height, x, y, transparent);
-        return;
-    }
-
-    const int on = ((flash_frame / 2) % 2) == 0;
-    if (on) {
-        draw_sprite_any(sprite, width, height, x, y, transparent);
-        return;
-    }
-
-    for (int sy = 0; sy < height; sy++) {
-        for (int sx = 0; sx < width; sx++) {
-            unsigned short colour = sprite[sy * width + sx];
-            if (colour == (unsigned short)transparent) {
-                continue;
-            }
-            draw_pixel(x + sx, y + sy, shade_565(colour, 8));
-        }
-    }
-}
-
 //up and down motion
 void draw_sprite_any_bob(const unsigned short *sprite,
                          int width, int height,
@@ -388,66 +339,6 @@ void draw_sprite_any_shade_pulse(const unsigned short *sprite,
                 continue;
             }
             draw_pixel(x + sx, y + sy, shade_565(colour, delta));
-        }
-    }
-}
-
-
-
-void draw_sprite_any_region(const unsigned short *sprite,
-                            int sprite_width, int sprite_height,
-                            int source_x, int source_y,
-                            int region_width, int region_height,
-                            int dst_x, int dst_y,
-                            short transparent)
-{
-    if (!sprite || sprite_width <= 0 || sprite_height <= 0) return;
-    if (region_width <= 0 || region_height <= 0) return;
-
-    if (source_x < 0) { dst_x -= source_x; region_width += source_x; source_x = 0; }
-    if (source_y < 0) { dst_y -= source_y; region_height += source_y; source_y = 0; }
-    if (source_x + region_width > sprite_width) region_width = sprite_width - source_x;
-    if (source_y + region_height > sprite_height) region_height = sprite_height - source_y;
-    if (region_width <= 0 || region_height <= 0) return;
-
-    for (int sy = 0; sy < region_height; sy++) {
-        const int source_row = (source_y + sy) * sprite_width;
-        for (int sx = 0; sx < region_width; sx++) {
-            unsigned short colour = sprite[source_row + (source_x + sx)];
-            if (colour == (unsigned short)transparent) {
-                continue;
-            }
-            draw_pixel(dst_x + sx, dst_y + sy, colour);
-        }
-    }
-}
-
-void draw_sprite_any_region_silhouette(const unsigned short *sprite,
-                                       int sprite_width, int sprite_height,
-                                       int source_x, int source_y,
-                                       int region_width, int region_height,
-                                       int dst_x, int dst_y,
-                                       short transparent,
-                                       short silhouette_colour)
-{
-    if (!sprite || region_width <= 0 || region_height <= 0) return;
-
-    if (source_x < 0) { dst_x -= source_x; region_width += source_x; source_x = 0; }
-    if (source_y < 0) { dst_y -= source_y; region_height += source_y; source_y = 0; }
-    if (source_x + region_width > sprite_width) region_width = sprite_width - source_x;
-    if (source_y + region_height > sprite_height) region_height = sprite_height - source_y;
-    if (region_width <= 0 || region_height <= 0) return;
-
-    const unsigned short draw_colour = (unsigned short)silhouette_colour;
-
-    for (int sy = 0; sy < region_height; sy++) {
-        const int source_row = (source_y + sy) * sprite_width;
-        for (int sx = 0; sx < region_width; sx++) {
-            unsigned short colour = sprite[source_row + (source_x + sx)];
-            if (colour == (unsigned short)transparent) {
-                continue;
-            }
-            draw_pixel(dst_x + sx, dst_y + sy, draw_colour);
         }
     }
 }
