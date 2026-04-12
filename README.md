@@ -1,4 +1,4 @@
-# Pokemon on C Bare Metal
+# Pokemon on C and NiosV
 A Pokemon inspired game built on a NiosV processor, without an operating system or game engine. Developed as the final project for ECE243, Computer Organization.
 
 Features a tile based overworld, turn based battles, I/O with audio and PS/2 Keyboard input, and sprite rendering with VGA.
