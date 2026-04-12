@@ -1,19 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NiosV Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f0f0f;
+      color: #e8e8e8;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid #2a2a2a;
+      padding: 2.5rem 3rem;
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+    }
+
+    header h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.6rem;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    header span {
+      font-size: 0.85rem;
+      color: #555;
+      font-family: 'Space Mono', monospace;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 1rem;
+    }
+
+    /* Video thumbnail */
+    .video-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      text-decoration: none;
+    }
+
+    .video-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0.85;
+    }
+
+    .video-wrapper:hover img {
+      transform: scale(1.02);
+      opacity: 1;
+    }
+
+    .play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .video-wrapper:hover .play-btn {
+      transform: translate(-50%, -50%) scale(1.08);
+      background: #fff;
+    }
+
+    .play-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #0f0f0f;
+      margin-left: 3px;
+    }
+
+    /* PDF */
+    .pdf-wrapper {
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+    }
+
+    .pdf-wrapper iframe {
+      display: block;
+      width: 100%;
+      height: 700px;
+      border: none;
+      background: #fff;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>NiosV Project</h1>
-=
-  <iframe width="560" height="315" 
-    src="https://www.youtube.com/watch?v=ZgjBpFqJh6U" 
-    frameborder="0" allowfullscreen>
-  </iframe>
-=
-  <iframe src="PokemonProjectNiosV.pdf" width="100%" height="600px">
-  </iframe>
+  <header>
+    <h1>NiosV Final Project</h1>
+    <span>// Pokemon Game</span>
+  </header>
+
+  <main>
+
+    <section>
+      <p class="section-label">Demo Video</p>
+      <a class="video-wrapper" href="https://www.youtube.com/watch?v=ZgjBpFqJh6U" target="_blank" rel="noopener">
+        <img src="https://img.youtube.com/vi/ZgjBpFqJh6U/maxresdefault.jpg" alt="Project demo video">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </a>
+    </section>
+
+    <section>
+      <p class="section-label">Project Report</p>
+      <div class="pdf-wrapper">
+        <iframe src="PokemonProjectNiosV.pdf"></iframe>
+      </div>
+    </section>
+
+  </main>
 
 </body>
 </html>
