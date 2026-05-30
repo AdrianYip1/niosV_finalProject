@@ -1,6 +1,17 @@
+# Build outputs
 *.o
 *.elf
 *.map
-.DS_Store
 *.d
+
+# Toolchain / IDE
+.DS_Store
 __pycache__
+gdbopxdriscv.ini
+gmake.bat
+.vscode/
+
+# Lookup reference files (internal dev notes, not source)
+software/gameplayLogic/entities/attacksIDLookup.txt
+software/gameplayLogic/entities/pokemonIDLookup.txt
+software/gameplayLogic/entities/pokemonPokedexEntries

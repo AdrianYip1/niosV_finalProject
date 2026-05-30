@@ -1,6 +1,13 @@
 #include "pokemonDataBase.h"
 #include "../../graphics/sprites/pokemon/pokemonSpriteInit.h"
 
+/*
+ All game data (type chart, moves, Pokemon stats) is stored in static
+ compile-time tables
+ Intentional becasue the DE1-SoC runs without an OS or memory manager,
+ so all data must be baked into the binary at a fixed address.
+ */
+
 const float typeChart[NUM_TYPES][NUM_TYPES] = {
     {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 1.0, 1.0}, // normal
     {1.0, 0.5, 0.5, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 0.5, 1.0, 0.5, 1.0, 2.0, 1.0, 1.0}, // fire
