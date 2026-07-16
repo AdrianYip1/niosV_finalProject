@@ -1,9 +1,11 @@
 # Pokemon on C and NiosV
 
-<p align="center">
-  <img src="media/Battle.png" width="420">
-  <img src="media/Pokedex1.png" width="420">
-</p>
+<table align="center">
+  <tr>
+    <td><img src="media/Battle.png" width="420"></td>
+    <td><img src="media/Pokedex1.png" width="420"></td>
+  </tr>
+</table>
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=VjDEreAy7r8">
